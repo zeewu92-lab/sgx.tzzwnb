@@ -984,8 +984,34 @@ function resizeImageFile(file, maxDim = 1000, quality = 0.85) {
   });
 }
 function combineDateTime(dateStr, timeStr) { return new Date(`${dateStr}T${timeStr || '00:00'}:00`); }
-function addMonths(d, n) { const r = new Date(d); r.setMonth(r.getMonth() + n); return r; }
-function addYears(d, n) { const r = new Date(d); r.setFullYear(r.getFullYear() + n); return r; }
+// 修復：原本直接 setMonth(getMonth()+n) 是經典的 JS 日期溢位陷阱——例如 1/31 加 1 個月，
+// 2 月根本沒有 31 號，JS 會自動把多出來的天數往後推，變成 3/3，日期整個被「偷偷改掉」，
+// 完全沒有任何警告。這正是使用者回報的「日期自動被修改」，也是「同一事件在日程分頁
+// 掃描不同月份時，算出來的落點忽前忽後、看起來像同一筆事件跑到好幾個月份」的根因——
+// 每個月各自重新從原始日期起算，溢位的量在不同月份長度下不一致，換算結果就對不上。
+// 改成：先把「日」暫存起來，換月之後再夾回目標月份實際擁有的最大天數（例如 1/31 加 1 個月
+// 要落在 2/28 或 2/29，不是溢位到 3 月），這是「加 N 個月／N 年」在日曆型 App 裡的標準做法。
+function addMonths(d, n) {
+  const day = d.getDate();
+  const r = new Date(d);
+  r.setDate(1); // 先把日期歸零到 1 號，換月的當下才不會因為原本的日還在，觸發同一種溢位
+  r.setMonth(r.getMonth() + n);
+  const daysInTargetMonth = new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate();
+  r.setDate(Math.min(day, daysInTargetMonth));
+  return r;
+}
+function addYears(d, n) {
+  // 同樣的溢位陷阱在「加年」也會發生，最典型的是閏年 2/29 加 1 年到平年——平年沒有 2/29，
+  // 會被自動推到 3/1。修法同上：換年時先歸零到 1 號，再依目標年份「同一個月」實際天數夾回去。
+  const month = d.getMonth();
+  const day = d.getDate();
+  const r = new Date(d);
+  r.setDate(1);
+  r.setFullYear(r.getFullYear() + n);
+  const daysInTargetMonth = new Date(r.getFullYear(), month + 1, 0).getDate();
+  r.setMonth(month, Math.min(day, daysInTargetMonth));
+  return r;
+}
 function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
 
 function getCalendarParts(date, calendarId) {
@@ -8832,20 +8858,22 @@ export default function App() {
                   AnniversaryCalendar／TimelineSection 整個卸載再重新掛載，所有 useMemo 快取、
                   日曆目前選的月份、捲動位置全部歸零，這正是「從其他頁面切進日程頁很慢」的主因；
                   改成常駐掛載後，切分頁純粹是 CSS 顯示/隱藏，不會重新渲染整棵子樹。 */}
-              <div className="flex-1 min-h-0 flex flex-col gap-2" style={{ display: activeTab === 'schedule' ? 'flex' : 'none', marginTop: -8 }}>
+              <div className="flex-1 min-h-0 flex flex-col gap-2" style={{ display: activeTab === 'schedule' ? 'flex' : 'none' }}>
                   {/* 「新增日程／搜尋」按鈕的實際掛載點：內容由下面的 TimelineSection（cards 模式）
                       透過 createPortal 掛進來，這裡只是預留一個節點，讓按鈕視覺上出現在日曆
-                      上方、彼此形成清楚的上下關係（見需求三）。 */}
-                  <div ref={setScheduleControlsEl} className="flex-shrink-0" />
+                      上方、彼此形成清楚的上下關係（見需求三）。
+                      position:relative + 較高的 zIndex：先前用負的 marginTop 把整個分頁往上拉，
+                      結果這顆按鈕被上面的 Header（zIndex:30，見 <header> 那段）疊在下面蓋住——
+                      現在改成不動版面位置，只讓這顆按鈕自己的堆疊順序比 Header 高，確定不會再被蓋住。 */}
+                  <div ref={setScheduleControlsEl} className="flex-shrink-0 relative" style={{ zIndex: 31 }} />
 
                   <AnniversaryCalendar events={events} lang={lang} t={t} now={now} onRangeChange={setScheduleRange} />
 
-                  {/* 純文字提示，描述預設狀態，不可點擊——獨立一行，不放進下面的按鈕模組（那裡
-                      只留真正可操作的「展示全部事件」開關），避免看起來像是可以點的選項。 */}
-                  <span className="text-xs px-1 flex-shrink-0" style={{ color: INK_SOFT }}>{t.futureOnlyLabel}</span>
-
-                  {/* 「展示全部事件」按鈕模組：打開後改成不分月份、列出全部事件（見 TimelineSection 的 showAll）。 */}
-                  <div className="rounded-2xl px-4 py-2.5 flex items-center justify-end flex-shrink-0" style={glass()}>
+                  {/* 「展示全部事件」按鈕模組：整塊縮小（padding／開關尺寸都變小），並把原本
+                      獨立一行的「只展示未來代辦事件」說明文字放回同一行的左邊——不可點擊的純文字
+                      跟右邊真正可操作的開關文字＋開關本身並排，兩者合一行，省下一行的高度。 */}
+                  <div className="rounded-2xl px-3 py-1.5 flex items-center justify-between gap-2 flex-shrink-0" style={glass()}>
+                    <span className="text-xs" style={{ color: INK_SOFT }}>{t.futureOnlyLabel}</span>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className="text-xs" style={{ color: INK_SOFT }}>{t.scheduleShowAllLabel}</span>
                       <button
@@ -8856,9 +8884,9 @@ export default function App() {
                         onClick={() => setScheduleShowAll(v => !v)}
                         className="relative flex-shrink-0 rounded-full"
                         style={{
-                          width: 46,
-                          height: 28,
-                          padding: 3,
+                          width: 38,
+                          height: 22,
+                          padding: 2,
                           background: scheduleShowAll ? ACCENT : 'rgba(120,125,135,0.22)',
                           border: scheduleShowAll ? `1px solid ${ACCENT}` : '1px solid rgba(120,125,135,0.16)',
                           boxShadow: scheduleShowAll ? `0 3px 10px ${accentAlpha('30')}` : 'inset 0 1px 2px rgba(0,0,0,0.06)',
@@ -8868,10 +8896,10 @@ export default function App() {
                         <span
                           className="absolute rounded-full"
                           style={{
-                            width: 20,
-                            height: 20,
-                            top: 3,
-                            left: scheduleShowAll ? 22 : 3,
+                            width: 16,
+                            height: 16,
+                            top: 2,
+                            left: scheduleShowAll ? 18 : 2,
                             background: '#fff',
                             boxShadow: '0 1px 4px rgba(0,0,0,0.18)',
                             transition: 'left 180ms cubic-bezier(0.22, 1, 0.36, 1)',
