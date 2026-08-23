@@ -389,6 +389,8 @@ const STRINGS = {
     calendarMonthView: '月', calendarYearView: '年', calendarChooseDate: '選擇年份與月份',
     calendarPrev: '上一個', calendarNext: '下一個', calendarConfirmYear: '確定', calendarViewWholeYear: '檢視整年', calendarToggleCollapse: '收合／展開日曆',
     futureOnlyLabel: '只展示未來待辦事件', scheduleShowAllLabel: '展示全部事件',
+    viewModeYear: '年', viewModeMonth: '月', viewModeWeek: '週',
+    emptyScheduleYear: '本年還沒有日程。', emptyScheduleMonth: '本月還沒有日程。', emptyScheduleWeek: '本週還沒有日程。',
     darkModeLabel: '深色模式', darkModeOn: '開', darkModeOff: '關', feedbackLabel: '意見回饋',
     modeCompanionHint: '設定情誼開始的日子，得到你們相伴的時長。',
     modeAnniversaryHint: '設定一個值得銘記的日子，讓時光線替你記錄一路點滴。',
@@ -510,6 +512,8 @@ const STRINGS = {
     calendarMonthView: 'Month', calendarYearView: 'Year', calendarChooseDate: 'Choose year and month',
     calendarPrev: 'Previous', calendarNext: 'Next', calendarConfirmYear: 'Done', calendarViewWholeYear: 'View whole year', calendarToggleCollapse: 'Collapse/expand calendar',
     futureOnlyLabel: 'Show upcoming events only', scheduleShowAllLabel: 'Show all events',
+    viewModeYear: 'Year', viewModeMonth: 'Month', viewModeWeek: 'Week',
+    emptyScheduleYear: 'No events this year yet.', emptyScheduleMonth: 'No events this month yet.', emptyScheduleWeek: 'No events this week yet.',
     darkModeLabel: 'Dark Mode', darkModeOn: 'On', darkModeOff: 'Off', feedbackLabel: 'Feedback',
     modeCompanionHint: "Set the day your bond began, and see how long you've been together.",
     modeAnniversaryHint: 'Set a day worth remembering, and let TimeLine track every moment along the way.',
@@ -631,6 +635,8 @@ const STRINGS = {
     calendarMonthView: '月', calendarYearView: '年', calendarChooseDate: '年月を選択',
     calendarPrev: '前へ', calendarNext: '次へ', calendarConfirmYear: '決定', calendarViewWholeYear: '年間表示', calendarToggleCollapse: 'カレンダーを折りたたむ／展開',
     futureOnlyLabel: '今後の予定のみ表示', scheduleShowAllLabel: '全ての予定を表示',
+    viewModeYear: '年', viewModeMonth: '月', viewModeWeek: '週',
+    emptyScheduleYear: '今年の予定はまだありません。', emptyScheduleMonth: '今月の予定はまだありません。', emptyScheduleWeek: '今週の予定はまだありません。',
     darkModeLabel: 'ダークモード', darkModeOn: 'オン', darkModeOff: 'オフ', feedbackLabel: 'フィードバック',
     modeCompanionHint: '絆が始まった日を設定して、二人が共に過ごした時間を確認しましょう。',
     modeAnniversaryHint: '心に刻みたい日を設定すれば、時間軸がここまでの歩みをそっと記録します。',
@@ -752,6 +758,8 @@ const STRINGS = {
     calendarMonthView: '월', calendarYearView: '년', calendarChooseDate: '연도와 월 선택',
     calendarPrev: '이전', calendarNext: '다음', calendarConfirmYear: '확인', calendarViewWholeYear: '연간 보기', calendarToggleCollapse: '캘린더 접기/펼치기',
     futureOnlyLabel: '앞으로의 일정만 표시', scheduleShowAllLabel: '전체 일정 표시',
+    viewModeYear: '년', viewModeMonth: '월', viewModeWeek: '주',
+    emptyScheduleYear: '올해 일정이 아직 없습니다.', emptyScheduleMonth: '이번 달 일정이 아직 없습니다.', emptyScheduleWeek: '이번 주 일정이 아직 없습니다.',
     darkModeLabel: '다크 모드', darkModeOn: '켜짐', darkModeOff: '꺼짐', feedbackLabel: '피드백',
     modeCompanionHint: '인연이 시작된 날을 설정하고 함께한 시간을 확인해 보세요.',
     modeAnniversaryHint: '기억하고 싶은 날을 설정하면 타임라인이 그동안의 발자취를 기록해 줍니다.',
@@ -889,6 +897,13 @@ const EVENT_MODES = [
   { id: 'care', labelKey: 'modeCare', hintKey: 'careHint' },
   { id: 'anniversary', labelKey: 'modeAnniversary', hintKey: 'modeAnniversaryHint' },
   { id: 'regular', labelKey: 'modeRegular', hintKey: 'modeRegularHint' },
+];
+// 日程分頁「年／月／週」檢視切換滑塊用（見需求四），跟 EVENT_MODES 是同一種滑動選中膠囊
+// 樣式，只是選項換成日曆的三種檢視模式。
+const SCHEDULE_VIEW_MODES = [
+  { id: 'year', labelKey: 'viewModeYear' },
+  { id: 'month', labelKey: 'viewModeMonth' },
+  { id: 'week', labelKey: 'viewModeWeek' },
 ];
 // 舊資料（或還沒設定模式）換算成目前選中的模式 id：只看 isBirthday／isCare，兩者都沒有就是「常規」。
 function eventModeFromEv(ev) {
@@ -1371,15 +1386,64 @@ function getEffectiveDate(ev, now) {
 // 頂替出來的日期常常已經跨進下一個西曆月份，造成同一個年度事件被算成分別出現在兩個
 // 連續月份（其中一個是錯的、卡在月底）。
 // 修法：年重複（含不循環的固定日期）事件一年最多只會發生一次，不需要對 12 個月各自重算
-// 一次，只要用「目標年份的前一年 12 月 1 號」當基準點，往未來掃描一次，保證這個基準點
+// 一次，只要用「目標年份的 1 月 1 號」當基準點，往未來掃描一次，保證這個基準點
 // 一定落在任何可能的目標發生日「之前」（不會是中途），得到的結果就是這個事件在目標年份
 // 唯一、正確的那一次發生日，用它落在哪個月份就好，不再有「多算出一個月」的問題。
 // 只有「每 N 個月」重複（repeatUnit==='month'，只有西曆才會這樣設定）才可能一年出現
 // 好幾次，那個不受這個 bug 影響（西曆逐月比較是精確的日期比大小，不需要「找不到就退而
 // 求其次」這種容易誤判的區塊掃描），繼續維持原本逐月重算即可。
 function getYearlyOccurrenceInYear(ev, targetYear) {
-  const safeRef = new Date(targetYear - 1, 11, 1);
+  // 這裡原本用「目標年份的前一年 12 月 1 號」當基準，後來發現這個基準點對「12 月」的西曆年
+  // 重複事件是錯的：比較演算法會直接在「前一年的 12 月」就找到符合的日期而停下來（因為
+  // 12 月 1 號已經在那個 12 月裡面），根本沒有機會推進到目標年份，導致 12 月的生日／紀念日
+  // 在瀏覽目標年份時完全消失不見（這正是後來回報的「事件莫名消失」）。
+  // 改成用「目標年份的 1 月 1 號」當基準：這是目標年份裡最早的一天，不管事件實際落在目標
+  // 年份的哪個月（1 月到 12 月都一樣），都保證基準點在它之前，演算法才會正確跳過前一年的
+  // 那一次、往前找到目標年份自己的那一次。經過大量西曆／農曆邊界案例（1 月初、12 月底、
+  // 跨年農曆月份等）實測驗證，這個基準點下每個事件在目標年份都能正確算出恰好一次。
+  const safeRef = new Date(targetYear, 0, 1);
   return getEffectiveDate(ev, safeRef);
+}
+// 給「週檢視」用的通用版本：找出一批事件裡，有哪些的發生日落在 [rangeStart, rangeEnd]
+// 這個西曆日期區間內（含頭尾兩端，忽略時分秒）。週檢視最多橫跨兩個西曆月份／兩個西曆年份
+// （例如週三橫跨月底、或跨年那一週），所以不能只套用「單一年份」或「單一月份」的算法，
+// 改成把區間橫跨到的每個「年-月」（月重複事件）或「年」（不循環／年重複事件）都各自算一次，
+// 再用實際日期是否落在區間內做最後篩選——這跟 rangedEvents／eventsByDay 用的月份／年份
+// 邏輯是同一套「不循環或年重複只算一次、月重複才逐月算」的原則，只是改成用日期區間比對，
+// 不再限定要剛好落在某個西曆月份或西曆年份裡。
+function getEventOccurrencesInRange(events, rangeStart, rangeEnd) {
+  const startTime = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate()).getTime();
+  const endTime = new Date(rangeEnd.getFullYear(), rangeEnd.getMonth(), rangeEnd.getDate()).getTime();
+  const results = [];
+  events.forEach(ev => {
+    if (ev.repeat && ev.repeatUnit === 'month') {
+      const monthKeys = new Set();
+      let cursor = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1);
+      const endCursor = new Date(rangeEnd.getFullYear(), rangeEnd.getMonth(), 1);
+      while (cursor <= endCursor) {
+        monthKeys.add(`${cursor.getFullYear()}-${cursor.getMonth()}`);
+        cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+      }
+      monthKeys.forEach(key => {
+        const [y, m] = key.split('-').map(Number);
+        const ref = new Date(y, m, 1);
+        const occ = getEffectiveDate(ev, ref);
+        if (occ.getFullYear() !== y || occ.getMonth() !== m) return;
+        const occTime = new Date(occ.getFullYear(), occ.getMonth(), occ.getDate()).getTime();
+        if (occTime >= startTime && occTime <= endTime) results.push({ ev, occ });
+      });
+    } else {
+      const years = new Set();
+      for (let y = rangeStart.getFullYear(); y <= rangeEnd.getFullYear(); y++) years.add(y);
+      years.forEach(y => {
+        const occ = getYearlyOccurrenceInYear(ev, y);
+        if (occ.getFullYear() !== y) return;
+        const occTime = new Date(occ.getFullYear(), occ.getMonth(), occ.getDate()).getTime();
+        if (occTime >= startTime && occTime <= endTime) results.push({ ev, occ });
+      });
+    }
+  });
+  return results;
 }
 const SELECT_STYLE = { border: CARD_BORDER, background: INPUT_BG, color: INK };
 const SELECT_CLASS = 'px-2 py-2 rounded-lg text-sm outline-none flex-1 min-w-0';
@@ -4297,13 +4361,10 @@ function TimelineSection({
     if (!isCardsLayout) return [];
     if (showAll) return upcomingEvents;
     if (!rangeFilter) return [];
-    const monthsToScan = rangeFilter.mode === 'year'
-      ? Array.from({ length: 12 }, (_, m) => m)
-      : [rangeFilter.month];
     const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const results = [];
     // 加進 results 前共用的整理步驟（算 diffDays／age／elapsedDays、組 __occKey），
-    // 兩種掃描方式（逐月／一年一次）都要用到，抽出來避免重複程式碼。
+    // 三種掃描方式（逐月／一年一次／週區間）都要用到，抽出來避免重複程式碼。
     function pushOccurrence(ev, occ) {
       const targetTime = new Date(occ.getFullYear(), occ.getMonth(), occ.getDate()).getTime();
       const diffDays = Math.ceil((targetTime - todayTime) / (1000 * 60 * 60 * 24));
@@ -4319,6 +4380,19 @@ function TimelineSection({
       // 另外帶上發生日期時間戳記做成 __occKey，渲染卡片時才不會撞 key。
       results.push({ ...ev, targetDate: occ, diffDays, age, elapsedDays, __occKey: `${ev.id}::${occ.getTime()}` });
     }
+    // 週檢視：改用通用的日期區間比對（見 getEventOccurrencesInRange 開頭註解），一週最多
+    // 橫跨兩個西曆月份／年份，不能沿用下面「按月份／按年份」的掃描方式。
+    if (rangeFilter.mode === 'week') {
+      if (rangeFilter.weekStart && rangeFilter.weekEnd) {
+        getEventOccurrencesInRange(events, rangeFilter.weekStart, rangeFilter.weekEnd)
+          .forEach(({ ev, occ }) => pushOccurrence(ev, occ));
+      }
+      results.sort((a, b) => a.targetDate - b.targetDate);
+      return results;
+    }
+    const monthsToScan = rangeFilter.mode === 'year'
+      ? Array.from({ length: 12 }, (_, m) => m)
+      : [rangeFilter.month];
     events.forEach(ev => {
       // 「每 N 個月」重複（只有西曆才會這樣設定）一年可能出現好幾次，必須逐月各自算一次；
       // 西曆的月份比較是精確的日期大小比較，不會有下面「年重複」那種區塊搜尋誤判的問題，
@@ -4333,7 +4407,7 @@ function TimelineSection({
         return;
       }
       // 不循環的固定日期、或年重複（含農曆／伊斯蘭曆／希伯來曆等，以及生日／關懷模式）：
-      // 一年最多只會發生一次，用「目標年份前一年 12 月 1 號」當基準往未來掃描一次即可，
+      // 一年最多只會發生一次，用「目標年份 1 月 1 號」當基準往未來掃描一次即可，
       // 不要對 12 個月各自重算——見 getYearlyOccurrenceInYear 開頭註解，這正是修復「同一個
       // 年重複事件被誤判成出現在兩個連續月份」的關鍵。
       const occ = getYearlyOccurrenceInYear(ev, rangeFilter.year);
@@ -4555,7 +4629,11 @@ function TimelineSection({
             </div>
           ) : (
             <div className="py-8">
-              <p style={{ color: INK, fontWeight: 'bold' }}>{t.emptyTimeline}</p>
+              <p style={{ color: INK, fontWeight: 'bold' }}>
+                {rangeFilter && rangeFilter.mode === 'year' ? t.emptyScheduleYear
+                  : rangeFilter && rangeFilter.mode === 'week' ? t.emptyScheduleWeek
+                  : t.emptyScheduleMonth}
+              </p>
               <p className="text-sm mt-1" style={{ color: INK_SOFT }}>{t.emptyTimelineSub}</p>
             </div>
           )
@@ -6212,13 +6290,16 @@ function BottomNavigation({ activeTab, setActiveTab, t }) {
 // 更新一次「現在時間」就會讓這個元件重新渲染、重新整個算一次，即使使用者什麼都沒點，
 // 這正是先前「開啟日程頁卡頓、操作反應慢」的主因之一，改成只有 events／year／month／
 // viewMode 真的變動時才重算。
-function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
+function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, setViewMode }) {
   const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth()); // 0-11，viewMode==='year' 時不使用
-  const [viewMode, setViewMode] = useState('month'); // 'month'＝月曆格子（原本的樣子）；'year'＝12 個月的年曆格子
-  const [selectedDay, setSelectedDay] = useState(null); // 只有月檢視才有意義，點日期在下面秀一小段當天預覽
+  const [month, setMonth] = useState(now.getMonth()); // 0-11，viewMode==='year'／'week' 時不使用
+  // viewMode（'month'＝月曆格子；'year'＝12 個月的年曆格子；'week'＝一週 7 天）改由外層 App
+  // 控制（見需求四：頂部標題列跟日曆之間的年／月／週滑塊），這裡不再自己 useState。
+  const [weekAnchor, setWeekAnchor] = useState(now); // 週檢視專用：這一週裡任一天，用來算出這一週的週日～週六範圍
+  const [selectedDay, setSelectedDay] = useState(null); // 月檢視專用，點日期在下面秀一小段當天預覽
+  const [selectedWeekDate, setSelectedWeekDate] = useState(null); // 週檢視專用，選中的完整日期（週可能橫跨兩個月，不能只存「日」這個數字）
   // 收合／展開：預設展開。收合時只留標題列（含收合鈕），下面的日期格子／年曆格子、選中日
-  // 預覽、上一個/下一個切換整塊收合，讓下面的事件卡片能拿到更多空間——用 maxHeight+opacity
+  // 預覽整塊收合，讓下面的事件卡片能拿到更多空間——用 maxHeight+opacity
   // 做轉場，跟其他彈窗輸入框放大/收合是同一套手法。
   const [collapsed, setCollapsed] = useState(false);
   const COLLAPSE_TRANSITION_MS = 260;
@@ -6273,13 +6354,41 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
   const startWeekday = firstOfMonth.getDay();
   const daysInPrevMonth = new Date(year, month, 0).getDate();
 
+  // 週檢視的範圍：週日～週六（跟月曆格子的星期排列一致），用 weekAnchor（這一週裡任一天）算出來。
+  const weekStart = useMemo(() => {
+    const d = new Date(weekAnchor.getFullYear(), weekAnchor.getMonth(), weekAnchor.getDate());
+    d.setDate(d.getDate() - d.getDay());
+    return d;
+  }, [weekAnchor]);
+  const weekEnd = useMemo(() => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + 6);
+    return d;
+  }, [weekStart]);
+  const weekDates = useMemo(() => Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  }), [weekStart]);
+  // 週檢視專用的事件對照表：key 是 "年-月-日"，用通用的日期區間比對（見 getEventOccurrencesInRange
+  // 開頭註解），因為一週可能橫跨兩個西曆月份／年份，不能沿用月檢視「單一年月」的算法。
+  const weekEventsByDateKey = useMemo(() => {
+    const map = {};
+    if (viewMode !== 'week') return map;
+    getEventOccurrencesInRange(events, weekStart, weekEnd).forEach(({ ev, occ }) => {
+      const key = `${occ.getFullYear()}-${occ.getMonth()}-${occ.getDate()}`;
+      (map[key] = map[key] || []).push(ev);
+    });
+    return map;
+  }, [events, weekStart, weekEnd, viewMode]);
+
   // 修復同一個 bug（見 getYearlyOccurrenceInYear 開頭註解）：月檢視原本直接用「這個月 1 號」
   // 當基準呼叫 getEffectiveDate，對農曆等需要「往未來逐日掃描找符合區塊」的曆法來說，如果
   // 事件在該農曆月份的實際西曆日期已經在這個月 1 號之前發生過，就會誤判、退而返回區塊最後
   // 一天頂替，常常跨進下個月——導致同一個農曆生日在切換月份瀏覽時，連續兩個月都被點上圓點。
   // 月重複（repeatUnit==='month'，只有西曆才會這樣設定）本來就該每個月各自出現一次，
   // 繼續用「這個月 1 號」當基準沒問題；不循環或年重複的事件改用 getYearlyOccurrenceInYear
-  // （用去年 12 月 1 號當基準，保證一定在目標發生日之前），一年只算一次、只會落在唯一一個月份。
+  // （用目標年份 1 月 1 號當基準，保證一定在目標發生日之前），一年只算一次、只會落在唯一一個月份。
   const eventsByDay = useMemo(() => {
     const map = {};
     events.forEach(ev => {
@@ -6320,17 +6429,36 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
     new Intl.DateTimeFormat(LOCALE_MAP[lang], { month: 'short' }).format(new Date(2023, m, 1))
   );
 
-  // 日曆切換／捲動操作：月檢視是上一月/下一月，年檢視是上一年/下一年，兩顆按鈕現在放在
-  // 日曆右下角（見下方 JSX），不再堆在標題旁邊。
+  // 日曆切換／捲動操作：月檢視是上一月/下一月，年檢視是上一年/下一年，週檢視是上一週/下一週，
+  // 不再用畫面上的按鈕觸發，改成日曆格子左右滑動（見下方 JSX 的 onTouchStart/onTouchEnd）。
   function goPrev() {
     setSelectedDay(null);
     if (viewMode === 'year') { setYear(y => y - 1); return; }
+    if (viewMode === 'week') { setWeekAnchor(d => addDays(d, -7)); setSelectedWeekDate(null); return; }
     if (month === 0) { setYear(y => y - 1); setMonth(11); } else { setMonth(m => m - 1); }
   }
   function goNext() {
     setSelectedDay(null);
     if (viewMode === 'year') { setYear(y => y + 1); return; }
+    if (viewMode === 'week') { setWeekAnchor(d => addDays(d, 7)); setSelectedWeekDate(null); return; }
     if (month === 11) { setYear(y => y + 1); setMonth(0); } else { setMonth(m => m + 1); }
+  }
+  // 左右滑動手勢：取代原本畫面上的「上一個／下一個」按鈕（見需求二）。用 touchstart／touchend
+  // 兩點的位移量判斷，橫向位移夠大、且明顯比縱向位移大時才當成滑動翻頁，避免跟上下捲動衝突。
+  const touchStartRef = useRef(null);
+  function handleCalendarTouchStart(e) {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+  function handleCalendarTouchEnd(e) {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start) return;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0) goNext(); else goPrev();
   }
   // 選擇面板裡點了月份宮格：立即套用選定的年份＋月份、切到月檢視並關閉面板
   function pickMonth(m) {
@@ -6348,12 +6476,15 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
     closePicker();
   }
 
-  // 日曆目前顯示的時間範圍（月或年）一有變動就同步給上層，下面的日程列表跟著這個範圍
-  // 即時更新（見需求六：日曆與日程列表不能各自使用不同的時間範圍）。
+  // 日曆目前顯示的時間範圍（月／年／週）一有變動就同步給上層，下面的日程列表跟著這個範圍
+  // 即時更新（見需求六：日曆與日程列表不能各自使用不同的時間範圍）。週檢視額外帶上
+  // weekStart／weekEnd（真正的 Date），因為一週可能橫跨兩個西曆月份／年份，不能只用單一年月表示。
   useEffect(() => {
-    onRangeChange && onRangeChange(viewMode === 'year' ? { mode: 'year', year } : { mode: 'month', year, month });
+    if (viewMode === 'year') { onRangeChange && onRangeChange({ mode: 'year', year }); return; }
+    if (viewMode === 'week') { onRangeChange && onRangeChange({ mode: 'week', year: weekStart.getFullYear(), weekStart, weekEnd }); return; }
+    onRangeChange && onRangeChange({ mode: 'month', year, month });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode, year, month]);
+  }, [viewMode, year, month, weekStart, weekEnd]);
 
   const cells = [];
   for (let i = 0; i < startWeekday; i++) cells.push({ day: daysInPrevMonth - startWeekday + 1 + i, inMonth: false });
@@ -6363,9 +6494,16 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
 
   const isToday = (d) => d === now.getDate() && month === now.getMonth() && year === now.getFullYear();
   const selectedEvents = selectedDay != null ? (eventsByDay[selectedDay] || []) : [];
+  const isTodayDate = (d) => d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  const selectedWeekEvents = selectedWeekDate
+    ? (weekEventsByDateKey[`${selectedWeekDate.getFullYear()}-${selectedWeekDate.getMonth()}-${selectedWeekDate.getDate()}`] || [])
+    : [];
 
+  const weekRangeFmt = new Intl.DateTimeFormat(LOCALE_MAP[lang], { month: 'short', day: 'numeric' });
   const titleLabel = viewMode === 'year'
     ? new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric' }).format(new Date(year, 0, 1))
+    : viewMode === 'week'
+    ? `${weekRangeFmt.format(weekStart)} – ${weekRangeFmt.format(weekEnd)}`
     : new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric', month: 'long' }).format(firstOfMonth);
   const pickerYearLabel = new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric' }).format(new Date(pickerYear, 0, 1));
   const yearMenuYears = Array.from({ length: 12 }, (_, i) => yearMenuGridStart + i);
@@ -6397,6 +6535,8 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
       </div>
 
       <div
+        onTouchStart={handleCalendarTouchStart}
+        onTouchEnd={handleCalendarTouchEnd}
         style={{
           maxHeight: collapsed ? 0 : 480,
           opacity: collapsed ? 0 : 1,
@@ -6430,6 +6570,43 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
                     }}
                   >
                     {c.day}
+                  </span>
+                  <span className="flex items-center justify-center gap-0.5 mt-0.5" style={{ height: 4 }}>
+                    {dayEvents.slice(0, 3).map((ev, di) => (
+                      <span key={di} className="rounded-full" style={{ width: 4, height: 4, background: colorHex(ev.colorId) }} />
+                    ))}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ) : viewMode === 'week' ? (
+          // 週檢視：跟月檢視同一排星期標籤，格子改成這一週實際的 7 天（可能橫跨兩個月，
+          // 所以每格顯示「日」的數字，取自該天真正的 Date，不是固定在同一個月份底下）。
+          <div className="grid grid-cols-7 gap-y-1 text-center">
+            {weekdayLabels.map((w, i) => (
+              <span key={i} className="text-[10px] font-bold" style={{ color: INK_SOFT }}>{w}</span>
+            ))}
+            {weekDates.map((d, i) => {
+              const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+              const dayEvents = weekEventsByDateKey[key] || [];
+              const selected = selectedWeekDate && selectedWeekDate.getTime() === d.getTime();
+              return (
+                <button
+                  key={i}
+                  onClick={() => setSelectedWeekDate(prev => (prev && prev.getTime() === d.getTime() ? null : d))}
+                  className="flex flex-col items-center justify-center py-1"
+                >
+                  <span
+                    className="flex items-center justify-center rounded-full text-xs font-bold"
+                    style={{
+                      width: 26,
+                      height: 26,
+                      background: selected ? ACCENT : (isTodayDate(d) ? 'var(--card-border)' : 'transparent'),
+                      color: selected ? '#fff' : INK,
+                    }}
+                  >
+                    {d.getDate()}
                   </span>
                   <span className="flex items-center justify-center gap-0.5 mt-0.5" style={{ height: 4 }}>
                     {dayEvents.slice(0, 3).map((ev, di) => (
@@ -6478,25 +6655,20 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
           </div>
         )}
 
-        {/* 日曆切換操作：改放右下角，只負責「往前一個／往後一個」，不再堆在標題旁邊（見需求四）。 */}
-        <div className="flex items-center justify-end gap-1 mt-3">
-          <button
-            onClick={goPrev}
-            aria-label={t.calendarPrev}
-            className="flex items-center justify-center rounded-full"
-            style={{ width: 28, height: 28, color: INK_SOFT, background: 'var(--card-border)' }}
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <button
-            onClick={goNext}
-            aria-label={t.calendarNext}
-            className="flex items-center justify-center rounded-full"
-            style={{ width: 28, height: 28, color: INK_SOFT, background: 'var(--card-border)' }}
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
+        {viewMode === 'week' && selectedWeekDate != null && (
+          <div className="mt-3 pt-3 flex flex-col gap-2" style={{ borderTop: CARD_BORDER }}>
+            {selectedWeekEvents.length === 0 ? (
+              <p className="text-xs text-center" style={{ color: INK_SOFT }}>—</p>
+            ) : (
+              selectedWeekEvents.map(ev => (
+                <div key={ev.id} className="flex items-center gap-2">
+                  <span className="text-lg">{ev.icon}</span>
+                  <span className="text-sm font-bold flex-1 truncate" style={{ color: INK }}>{ev.title}</span>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* 年份／月份選擇面板：月份直接用 12 宮格挑（點了立即套用並關閉面板），不再用「月／年」
@@ -8145,6 +8317,10 @@ export default function App() {
   // 初始值先假設是「本月」，等 AnniversaryCalendar 掛載後的第一個 effect 就會立刻覆寫成
   // 它自己算出的正確值（月檢視預設也是本月，兩者一致，不會有畫面閃一下又跳的情況）。
   const [scheduleRange, setScheduleRange] = useState(() => ({ mode: 'month', year: nowTick.getFullYear(), month: nowTick.getMonth() }));
+  // 日曆目前的檢視模式（年／月／週），改由這一層控制、往下傳給 AnniversaryCalendar 當受控
+  // 屬性，這樣頂部標題列和日曆之間新增的年／月／週滑塊（見下方 JSX）才能直接切換它，
+  // 不用透過日曆元件內部才能改。
+  const [scheduleViewMode, setScheduleViewMode] = useState('month');
   // 「展示全部事件」開關，預設關閉——預設只看日曆目前選的月份（本月），跟日曆同步；
   // 開啟後改成不分月份、列出全部事件（見下方 TimelineSection 的 showAll 用法）。
   const [scheduleShowAll, setScheduleShowAll] = useState(false);
@@ -8733,7 +8909,22 @@ export default function App() {
               </>
             ) : (
               <h1 className="text-2xl font-black tracking-tight" style={{ color: INK }}>
-                {{ clock: t.worldClock, schedule: t.navSchedule, gallery: t.navGallery, profile: t.navProfile }[activeTab] || ''}
+                {activeTab === 'schedule'
+                  ? (() => {
+                      // 日程分頁的標題改顯示日曆目前檢視的年份／月份（或週範圍），不再固定顯示
+                      // 「日程」兩個字（見需求四）：mode 分別對應 AnniversaryCalendar 回報的
+                      // 'year' / 'month' / 'week'，跟日曆標題列裡的 titleLabel 用同一套格式化邏輯。
+                      if (!scheduleRange) return t.navSchedule;
+                      if (scheduleRange.mode === 'year') {
+                        return new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric' }).format(new Date(scheduleRange.year, 0, 1));
+                      }
+                      if (scheduleRange.mode === 'week' && scheduleRange.weekStart && scheduleRange.weekEnd) {
+                        const fmt = new Intl.DateTimeFormat(LOCALE_MAP[lang], { month: 'short', day: 'numeric' });
+                        return `${fmt.format(scheduleRange.weekStart)} – ${fmt.format(scheduleRange.weekEnd)}`;
+                      }
+                      return new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric', month: 'long' }).format(new Date(scheduleRange.year, scheduleRange.month || 0, 1));
+                    })()
+                  : { clock: t.worldClock, gallery: t.navGallery, profile: t.navProfile }[activeTab] || ''}
               </h1>
             )}
           </div>
@@ -8915,14 +9106,50 @@ export default function App() {
                   改成常駐掛載後，切分頁純粹是 CSS 顯示/隱藏，不會重新渲染整棵子樹。 */}
               <div className="flex-1 min-h-0 flex flex-col gap-2" style={{ display: activeTab === 'schedule' ? 'flex' : 'none' }}>
                   {/* 「新增日程／搜尋」按鈕的實際掛載點：內容由下面的 TimelineSection（cards 模式）
-                      透過 createPortal 掛進來，這裡只是預留一個節點，讓按鈕視覺上出現在日曆
-                      上方、彼此形成清楚的上下關係（見需求三）。
-                      position:relative + 較高的 zIndex：先前用負的 marginTop 把整個分頁往上拉，
-                      結果這顆按鈕被上面的 Header（zIndex:30，見 <header> 那段）疊在下面蓋住——
-                      現在改成不動版面位置，只讓這顆按鈕自己的堆疊順序比 Header 高，確定不會再被蓋住。 */}
-                  <div ref={setScheduleControlsEl} className="flex-shrink-0 relative" style={{ zIndex: 31 }} />
+                      透過 createPortal 掛進來。改成用負的 marginTop 把這顆按鈕往上平移、蓋住
+                      一半上面 Header 的標題列（見需求一），position:relative + zIndex 31（比
+                      Header 的 zIndex:30 高）確定按鈕會疊在 Header 上面、不會被蓋住；因為這是
+                      這個 flex 直排容器的第一個子元素，負的 marginTop 會把它、連同下面所有
+                      內容（日曆、篩選列、事件列表）一起往上帶，等於「整體內容再向上移」
+                      一次到位，不用另外再調一次外層容器的位置。 */}
+                  <div ref={setScheduleControlsEl} className="flex-shrink-0 relative" style={{ zIndex: 31, marginTop: -34 }} />
 
-                  <AnniversaryCalendar events={events} lang={lang} t={t} now={now} onRangeChange={setScheduleRange} />
+                  {/* 年／月／週檢視滑塊：放在頂部標題列（Header）跟日曆之間，切換 scheduleViewMode，
+                      直接控制下面 AnniversaryCalendar 的檢視模式（見需求四）。跟「新建地標」的
+                      模式選擇同一種滑動選中膠囊樣式（見 SCHEDULE_VIEW_MODES）。 */}
+                  <div className="relative flex p-1 rounded-full flex-shrink-0" style={{ background: '#FFFFFF', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute', top: 4, bottom: 4, left: 4,
+                        width: 'calc((100% - 8px) / 3)', borderRadius: 999,
+                        background: ACCENT,
+                        boxShadow: '0 2px 8px rgba(108,123,224,0.35)',
+                        transform: `translateX(${SCHEDULE_VIEW_MODES.findIndex(m => m.id === scheduleViewMode) * 100}%)`,
+                        transition: 'transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1), background 220ms ease, box-shadow 220ms ease',
+                        willChange: 'transform',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    {SCHEDULE_VIEW_MODES.map(m => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setScheduleViewMode(m.id)}
+                        className="relative z-10 flex-1 min-w-0 rounded-full text-xs font-bold"
+                        style={{
+                          padding: '7px 3px',
+                          color: scheduleViewMode === m.id ? '#fff' : INK_SOFT,
+                          background: 'transparent',
+                          transition: 'color 180ms ease',
+                        }}
+                      >
+                        {t[m.labelKey]}
+                      </button>
+                    ))}
+                  </div>
+
+                  <AnniversaryCalendar events={events} lang={lang} t={t} now={now} onRangeChange={setScheduleRange} viewMode={scheduleViewMode} setViewMode={setScheduleViewMode} />
 
                   {/* 這一整行本身不套毛玻璃背景，只有純文字提示＋真正的按鈕模組並排。
                       左邊「只展示未來待辦事件」是不可點擊的純文字說明，不需要背景卡片；
