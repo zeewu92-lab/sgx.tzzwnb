@@ -1,29 +1,4 @@
-export function calNumericParts(date, calendarId) {
-  try {
-    const dtf = new Intl.DateTimeFormat(
-      'zh-TW-u-ca-' + calendarId,
-      {
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-      }
-    );
-
-    const o = {};
-    dtf.formatToParts(date).forEach(
-      p => (o[p.type] = p.value)
-    );
-
-    return {
-      year: parseInt(o.year),
-      month: parseInt(o.month),
-      day: parseInt(o.day),
-    };
-  } catch (e) {
-    return null;
-  }
-}
-const LUNAR_MONTHS = [
+export const LUNAR_MONTHS = [
   '正月',
   '二月',
   '三月',
@@ -49,7 +24,10 @@ const GANZHI_BRANCHES = [
 ];
 
 const CAL_EPOCH_GUESS = {
-  islamic: y => Math.floor(622 + ((y - 1) * 354.36667) / 365.2425),
+  islamic: y =>
+    Math.floor(
+      622 + ((y - 1) * 354.36667) / 365.2425
+    ),
   hebrew: y => y - 3760,
 };
 
@@ -60,28 +38,6 @@ const JP_ERAS = [
   { id: 'heisei', label: '平成', startYear: 1989 },
   { id: 'reiwa', label: '令和', startYear: 2019 },
 ];
-
-export function combineDateTime(dateStr, timeStr) {
-  return new Date(`${dateStr}T${timeStr || '00:00'}:00`);
-}
-
-export function addMonths(d, n) {
-  const r = new Date(d);
-  r.setMonth(r.getMonth() + n);
-  return r;
-}
-
-export function addYears(d, n) {
-  const r = new Date(d);
-  r.setFullYear(r.getFullYear() + n);
-  return r;
-}
-
-export function addDays(d, n) {
-  const r = new Date(d);
-  r.setDate(r.getDate() + n);
-  return r;
-}
 
 export function calNumericParts(date, calendarId) {
   try {
@@ -95,6 +51,7 @@ export function calNumericParts(date, calendarId) {
     );
 
     const o = {};
+
     dtf.formatToParts(date).forEach(
       p => (o[p.type] = p.value)
     );
@@ -120,6 +77,7 @@ export function getCalendarParts(date, calendarId) {
       });
 
       const obj = {};
+
       dtf.formatToParts(date).forEach(
         p => (obj[p.type] = p.value)
       );
@@ -142,6 +100,7 @@ export function getCalendarParts(date, calendarId) {
     );
 
     const obj = {};
+
     dtf.formatToParts(date).forEach(
       p => (obj[p.type] = p.value)
     );
@@ -150,6 +109,30 @@ export function getCalendarParts(date, calendarId) {
   } catch (e) {
     return null;
   }
+}
+
+export function combineDateTime(dateStr, timeStr) {
+  return new Date(
+    `${dateStr}T${timeStr || '00:00'}:00`
+  );
+}
+
+export function addMonths(d, n) {
+  const r = new Date(d);
+  r.setMonth(r.getMonth() + n);
+  return r;
+}
+
+export function addYears(d, n) {
+  const r = new Date(d);
+  r.setFullYear(r.getFullYear() + n);
+  return r;
+}
+
+export function addDays(d, n) {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
 }
 
 export function getGanZhi(relatedYear) {
@@ -183,8 +166,14 @@ export function chineseDayName(day) {
   if (day === 10) return '初十';
   if (day === 20) return '二十';
   if (day === 30) return '三十';
-  if (day < 10) return '初' + num[day];
-  if (day < 20) return '十' + num[day - 10];
+
+  if (day < 10) {
+    return '初' + num[day];
+  }
+
+  if (day < 20) {
+    return '十' + num[day - 10];
+  }
 
   return '廿' + num[day - 20];
 }
@@ -204,12 +193,17 @@ export function chineseMonthLabel(monthNum, isLeap) {
     LUNAR_MONTHS[monthNum - 1] ||
     `${monthNum}月`;
 
-  return isLeap ? `閏${base}` : base;
+  return isLeap
+    ? `閏${base}`
+    : base;
 }
 
 export function chineseMonthLabelToNumeric(label) {
   const isLeap = label.startsWith('閏');
-  const bare = isLeap ? label.slice(1) : label;
+  const bare = isLeap
+    ? label.slice(1)
+    : label;
+
   const idx = LUNAR_MONTHS.indexOf(bare);
 
   return {
@@ -220,26 +214,39 @@ export function chineseMonthLabelToNumeric(label) {
 
 export function chineseMonthInfo(date) {
   try {
-    const dtf = new Intl.DateTimeFormat('en-US', {
-      calendar: 'chinese',
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-    });
+    const dtf = new Intl.DateTimeFormat(
+      'en-US',
+      {
+        calendar: 'chinese',
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+      }
+    );
 
     const o = {};
+
     dtf.formatToParts(date).forEach(
       p => (o[p.type] = p.value)
     );
 
-    const { num, isLeap } =
-      parseChineseNumericMonth(o.month || '');
+    const {
+      num,
+      isLeap,
+    } = parseChineseNumericMonth(
+      o.month || ''
+    );
 
     if (num == null) return null;
 
     return {
-      year: parseInt(o.relatedYear || o.year),
-      month: chineseMonthLabel(num, isLeap),
+      year: parseInt(
+        o.relatedYear || o.year
+      ),
+      month: chineseMonthLabel(
+        num,
+        isLeap
+      ),
       day: parseInt(o.day),
     };
   } catch (e) {
@@ -247,20 +254,61 @@ export function chineseMonthInfo(date) {
   }
 }
 
-export function buildChineseYearMonths(lunarYear) {
-  let d = new Date(lunarYear - 1, 10, 1);
+export function getChineseDateInfo(date) {
+  const parts = getCalendarParts(
+    date,
+    'chinese'
+  );
+
+  if (!parts) return null;
+
+  const {
+    num,
+    isLeap,
+  } = parseChineseNumericMonth(
+    parts.month || ''
+  );
+
+  if (num == null) return null;
+
+  return {
+    year: parseInt(
+      parts.relatedYear || parts.year
+    ),
+    month: num,
+    isLeap,
+    day: parseInt(parts.day),
+  };
+}
+
+export function buildChineseYearMonths(
+  lunarYear
+) {
+  let d = new Date(
+    lunarYear - 1,
+    10,
+    1
+  );
+
   const months = [];
   let started = false;
 
   for (let i = 0; i < 480; i++) {
     const info = chineseMonthInfo(d);
 
-    if (info && info.year === lunarYear) {
+    if (
+      info &&
+      info.year === lunarYear
+    ) {
       started = true;
 
-      const last = months[months.length - 1];
+      const last =
+        months[months.length - 1];
 
-      if (!last || last.label !== info.month) {
+      if (
+        !last ||
+        last.label !== info.month
+      ) {
         months.push({
           label: info.month,
           start: new Date(d),
@@ -285,7 +333,9 @@ export function chineseCalendarToGregorian(
   day
 ) {
   const months =
-    buildChineseYearMonths(lunarYear);
+    buildChineseYearMonths(
+      lunarYear
+    );
 
   const m = months.find(
     x => x.label === monthLabel
@@ -295,7 +345,10 @@ export function chineseCalendarToGregorian(
 
   return addDays(
     m.start,
-    Math.min(Math.max(day, 1), m.days) - 1
+    Math.min(
+      Math.max(day, 1),
+      m.days
+    ) - 1
   );
 }
 
@@ -314,7 +367,11 @@ export function calendarDateToGregorian(
   }
 
   if (calendarId === 'japanese') {
-    return new Date(year, month - 1, day);
+    return new Date(
+      year,
+      month - 1,
+      day
+    );
   }
 
   if (calendarId === 'chinese') {
@@ -335,10 +392,11 @@ export function calendarDateToGregorian(
   d = addDays(d, -60);
 
   for (let i = 0; i < 800; i++) {
-    const p = calNumericParts(
-      d,
-      calendarId
-    );
+    const p =
+      calNumericParts(
+        d,
+        calendarId
+      );
 
     if (
       p &&
@@ -394,20 +452,26 @@ export function getCalendarMonthDays(
     ).getDate();
   }
 
-  const start = calendarDateToGregorian(
-    calendarId,
-    year,
-    month,
-    1
-  );
+  const start =
+    calendarDateToGregorian(
+      calendarId,
+      year,
+      month,
+      1
+    );
 
   if (!start) return 30;
 
-  for (let len = 25; len <= 31; len++) {
-    const p = calNumericParts(
-      addDays(start, len),
-      calendarId
-    );
+  for (
+    let len = 25;
+    len <= 31;
+    len++
+  ) {
+    const p =
+      calNumericParts(
+        addDays(start, len),
+        calendarId
+      );
 
     if (
       !p ||
@@ -426,23 +490,31 @@ export function japaneseEraToGregorianYear(
   year
 ) {
   const e =
-    JP_ERAS.find(x => x.id === eraId) ||
+    JP_ERAS.find(
+      x => x.id === eraId
+    ) ||
     JP_ERAS[JP_ERAS.length - 1];
 
-  return e.startYear + year - 1;
+  return (
+    e.startYear +
+    year -
+    1
+  );
 }
 
 export function getJapaneseEra(date) {
   try {
-    const dtf = new Intl.DateTimeFormat(
-      'zh-TW-u-ca-japanese',
-      {
-        year: 'numeric',
-        era: 'short',
-      }
-    );
+    const dtf =
+      new Intl.DateTimeFormat(
+        'zh-TW-u-ca-japanese',
+        {
+          year: 'numeric',
+          era: 'short',
+        }
+      );
 
     const o = {};
+
     dtf.formatToParts(date).forEach(
       p => (o[p.type] = p.value)
     );
@@ -451,11 +523,14 @@ export function getJapaneseEra(date) {
       JP_ERAS.find(
         x => x.label === o.era
       ) ||
-      JP_ERAS[JP_ERAS.length - 1];
+      JP_ERAS[
+        JP_ERAS.length - 1
+      ];
 
     return {
       id: found.id,
-      year: parseInt(o.year) || 1,
+      year:
+        parseInt(o.year) || 1,
     };
   } catch (e) {
     return {
@@ -465,7 +540,9 @@ export function getJapaneseEra(date) {
   }
 }
 
-export function japaneseEraYearMax(eraId) {
+export function japaneseEraYearMax(
+  eraId
+) {
   const idx =
     JP_ERAS.findIndex(
       e => e.id === eraId
@@ -473,7 +550,9 @@ export function japaneseEraYearMax(eraId) {
 
   if (idx === -1) return 60;
 
-  if (idx === JP_ERAS.length - 1) {
+  if (
+    idx === JP_ERAS.length - 1
+  ) {
     return (
       new Date().getFullYear() -
       JP_ERAS[idx].startYear +
@@ -503,11 +582,13 @@ export function formatAltCalendar(
   }
 
   if (calendarId === 'chinese') {
-    const info = chineseMonthInfo(date);
+    const info =
+      chineseMonthInfo(date);
 
     if (!info) return '';
 
-    const ganzhi = getGanZhi(info.year);
+    const ganzhi =
+      getGanZhi(info.year);
 
     if (lang === 'zh-TW') {
       return `${t.lunarPrefix}${ganzhi}年・${info.month}${chineseDayName(info.day)}`;
@@ -516,18 +597,20 @@ export function formatAltCalendar(
     const {
       num,
       isLeap,
-    } = chineseMonthLabelToNumeric(
-      info.month
-    );
+    } =
+      chineseMonthLabelToNumeric(
+        info.month
+      );
 
     const leapMark = {
       ja: '閏',
       ko: '윤',
     }[lang] || 'leap ';
 
-    const prefix = isLeap
-      ? leapMark
-      : '';
+    const prefix =
+      isLeap
+        ? leapMark
+        : '';
 
     if (lang === 'ja') {
       return `${t.lunarPrefix}${ganzhi}年 ${prefix}${num}/${info.day}`;
@@ -540,43 +623,34 @@ export function formatAltCalendar(
     return `${t.lunarPrefix} ${ganzhi} Year ${prefix}${num}/${info.day}`;
   }
 
-  const parts = getCalendarParts(
-    date,
-    calendarId
-  );
+  const parts =
+    getCalendarParts(
+      date,
+      calendarId
+    );
 
   if (!parts) return '';
 
-  const m = parseInt(parts.month);
-  const d = parseInt(parts.day);
+  const m =
+    parseInt(parts.month);
+
+  const d =
+    parseInt(parts.day);
 
   const calLabel =
     (
       CAL_OPTIONS.find(
-        c => c.id === calendarId
+        c =>
+          c.id === calendarId
       ) || {}
     ).label || {};
 
-  return `${calLabel[lang] || calendarId} ${parts.year}/${m}/${d}`;
+  return `${
+    calLabel[lang] ||
+    calendarId
+  } ${parts.year}/${m}/${d}`;
 }
-export function getChineseDateInfo(date) {
-  const parts = getCalendarParts(date, 'chinese');
 
-  if (!parts) return null;
-
-  const { num, isLeap } = parseChineseNumericMonth(
-    parts.month || ''
-  );
-
-  if (num == null) return null;
-
-  return {
-    year: parseInt(parts.relatedYear || parts.year),
-    month: num,
-    isLeap,
-    day: parseInt(parts.day),
-  };
-}
 export function isoDateStr(d) {
   return `${d.getFullYear()}-${String(
     d.getMonth() + 1
@@ -584,44 +658,139 @@ export function isoDateStr(d) {
     d.getDate()
   ).padStart(2, '0')}`;
 }
-function findNextChineseMatch(targetMonth, targetDay, targetIsLeap, fromDate, maxDays = 400) {
-  const isTargetPlainBlock = (info) => info.month === targetMonth && !info.isLeap;
-  const isTargetLeapBlock = (info) => info.month === targetMonth && info.isLeap;
-  const isSameBlock = (a, b) => a && b && a.month === b.month && a.isLeap === b.isLeap;
 
-  let prevInfo = null;      // 前一天所在區塊的簽章：{ month, isLeap }
-  let blockLastDay = null;  // 目前區塊已經掃到的最後一天（區塊天數不足、找不到目標日時的頂替候選）
-  let blockExactDay = null; // 目前區塊裡若已出現目標日（day === targetDay），記下那一天
-  let plainFallback = null; // 事件本身是閏月時，最近一次「正月（非閏）目標月份」區塊結束的候選日期，
-                             // 用來在確定「這個農曆年沒有對應閏月」時立刻頂替回傳。
+export function findNextChineseMatch(
+  targetMonth,
+  targetDay,
+  targetIsLeap,
+  fromDate,
+  maxDays = 400
+) {
+  const isTargetPlainBlock =
+    info =>
+      info.month === targetMonth &&
+      !info.isLeap;
 
-  for (let i = 0; i < maxDays; i++) {
-    const d = addDays(fromDate, i);
-    const info = getChineseDateInfo(d);
+  const isTargetLeapBlock =
+    info =>
+      info.month === targetMonth &&
+      info.isLeap;
+
+  const isSameBlock =
+    (a, b) =>
+      a &&
+      b &&
+      a.month === b.month &&
+      a.isLeap === b.isLeap;
+
+  let prevInfo = null;
+
+  let blockLastDay = null;
+
+  let blockExactDay = null;
+
+  let plainFallback = null;
+
+  for (
+    let i = 0;
+    i < maxDays;
+    i++
+  ) {
+    const d =
+      addDays(fromDate, i);
+
+    const info =
+      getChineseDateInfo(d);
+
     if (!info) continue;
 
-    if (!isSameBlock(prevInfo, info)) {
-      // 換到新月份區塊之前，先「結算」剛剛結束的那個區塊
-      if (prevInfo && isTargetPlainBlock(prevInfo)) {
+    if (
+      !isSameBlock(
+        prevInfo,
+        info
+      )
+    ) {
+      if (
+        prevInfo &&
+        isTargetPlainBlock(
+          prevInfo
+        )
+      ) {
         if (!targetIsLeap) {
-          // 非閏月事件：正月區塊掃完卻沒吻合到目標日 → 目標日是「三十」但該月是小月，退到最後一天
-          return blockExactDay || blockLastDay;
+          return (
+            blockExactDay ||
+            blockLastDay
+          );
         }
-        // 閏月事件：先記下這個正月區塊的候選日期，暫不回傳，等看看緊接著是不是同編號的閏月
-        plainFallback = blockExactDay || blockLastDay;
-      } else if (prevInfo && isTargetLeapBlock(prevInfo) && targetIsLeap) {
-        // 閏月事件，剛結束的正是目標閏月區塊，但整段掃完都沒吻合到目標日（閏月本身「三十」撞小月）
-        return blockExactDay || blockLastDay;
+
+        plainFallback =
+          blockExactDay ||
+          blockLastDay;
+      } else if (
+        prevInfo &&
+        isTargetLeapBlock(
+          prevInfo
+        ) &&
+        targetIsLeap
+      ) {
+        return (
+          blockExactDay ||
+          blockLastDay
+        );
       }
-      // 閏月事件、剛結算完正月區塊、且緊接著的新區塊不是同編號的閏月 → 這個農曆年沒有這個閏月，
-      // 直接用剛剛正月區塊的候選日期頂替（「閏八月初一」→「八月初一」／「閏七月三十」→「七月二十九」）
-      if (plainFallback && targetIsLeap && !isTargetLeapBlock(info)) {
+
+      if (
+        plainFallback &&
+        targetIsLeap &&
+        !isTargetLeapBlock(
+          info
+        )
+      ) {
         return plainFallback;
       }
+
       blockLastDay = null;
       blockExactDay = null;
     }
-    export function findNextCalendarMatch(
+
+    if (
+      isTargetPlainBlock(info) ||
+      isTargetLeapBlock(info)
+    ) {
+      blockLastDay = d;
+
+      if (
+        info.day === targetDay
+      ) {
+        blockExactDay = d;
+
+        if (
+          !targetIsLeap &&
+          isTargetPlainBlock(
+            info
+          )
+        ) {
+          return d;
+        }
+
+        if (
+          targetIsLeap &&
+          isTargetLeapBlock(
+            info
+          )
+        ) {
+          return d;
+        }
+      }
+    }
+
+    prevInfo = info;
+  }
+
+  return plainFallback;
+}
+
+export function findNextCalendarMatch(
   calendarId,
   targetMonth,
   targetDay,
@@ -631,284 +800,48 @@ function findNextChineseMatch(targetMonth, targetDay, targetIsLeap, fromDate, ma
   let lastDayOfTargetMonth = null;
   let enteredTargetMonth = false;
 
-  for (let i = 0; i < maxDays; i++) {
-    const d = addDays(fromDate, i);
-    const parts = getCalendarParts(d, calendarId);
+  for (
+    let i = 0;
+    i < maxDays;
+    i++
+  ) {
+    const d =
+      addDays(fromDate, i);
+
+    const parts =
+      getCalendarParts(
+        d,
+        calendarId
+      );
 
     if (!parts) continue;
 
-    const month = parseInt(parts.month);
+    const month =
+      parseInt(parts.month);
 
-    if (month !== targetMonth) {
-      if (enteredTargetMonth) return lastDayOfTargetMonth;
+    if (
+      month !== targetMonth
+    ) {
+      if (
+        enteredTargetMonth
+      ) {
+        return lastDayOfTargetMonth;
+      }
+
       continue;
     }
 
     enteredTargetMonth = true;
 
-    if (parseInt(parts.day) === targetDay) return d;
+    if (
+      parseInt(parts.day) ===
+      targetDay
+    ) {
+      return d;
+    }
 
     lastDayOfTargetMonth = d;
   }
 
   return lastDayOfTargetMonth;
 }
-
-const CAL_EPOCH_GUESS = {
-  islamic: y => Math.floor(
-    622 + ((y - 1) * 354.36667) / 365.2425
-  ),
-  hebrew: y => y - 3760,
-};
-
-export function calendarDateToGregorian(calendarId, year, month, day) {
-  if (calendarId === 'buddhist') {
-    return new Date(year - 543, month - 1, day);
-  }
-
-  if (calendarId === 'japanese') {
-    return new Date(year, month - 1, day);
-  }
-
-  if (calendarId === 'chinese') {
-    return null;
-  }
-
-  const guessFn = CAL_EPOCH_GUESS[calendarId];
-  if (!guessFn) return null;
-
-  let d = new Date(guessFn(year), 0, 1);
-  d = addDays(d, -60);
-
-  for (let i = 0; i < 800; i++) {
-    const p = calNumericParts(d, calendarId);
-
-    if (
-      p &&
-      p.year === year &&
-      p.month === month &&
-      p.day === day
-    ) {
-      return d;
-    }
-
-    d = addDays(d, 1);
-  }
-
-  return null;
-}
-
-export function getCalendarMonthCount(calendarId, year) {
-  if (calendarId === 'hebrew') {
-    return calendarDateToGregorian(
-      'hebrew',
-      year,
-      13,
-      1
-    ) ? 13 : 12;
-  }
-
-  return 12;
-}
-
-export function getCalendarMonthDays(calendarId, year, month) {
-  if (
-    calendarId === 'buddhist' ||
-    calendarId === 'japanese'
-  ) {
-    const gYear =
-      calendarId === 'buddhist'
-        ? year - 543
-        : year;
-
-    return new Date(gYear, month, 0).getDate();
-  }
-
-  const start = calendarDateToGregorian(
-    calendarId,
-    year,
-    month,
-    1
-  );
-
-  if (!start) return 30;
-
-  for (let len = 25; len <= 31; len++) {
-    const p = calNumericParts(
-      addDays(start, len),
-      calendarId
-    );
-
-    if (
-      !p ||
-      p.month !== month ||
-      p.year !== year
-    ) {
-      return len;
-    }
-  }
-
-  return 30;
-}
-const JP_ERAS = [
-  { id: 'meiji', label: '明治', startYear: 1868 },
-  { id: 'taisho', label: '大正', startYear: 1912 },
-  { id: 'showa', label: '昭和', startYear: 1926 },
-  { id: 'heisei', label: '平成', startYear: 1989 },
-  { id: 'reiwa', label: '令和', startYear: 2019 },
-];
-
-export function japaneseEraToGregorianYear(eraId, year) {
-  const e =
-    JP_ERAS.find(x => x.id === eraId) ||
-    JP_ERAS[JP_ERAS.length - 1];
-
-  return e.startYear + year - 1;
-}
-
-export function getJapaneseEra(date) {
-  try {
-    const dtf = new Intl.DateTimeFormat(
-      'zh-TW-u-ca-japanese',
-      {
-        year: 'numeric',
-        era: 'short',
-      }
-    );
-
-    const o = {};
-    dtf.formatToParts(date).forEach(
-      p => (o[p.type] = p.value)
-    );
-
-    const found =
-      JP_ERAS.find(x => x.label === o.era) ||
-      JP_ERAS[JP_ERAS.length - 1];
-
-    return {
-      id: found.id,
-      year: parseInt(o.year) || 1,
-    };
-  } catch (e) {
-    return { id: 'reiwa', year: 1 };
-  }
-}
-
-export function japaneseEraYearMax(eraId) {
-  const idx = JP_ERAS.findIndex(e => e.id === eraId);
-
-  if (idx === -1) return 60;
-
-  if (idx === JP_ERAS.length - 1) {
-    return new Date().getFullYear() -
-      JP_ERAS[idx].startYear + 15;
-  }
-
-  return JP_ERAS[idx + 1].startYear -
-    JP_ERAS[idx].startYear + 1;
-}
-
-export function isoDateStr(d) {
-  return `${d.getFullYear()}-${String(
-    d.getMonth() + 1
-  ).padStart(2, '0')}-${String(
-    d.getDate()
-  ).padStart(2, '0')}`;
-}
-return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex gap-1.5">
-        {calendarId === 'japanese' && (
-          <select
-            value={era}
-            onChange={e => {
-              const nextEra = e.target.value;
-              const maxY = japaneseEraYearMax(nextEra);
-              const clamped = Math.min(year || 1, maxY);
-              if (yearDebounceRef.current) { clearTimeout(yearDebounceRef.current); yearDebounceRef.current = null; }
-              setEra(nextEra);
-              setYear(clamped);
-              setYearText(String(clamped));
-            }}
-            className={SELECT_CLASS} style={SELECT_STYLE}
-          >
-            {JP_ERAS.map(e => <option key={e.id} value={e.id}>{e.label}</option>)}
-          </select>
-        )}
-        <input
-          type="number"
-          inputMode="numeric"
-          value={yearText}
-          onChange={e => {
-            const raw = e.target.value;
-            setYearText(raw); // 只更新輸入框自己的顯示文字，不會被其他地方的同步邏輯覆蓋，打字/刪除不會卡頓
-            if (yearDebounceRef.current) clearTimeout(yearDebounceRef.current);
-            if (raw === '' || raw === '-') return; // 使用者正在清空輸入框或準備輸入負數，先不換算，避免中途被當成 NaN
-            const v = parseInt(raw, 10);
-            if (Number.isNaN(v)) return;
-            // 日本曆的「年」是年號內的年份，範圍有限；其餘曆法的年份原則上不特別限制，讓使用者可直接手動鍵入任何年份
-            const clamped = calendarId === 'japanese' ? Math.min(Math.max(v, 1), japaneseEraYearMax(era)) : v;
-            // 伊斯蘭曆／希伯來曆／農曆的換算需要逐日掃描比對，延遲一小段時間再真正觸發，避免每敲一個數字就卡一下
-            yearDebounceRef.current = setTimeout(() => setYear(clamped), 220);
-          }}
-          onBlur={() => {
-            if (yearDebounceRef.current) { clearTimeout(yearDebounceRef.current); yearDebounceRef.current = null; }
-            // 使用者把輸入框留空或輸入無效內容就離開時，還原成目前生效中的年份，避免留下空白欄位
-            if (yearText === '' || Number.isNaN(parseInt(yearText, 10))) { setYearText(String(year)); return; }
-            // 離開欄位時立即把還沒套用的數值套用，不用等延遲時間跑完
-            const v = parseInt(yearText, 10);
-            setYear(calendarId === 'japanese' ? Math.min(Math.max(v, 1), japaneseEraYearMax(era)) : v);
-          }}
-          className={SELECT_CLASS} style={SELECT_STYLE}
-        />
-        {/* 快速選單：跟月份／日期選單一樣是普通原生 <select>，一定會顯示出瀏覽器原生的下拉箭頭，不會有箭頭消失的問題。
-            為了不要跟左邊的輸入框重複顯示同一組數字，這裡把「目前被選中的那個年份」的選項文字故意留空，
-            所以收合狀態只會看到一個空白按鈕＋原生箭頭；點開清單時，其餘年份仍會正常顯示數字可以選。 */}
-        <select
-          value={year}
-          onChange={e => {
-            const v = parseInt(e.target.value, 10);
-            if (Number.isNaN(v)) return;
-            const clamped = calendarId === 'japanese' ? Math.min(Math.max(v, 1), japaneseEraYearMax(era)) : v;
-            if (yearDebounceRef.current) { clearTimeout(yearDebounceRef.current); yearDebounceRef.current = null; }
-            setYear(clamped);
-            setYearText(String(clamped));
-          }}
-          aria-label={t.yearPickerLabel || (lang === 'en' ? 'Pick year' : '選擇年份')}
-          className="flex-shrink-0 w-8 py-2 rounded-lg text-sm outline-none text-center"
-          style={SELECT_STYLE}
-        >
-          {yearOptions.map(y => <option key={y} value={y}>{y === year ? '' : y}</option>)}
-        </select>
-        <select
-          value={month}
-          onChange={e => {
-            const val = isChinese ? e.target.value : parseInt(e.target.value);
-            setMonth(val);
-            setDay(1);
-          }}
-          className={SELECT_CLASS} style={SELECT_STYLE}
-        >
-          {isChinese
-            ? chineseMonths.map(m => <option key={m.label} value={m.label}>{m.label}</option>)
-            : Array.from({ length: monthCount }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
-        <select
-          value={day}
-          onChange={e => setDay(parseInt(e.target.value))}
-          className={SELECT_CLASS} style={SELECT_STYLE}
-        >
-          {Array.from({ length: dayCount }, (_, i) => i + 1).map(d => (
-            <option key={d} value={d}>{isChinese ? chineseDayName(d) : d}</option>
-          ))}
-        </select>
-      </div>
-      {isoDate && (
-        <p className="text-xs px-1" style={{ color: ACCENT }}>
-          → {new Date(isoDate + 'T00:00:00').toLocaleDateString(LOCALE_MAP[lang] || 'zh-TW')}
-        </p>
-      )}
-    </div>
-  );
-}
-function glass(extra = {}) { return { background: CARD_BG, border: CARD_BORDER, boxShadow: '0 2px 10px rgba(35,39,51,0.05)', ...extra }; }
