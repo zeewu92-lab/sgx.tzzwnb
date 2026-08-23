@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Trash2, ChevronDown, ChevronLeft, ChevronRight, X, MapPin, Check, Clock, Globe, Sun, Moon, Pencil, User, LogOut, Mail, Eye, EyeOff, Search, SlidersHorizontal, Share2, Bell, BellOff, Settings, Images, Move, Calendar } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronLeft, ChevronRight, X, MapPin, Check, Clock, Globe, Sun, Moon, Pencil, User, LogOut, Mail, Eye, EyeOff, Search, SlidersHorizontal, Share2, Bell, BellOff, Settings, Images, Move, Calendar, Shield, Info, FileText, Database, RefreshCw } from 'lucide-react';
 import {
   watchAuthState, signUpWithEmail, signInWithEmail, signInWithGoogle, signInWithApple,
   sendMagicLink, completeEmailLinkSignInIfNeeded, signOutUser,
@@ -475,6 +475,22 @@ const STRINGS = {
     daysLeft: n => `${n} 天後`, daysAgo: n => `${n} 天前`,
     exportLabel: '匯出成圖片', exportFormatCard: '卡片', exportFormatStory: '限動 (9:16)',
     exportShareButton: '匯出並分享', exportPreparing: '圖片產生中…', exportError: '匯出失敗，請再試一次。',
+    accountManageLabel: '帳戶管理', accountSecurityLabel: '帳戶安全',
+    myTimeLabel: '我的時光', myTimeCaption: '你在時光線裡留下的時光',
+    myTimeStats: (e, a, p) => `${e} 個事件　${a} 個相冊　${p} 張照片`,
+    myTimeOverviewTitle: '資料總覽', myTimeOverviewDesc: '這裡統計你目前保存在時光線裡的內容，不會顯示詳細內容。',
+    myTimeOverviewEvents: '事件', myTimeOverviewAlbums: '相冊', myTimeOverviewPhotos: '照片',
+    dataGroupLabel: '資料', importExportLabel: '匯入與匯出', syncDataLabel: '同步與資料',
+    notSyncedStatus: '尚未同步', syncErrorStatus: '同步發生問題',
+    lastSyncedJustNow: '最後同步：剛剛', lastSyncedAgo: s => `最後同步：${s}前`,
+    syncMinutesAgo: n => `${n} 分鐘`, syncHoursAgo: n => `${n} 小時`, syncDaysAgo: n => `${n} 天`,
+    syncLoginHint: '登入帳戶即可啟用同步，資料將安全保存在雲端。',
+    prefGroupLabel: '偏好', appearanceLabel: '外觀', notifyPrefLabel: '通知', languageLabel: '語言',
+    calendarPrefLabel: '日曆', calendarPrefHint: '曆法（西曆、農曆等）可以在新增或編輯地標時個別設定。',
+    otherGroupLabel: '其他', aboutLabel: '關於時光線', privacyLabel: '隱私權政策', termsLabel: '使用條款',
+    aboutBody: '時光線是一款用來記錄生活中重要時刻與紀念日的應用程式，陪你留住值得回味的時光。',
+    legalPlaceholder: '完整內容準備中，稍後將於此提供。',
+    loginPromptTitle: '登入以同步你的時光',
   },
   en: {
     todayIs: d => `Today is ${d}`, greetMorning: 'Good morning', greetForenoon: 'Good morning', greetAfternoon: 'Good afternoon', greetLateAfternoon: 'Good afternoon', greetEvening: 'Good evening',
@@ -579,6 +595,22 @@ const STRINGS = {
     daysLeft: n => `${n} Days Left`, daysAgo: n => `${n} Days Ago`, anniversaryBadge: n => `${n} Anniversary`, companionDays: n => `${n} days together`, cycleLabel: 'Repeat',
     exportLabel: 'Export as image', exportFormatCard: 'Card', exportFormatStory: 'Story (9:16)',
     exportShareButton: 'Export & Share', exportPreparing: 'Preparing image…', exportError: 'Export failed — please try again.',
+    accountManageLabel: 'Account Management', accountSecurityLabel: 'Account Security',
+    myTimeLabel: 'My Moments', myTimeCaption: 'What you have kept in Timeline',
+    myTimeStats: (e, a, p) => `${e} events · ${a} albums · ${p} photos`,
+    myTimeOverviewTitle: 'Overview', myTimeOverviewDesc: 'A quick summary of what you currently keep in Timeline — no details shown here.',
+    myTimeOverviewEvents: 'Events', myTimeOverviewAlbums: 'Albums', myTimeOverviewPhotos: 'Photos',
+    dataGroupLabel: 'Data', importExportLabel: 'Import & Export', syncDataLabel: 'Sync & Data',
+    notSyncedStatus: 'Not synced', syncErrorStatus: 'Sync issue',
+    lastSyncedJustNow: 'Last synced: just now', lastSyncedAgo: s => `Last synced: ${s} ago`,
+    syncMinutesAgo: n => `${n} min`, syncHoursAgo: n => `${n} hr`, syncDaysAgo: n => `${n} d`,
+    syncLoginHint: 'Sign in to enable sync and keep your data safe in the cloud.',
+    prefGroupLabel: 'Preferences', appearanceLabel: 'Appearance', notifyPrefLabel: 'Notifications', languageLabel: 'Language',
+    calendarPrefLabel: 'Calendar', calendarPrefHint: 'The calendar system (Gregorian, lunar, etc.) can be set individually when adding or editing a landmark.',
+    otherGroupLabel: 'More', aboutLabel: 'About Timeline', privacyLabel: 'Privacy Policy', termsLabel: 'Terms of Use',
+    aboutBody: 'Timeline is an app for keeping track of the moments and anniversaries that matter, helping you hold on to time worth remembering.',
+    legalPlaceholder: 'Full content coming soon.',
+    loginPromptTitle: 'Sign in to sync your moments',
   },
   ja: {
     todayIs: d => `今日は ${d}`, greetMorning: 'おはようございます', greetForenoon: 'おはようございます', greetAfternoon: 'こんにちは', greetLateAfternoon: 'こんにちは', greetEvening: 'こんばんは',
@@ -683,6 +715,22 @@ const STRINGS = {
     daysLeft: n => `あと${n}日`, daysAgo: n => `${n}日前`, anniversaryBadge: n => `${n}周年`, companionDays: n => `${n}日間`, cycleLabel: '繰り返し',
     exportLabel: '画像として書き出す', exportFormatCard: 'カード', exportFormatStory: 'ストーリー (9:16)',
     exportShareButton: '書き出して共有', exportPreparing: '画像を作成中…', exportError: '書き出しに失敗しました。もう一度お試しください。',
+    accountManageLabel: 'アカウント管理', accountSecurityLabel: 'アカウントセキュリティ',
+    myTimeLabel: '私の時間', myTimeCaption: 'タイムラインに残してきた時間',
+    myTimeStats: (e, a, p) => `${e} 件のイベント　${a} 件のアルバム　${p} 枚の写真`,
+    myTimeOverviewTitle: 'データ概要', myTimeOverviewDesc: '現在タイムラインに保存している内容の概要です。詳細は表示されません。',
+    myTimeOverviewEvents: 'イベント', myTimeOverviewAlbums: 'アルバム', myTimeOverviewPhotos: '写真',
+    dataGroupLabel: 'データ', importExportLabel: 'インポートとエクスポート', syncDataLabel: '同期とデータ',
+    notSyncedStatus: '未同期', syncErrorStatus: '同期に問題があります',
+    lastSyncedJustNow: '最終同期：たった今', lastSyncedAgo: s => `最終同期：${s}前`,
+    syncMinutesAgo: n => `${n}分`, syncHoursAgo: n => `${n}時間`, syncDaysAgo: n => `${n}日`,
+    syncLoginHint: 'サインインすると同期が有効になり、データが安全にクラウドへ保存されます。',
+    prefGroupLabel: '設定', appearanceLabel: '外観', notifyPrefLabel: '通知', languageLabel: '言語',
+    calendarPrefLabel: 'カレンダー', calendarPrefHint: '暦法（西暦・旧暦など）は地標の追加・編集時に個別に設定できます。',
+    otherGroupLabel: 'その他', aboutLabel: 'アプリについて', privacyLabel: 'プライバシーポリシー', termsLabel: '利用規約',
+    aboutBody: 'タイムラインは、人生の大切な瞬間や記念日を記録するためのアプリです。心に残る時間をともに残していきます。',
+    legalPlaceholder: '詳細な内容は準備中です。近日中に掲載予定です。',
+    loginPromptTitle: 'サインインして時間を同期',
   },
   ko: {
     todayIs: d => `오늘은 ${d}`, greetMorning: '좋은 아침이에요', greetForenoon: '좋은 아침이에요', greetAfternoon: '좋은 오후예요', greetLateAfternoon: '좋은 오후예요', greetEvening: '좋은 저녁이에요',
@@ -787,6 +835,22 @@ const STRINGS = {
     daysLeft: n => `${n}일 남음`, daysAgo: n => `${n}일 지남`, anniversaryBadge: n => `${n}주년`, companionDays: n => `${n}일 함께`, cycleLabel: '반복',
     exportLabel: '이미지로 내보내기', exportFormatCard: '카드', exportFormatStory: '스토리 (9:16)',
     exportShareButton: '내보내기 및 공유', exportPreparing: '이미지 생성 중…', exportError: '내보내기에 실패했습니다. 다시 시도해 주세요.',
+    accountManageLabel: '계정 관리', accountSecurityLabel: '계정 보안',
+    myTimeLabel: '나의 시간', myTimeCaption: '타임라인에 남긴 시간',
+    myTimeStats: (e, a, p) => `이벤트 ${e}개　앨범 ${a}개　사진 ${p}장`,
+    myTimeOverviewTitle: '데이터 개요', myTimeOverviewDesc: '현재 타임라인에 보관 중인 내용을 간단히 보여줍니다. 세부 내용은 표시되지 않습니다.',
+    myTimeOverviewEvents: '이벤트', myTimeOverviewAlbums: '앨범', myTimeOverviewPhotos: '사진',
+    dataGroupLabel: '데이터', importExportLabel: '가져오기 및 내보내기', syncDataLabel: '동기화 및 데이터',
+    notSyncedStatus: '동기화 안 됨', syncErrorStatus: '동기화 문제 발생',
+    lastSyncedJustNow: '마지막 동기화: 방금', lastSyncedAgo: s => `마지막 동기화: ${s} 전`,
+    syncMinutesAgo: n => `${n}분`, syncHoursAgo: n => `${n}시간`, syncDaysAgo: n => `${n}일`,
+    syncLoginHint: '로그인하면 동기화가 활성화되어 데이터가 클라우드에 안전하게 저장됩니다.',
+    prefGroupLabel: '환경설정', appearanceLabel: '외관', notifyPrefLabel: '알림', languageLabel: '언어',
+    calendarPrefLabel: '캘린더', calendarPrefHint: '달력 체계(양력, 음력 등)는 랜드마크를 추가하거나 편집할 때 개별적으로 설정할 수 있습니다.',
+    otherGroupLabel: '기타', aboutLabel: '앱 정보', privacyLabel: '개인정보 처리방침', termsLabel: '이용약관',
+    aboutBody: '타임라인은 삶의 중요한 순간과 기념일을 기록하는 앱으로, 소중한 시간을 함께 간직합니다.',
+    legalPlaceholder: '전체 내용은 준비 중이며 곧 제공될 예정입니다.',
+    loginPromptTitle: '로그인하여 시간을 동기화하세요',
   },
 };
 
@@ -7079,21 +7143,409 @@ function AlbumDetailScreen({ album, events, setEvents, setAlbums, t, isLargeScre
   );
 }
 
-/* ---------------- 我的（帳號、提醒、意見反饋、深色模式、語言，原本全部散在 Header 上） ---------------- */
-// 這裡刻意不重寫任何一個按鈕的內部邏輯，AuthModal／NotifySettingsButton／FeedbackModal／
-// LangSwitcher 的觸發方式、狀態、彈窗行為都原封不動，只是把觸發它們的按鈕從 Header
-// 搬進這裡、排成一列可讀性更高的清單，而不是擠在 Header 右上角的一排小圖示。
-function ProfileRow({ icon, label, onClick, danger, right }) {
+/* ---------------- 我的（帳戶、我的時光、資料、偏好、其他——完整的個人帳戶與 App 設定中心） ---------------- */
+// 整頁分成「首頁」與「子頁面」兩層：
+// - 首頁：帳戶卡片＋我的時光統計卡片＋三個分組列表卡片（資料／偏好／其他），一次性呈現，不需要點進去。
+// - 子頁面：帳戶管理、資料總覽、本機備份、匯入與匯出、同步與資料、關於／隱私權政策／使用條款，
+//   點擊對應項目後以「獨立頁面」（非置中彈窗）由下往上滑入、蓋住整個畫面（含底部導覽列），
+//   跟時間軸卡片點開詳情視窗是完全不同的呈現方式，符合「帳戶管理需要獨立頁面」的需求。
+// 外觀／通知／語言／日曆這幾項屬於「低頻、內容單薄」的偏好設定，沿用原本 AuthModal／
+// NotifySettingsButton／LangSwitcher 一模一樣的元件與互動邏輯，只是改成以「彈出面板」的形式
+// 掛在列表項目右側，不需要另外開一個獨立頁面——這也是需求文件裡明確允許的兩種呈現方式之一。
+
+// 帳戶頭像：優先顯示 Google 等登入方式提供的頭像，沒有圖片時退回顯示名稱／Email 的字首，
+// 兩者都沒有才顯示預設的人形圖示，不會出現「空白圓圈」這種沒有內容的狀態。
+function ProfileAvatar({ fbUser, size = 48 }) {
+  const source = (fbUser && (fbUser.displayName || fbUser.email)) || '';
+  const initial = source.trim().charAt(0).toUpperCase();
+  return (
+    <span
+      className="relative flex-shrink-0 rounded-full overflow-hidden flex items-center justify-center font-black"
+      style={{ width: size, height: size, background: accentAlpha('22'), color: ACCENT, fontSize: Math.round(size * 0.4) }}
+    >
+      {fbUser && fbUser.photoURL
+        ? <img src={fbUser.photoURL} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+        : (initial || <User size={Math.round(size * 0.5)} />)}
+    </span>
+  );
+}
+
+// 開／關切換：跟日程分頁「只展示未來代辦事件」用的是同一套視覺（圓形滑鈕＋膠囊底），
+// 這裡抽成獨立元件方便在「外觀」設定列直接重複使用。
+function ToggleSwitch({ checked, onChange, label }) {
   return (
     <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3 p-4 rounded-2xl text-left"
-      style={{ ...glass(), color: danger ? DANGER : INK }}
+      type="button" role="switch" aria-checked={checked} aria-label={label}
+      onClick={onChange}
+      className="relative flex-shrink-0 rounded-full"
+      style={{
+        width: 44, height: 26, padding: 3,
+        background: checked ? ACCENT : 'rgba(120,125,135,0.22)',
+        border: checked ? `1px solid ${ACCENT}` : '1px solid rgba(120,125,135,0.16)',
+        transition: 'background 180ms ease, border-color 180ms ease',
+      }}
     >
-      {icon}
-      <span className="flex-1 text-sm font-bold">{label}</span>
-      {right}
+      <span
+        className="absolute rounded-full"
+        style={{ width: 18, height: 18, top: 2, left: checked ? 21 : 2, background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.18)', transition: 'left 180ms cubic-bezier(0.22, 1, 0.36, 1)' }}
+      />
     </button>
+  );
+}
+
+// 分組列表的單一列：整列可點擊（右側自動補上箭頭）或右側掛一個獨立的互動元件（開關／下拉面板），
+// 兩種情境擇一，不會同時出現，避免整列的 onClick 跟右側元件自己的點擊互相搶事件。
+function SettingsRow({ icon, label, onClick, danger, right, isFirst }) {
+  const Comp = onClick ? 'button' : 'div';
+  return (
+    <Comp
+      onClick={onClick}
+      type={onClick ? 'button' : undefined}
+      className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+      style={{ color: danger ? DANGER : INK, borderTop: isFirst ? 'none' : CARD_BORDER }}
+    >
+      <span className="flex-shrink-0" style={{ color: danger ? DANGER : INK_SOFT }}>{icon}</span>
+      <span className="flex-1 text-sm font-bold truncate">{label}</span>
+      {right}
+      {onClick && !right && <ChevronRight size={16} style={{ color: INK_SOFT, opacity: 0.55, flexShrink: 0 }} />}
+    </Comp>
+  );
+}
+
+// 一組列表用同一張毛玻璃卡片包起來、中間用細線分隔，取代「每一列各自一張卡片、彼此用空隙隔開」
+// 的舊做法——同一分組視覺上更聚合，也讓「資料／偏好／其他」這幾個分組的層級關係更清楚。
+function SettingsGroupCard({ title, children }) {
+  return (
+    <div className="flex flex-col gap-2">
+      {title && <p className="px-1 text-xs font-bold" style={{ color: INK_SOFT, letterSpacing: '0.02em' }}>{title}</p>}
+      <div className="rounded-2xl overflow-hidden" style={glass()}>{children}</div>
+    </div>
+  );
+}
+
+// 「日曆」目前在 App 裡沒有一個全域偏好可以設定——曆法（西曆／農曆等）是各別地標自己的欄位
+// （新增／編輯地標表單裡的「曆法參照」）。與其為了塞滿選單而虛構一個並不存在的全域開關，
+// 這裡改成一個小面板，如實說明目前曆法是在哪裡設定的，不做過度包裝。
+function CalendarPrefButton({ t }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    function handleClickOutside(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  useExclusiveDropdown('calendarPref', open, () => setOpen(false));
+  return (
+    <div className="relative flex-shrink-0" ref={ref}>
+      <button
+        onClick={() => setOpen(v => { const next = !v; if (next) openDropdownExclusive('calendarPref'); return next; })}
+        aria-label={t.calendarPrefLabel}
+        className="flex items-center justify-center rounded-full"
+        style={{ ...glass(), width: '1.75rem', height: '1.75rem', color: INK_SOFT }}
+      >
+        <ChevronRight size={14} style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 150ms ease' }} />
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 mt-2 rounded-xl p-3 z-20"
+          style={{ ...glass(), width: 224, boxShadow: '0 10px 30px rgba(35,39,51,0.15)' }}
+          onClick={e => e.stopPropagation()}
+        >
+          <p className="text-xs leading-relaxed" style={{ color: INK }}>{t.calendarPrefHint}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 子頁面外層容器：以獨立、由下往上滑入的全螢幕頁面呈現（蓋住底部導覽列），
+// 跟「相冊」在大螢幕上的全螢幕覆蓋層共用同一套 z-index 慣例，只是再往上加一層，
+// 確保「我的」的子頁面一定疊在最上面。淡入淡出交給 useOverlayTransition 處理，
+// 手機返回手勢／鍵盤 Esc 則交給 useModalBackClose，行為與 App 裡其他彈窗一致。
+function ProfileSubpageShell({ title, onBack, mounted, shown, children }) {
+  if (!mounted) return null;
+  return createPortal(
+    <div
+      className="fixed inset-0 flex flex-col"
+      style={{
+        zIndex: 260, background: 'var(--app-bg, var(--card-bg))',
+        opacity: shown ? 1 : 0, transform: shown ? 'translateY(0)' : 'translateY(16px)',
+        transition: 'opacity 200ms ease, transform 200ms cubic-bezier(0.22, 1, 0.36, 1)',
+      }}
+    >
+      <div
+        className="px-6 md:px-10 flex items-center gap-3 flex-shrink-0"
+        style={{ borderBottom: CARD_BORDER, paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 0px))', paddingBottom: '1.25rem' }}
+      >
+        <button onClick={onBack} aria-label="back" className="flex items-center justify-center rounded-full flex-shrink-0" style={{ ...glass(), width: '2.125rem', height: '2.125rem', color: INK }}>
+          <ChevronLeft size={18} />
+        </button>
+        <h1 className="text-lg font-black tracking-tight flex-1 truncate" style={{ color: INK }}>{title}</h1>
+      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 md:px-10 py-5 max-w-[720px] mx-auto w-full flex flex-col gap-4" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))' }}>
+        {children}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// 「帳戶管理」子頁面：頭像／使用者名稱／Email／登入方式／帳戶安全（修改密碼，僅 Email 密碼帳號
+// 才有）／登出／刪除帳戶。內部再切三個小視圖（主畫面／修改密碼／刪除確認），邏輯跟原本
+// AuthModal 已登入時的內容完全一致，只是從「置中彈窗」搬成「全頁面」的呈現方式。
+function AccountManagementPage({ t, fbUser, onClose }) {
+  const [view, setView] = useState('main'); // 'main' | 'password' | 'delete'
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [pwSuccess, setPwSuccess] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+
+  if (!fbUser) return null;
+  const providerId = getCurrentUserProviderId();
+  const methodLabel = providerId === 'google.com' ? t.loginMethodGoogle : providerId === 'apple.com' ? t.loginMethodApple : t.loginMethodEmail;
+
+  async function run(fn) {
+    setBusy(true); setError('');
+    let timedOut = false;
+    try {
+      const timeoutPromise = new Promise((_, reject) => { setTimeout(() => { timedOut = true; reject(new Error('timeout')); }, 8000); });
+      await Promise.race([fn(), timeoutPromise]);
+    } catch (err) {
+      setError(timedOut ? t.authTimeout : t.authError);
+    }
+    setBusy(false);
+  }
+
+  function handleChangePassword() {
+    if (newPassword !== confirmNewPassword) { setError(t.passwordMismatch); return; }
+    run(async () => {
+      await changePassword(currentPassword, newPassword);
+      setPwSuccess(true);
+      setCurrentPassword(''); setNewPassword(''); setConfirmNewPassword('');
+    });
+  }
+
+  if (view === 'password') {
+    return (
+      <div className="flex flex-col gap-3">
+        <PasswordField t={t} placeholder={t.currentPassword} value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
+          className="px-3 py-2.5 rounded-xl text-sm outline-none w-full" style={{ background: 'var(--input-bg)', border: CARD_BORDER, color: INK }} />
+        <PasswordField t={t} placeholder={t.newPassword} value={newPassword} onChange={e => setNewPassword(e.target.value)}
+          className="px-3 py-2.5 rounded-xl text-sm outline-none w-full" style={{ background: 'var(--input-bg)', border: CARD_BORDER, color: INK }} />
+        <PasswordField t={t} placeholder={t.confirmNewPassword} value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)}
+          className="px-3 py-2.5 rounded-xl text-sm outline-none w-full" style={{ background: 'var(--input-bg)', border: CARD_BORDER, color: INK }} />
+        {error && <p className="text-xs font-bold" style={{ color: DANGER }}>{error}</p>}
+        {pwSuccess && <p className="text-xs font-bold" style={{ color: MINT }}>{t.passwordChangeSuccess}</p>}
+        <button
+          onClick={handleChangePassword}
+          disabled={busy || !currentPassword || !newPassword || !confirmNewPassword}
+          className="py-2.5 rounded-xl font-bold text-sm"
+          style={{ background: MINT, color: '#fff', opacity: busy || !currentPassword || !newPassword || !confirmNewPassword ? 0.6 : 1 }}
+        >
+          {t.saveChangesBtn}
+        </button>
+        <button onClick={() => { setView('main'); setError(''); setPwSuccess(false); }} className="text-xs font-bold self-start" style={{ color: ACCENT }}>{t.back}</button>
+      </div>
+    );
+  }
+
+  if (view === 'delete') {
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm" style={{ color: INK }}>{t.deleteAccountConfirmDesc}</p>
+        {providerId === 'password' && (
+          <PasswordField t={t} placeholder={t.currentPassword} value={deletePassword} onChange={e => setDeletePassword(e.target.value)}
+            className="px-3 py-2.5 rounded-xl text-sm outline-none w-full" style={{ background: 'var(--input-bg)', border: CARD_BORDER, color: INK }} />
+        )}
+        {error && <p className="text-xs font-bold" style={{ color: DANGER }}>{error}</p>}
+        <button
+          onClick={() => run(async () => { await deleteAccount(deletePassword); onClose(); })}
+          disabled={busy || (providerId === 'password' && !deletePassword)}
+          className="py-2.5 rounded-xl font-bold text-sm"
+          style={{ background: DANGER, color: '#fff', opacity: busy || (providerId === 'password' && !deletePassword) ? 0.6 : 1 }}
+        >
+          {t.confirmDelete}
+        </button>
+        <button onClick={() => { setView('main'); setError(''); }} className="text-xs font-bold self-start" style={{ color: ACCENT }}>{t.cancel}</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex items-center gap-3">
+        <ProfileAvatar fbUser={fbUser} size={56} />
+        <div className="flex-1 min-w-0">
+          <p className="text-base font-black truncate" style={{ color: INK }}>{fbUser.displayName || (fbUser.email ? fbUser.email.split('@')[0] : t.account)}</p>
+          {fbUser.email && <p className="text-xs truncate" style={{ color: INK_SOFT }}>{fbUser.email}</p>}
+        </div>
+      </div>
+
+      <SettingsGroupCard title={t.accountSecurityLabel}>
+        <SettingsRow isFirst icon={<Shield size={18} />} label={t.loginMethodLabel} right={<span className="text-xs font-bold" style={{ color: INK_SOFT }}>{methodLabel}</span>} />
+        {providerId === 'password' && (
+          <SettingsRow icon={<Pencil size={18} />} label={t.changePassword} onClick={() => { setView('password'); setError(''); setPwSuccess(false); }} />
+        )}
+      </SettingsGroupCard>
+
+      {error && <p className="text-xs font-bold" style={{ color: DANGER }}>{error}</p>}
+
+      <button
+        onClick={() => run(async () => { await signOutUser(); onClose(); })}
+        disabled={busy}
+        className="flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm"
+        style={{ ...glass(), color: INK, opacity: busy ? 0.6 : 1 }}
+      >
+        <LogOut size={16} /> {t.logout}
+      </button>
+
+      <button onClick={() => { setView('delete'); setError(''); setDeletePassword(''); }} className="text-xs font-bold self-center" style={{ color: DANGER }}>
+        {t.deleteAccount}
+      </button>
+    </div>
+  );
+}
+
+// 「我的時光」點進去的資料總覽：只放大呈現首頁那三個統計數字，不重新展示時間軸／相冊的實際內容，
+// 避免變成「第二個時間軸」或「第二個相冊頁」。
+function MyTimeOverviewPage({ t, eventCount, albumCount, photoCount }) {
+  const stats = [
+    { label: t.myTimeOverviewEvents, value: eventCount },
+    { label: t.myTimeOverviewAlbums, value: albumCount },
+    { label: t.myTimeOverviewPhotos, value: photoCount },
+  ];
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm" style={{ color: INK_SOFT }}>{t.myTimeOverviewDesc}</p>
+      <div className="grid grid-cols-3 gap-3">
+        {stats.map(s => (
+          <div key={s.label} className="rounded-2xl p-4 flex flex-col items-center gap-1" style={glass()}>
+            <span className="text-2xl font-black" style={{ color: INK }}>{s.value}</span>
+            <span className="text-xs font-bold" style={{ color: INK_SOFT }}>{s.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// 「本機備份」／「匯入與匯出」共用同一套底層邏輯（跟原本 AuthModal 裡的匯出／匯入完全一致，
+// 只是搬到獨立頁面），因為目前 App 裡「備份」與「匯入匯出」本來就是同一個檔案格式（.tzzwnb）
+// 的一體兩面，不存在兩套互不相關的實作——variant 只決定文案的側重（備份提醒 vs. 兩個按鈕並重），
+// 不會產生使用者看不懂的重複功能。
+function BackupDataPage({ t, backupData, onImportBackup, variant }) {
+  const importFileRef = useRef(null);
+  const [backupMsg, setBackupMsg] = useState(null);
+
+  async function buildBackupPayloadWithPhotos() {
+    const albumPhotos = await collectAllAlbumPhotos(backupData.albums && backupData.albums.length ? backupData.albums : resolveAlbumsField(backupData));
+    return { ...backupData, ...(Object.keys(albumPhotos).length ? { albumPhotos } : {}), exportedAt: Date.now() };
+  }
+
+  async function parseAndImport(fileText) {
+    const data = await parseBackupPayload(fileText);
+    if (!data) { setBackupMsg({ type: 'error', text: t.backupImportError }); return false; }
+    onImportBackup(data);
+    setBackupMsg({ type: 'success', text: t.backupImportSuccess });
+    return true;
+  }
+
+  async function handleExportBackup() {
+    const json = JSON.stringify(await buildBackupPayloadWithPhotos(), null, 2);
+    const encryptedText = await encryptBackupText(json);
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+    const filename = `sgx-backup-${stamp}.tzzwnb`;
+    const file = new File([encryptedText], filename, { type: 'application/octet-stream' });
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: filename });
+        setBackupMsg({ type: 'success', text: t.backupExportSuccess });
+        return;
+      } catch (err) { /* 使用者取消分享，退回下載方式 */ }
+    }
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    setBackupMsg({ type: 'success', text: t.backupExportSuccess });
+  }
+
+  function handleImportFileChange(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => parseAndImport(String(reader.result));
+    reader.onerror = () => setBackupMsg({ type: 'error', text: t.backupImportError });
+    reader.readAsText(file);
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm" style={{ color: INK_SOFT }}>{t.backupHint}</p>
+      {variant === 'backup' && <p className="text-xs leading-relaxed" style={{ color: INK_SOFT }}>{t.albumBackupReminder}</p>}
+      <div className="flex gap-2">
+        <button type="button" onClick={handleExportBackup} className="flex-1 py-3 rounded-xl text-sm font-bold" style={{ ...glass(), color: INK }}>
+          {t.backupExportBtn}
+        </button>
+        <button type="button" onClick={() => importFileRef.current && importFileRef.current.click()} className="flex-1 py-3 rounded-xl text-sm font-bold" style={{ ...glass(), color: INK }}>
+          {t.backupImportBtn}
+        </button>
+        <input ref={importFileRef} type="file" accept=".tzzwnb" className="hidden" onChange={handleImportFileChange} />
+      </div>
+      {backupMsg && <p className="text-xs font-bold" style={{ color: backupMsg.type === 'success' ? MINT : DANGER }}>{backupMsg.text}</p>}
+    </div>
+  );
+}
+
+// 「最後同步」相對時間的簡單換算，只在本地計算、不依賴任何後端時間戳格式。
+function formatRelativeSync(ts, t) {
+  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (diffSec < 60) return t.lastSyncedJustNow;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return t.lastSyncedAgo(t.syncMinutesAgo(diffMin));
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return t.lastSyncedAgo(t.syncHoursAgo(diffHr));
+  const diffDay = Math.floor(diffHr / 24);
+  return t.lastSyncedAgo(t.syncDaysAgo(diffDay));
+}
+
+// 「同步與資料」子頁面：只用「帳戶」「同步」等產品層級的語彙呈現狀態，完全不提 Firebase
+// 或特定地區限制等技術細節；連線失敗時才顯示簡潔的錯誤提示，平常不主動暴露任何技術資訊。
+function SyncDataPage({ t, fbUser, syncStatus, lastSyncedAt, onOpenAuth }) {
+  const [, forceTick] = useState(0);
+  useEffect(() => { const iv = setInterval(() => forceTick(v => v + 1), 30000); return () => clearInterval(iv); }, []);
+
+  let statusText = t.notSyncedStatus;
+  let statusColor = INK_SOFT;
+  if (fbUser) {
+    if (syncStatus === 'syncing') { statusText = t.syncing; statusColor = ACCENT; }
+    else if (syncStatus === 'synced') { statusText = t.synced; statusColor = MINT; }
+    else if (syncStatus === 'error') { statusText = t.syncErrorStatus; statusColor = DANGER; }
+  }
+  const lastSyncedText = fbUser && lastSyncedAt ? formatRelativeSync(lastSyncedAt, t) : null;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="rounded-2xl p-5 flex flex-col items-center gap-1.5 text-center" style={glass()}>
+        <span className="text-base font-black" style={{ color: statusColor }}>{statusText}</span>
+        {lastSyncedText && <span className="text-xs" style={{ color: INK_SOFT }}>{lastSyncedText}</span>}
+      </div>
+      {!fbUser ? (
+        <>
+          <p className="text-sm" style={{ color: INK_SOFT }}>{t.syncLoginHint}</p>
+          <button onClick={onOpenAuth} className="py-3 rounded-xl text-sm font-bold" style={{ background: ACCENT, color: '#fff' }}>{t.login}</button>
+        </>
+      ) : (
+        syncStatus === 'error' && <p className="text-xs font-bold" style={{ color: DANGER }}>{t.syncErrorHint}</p>
+      )}
+    </div>
   );
 }
 
@@ -7101,46 +7553,139 @@ function ProfilePage({
   t, fbUser, localSaveError, syncStatus, onOpenAuth,
   notifyEnabled, onToggleNotify, notifyDaysBefore, setNotifyDaysBefore, notifyPermission,
   onOpenFeedback, isDark, setIsDark, lang, setLang,
+  events, albums, clocks, customIcons, onImportBackup, lastSyncedAt, appVersion,
 }) {
+  const [subpage, setSubpage] = useState(null);
+  const [mounted, shown] = useOverlayTransition(subpage !== null, 200);
+  useModalBackClose(subpage !== null, () => setSubpage(null));
+
+  // 淡出動畫播放期間 subpage 已經變成 null，但畫面還在，這裡另外記一份「最後顯示過的子頁面」，
+  // 讓子頁面內容跟著淡出、而不是在動畫播到一半時瞬間清空變成空白。
+  const [renderedSubpage, setRenderedSubpage] = useState(null);
+  useEffect(() => { if (subpage) setRenderedSubpage(subpage); }, [subpage]);
+
+  const [photoCount, setPhotoCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const photosMap = await collectAllAlbumPhotos(albums || []);
+        if (!cancelled) setPhotoCount(Object.values(photosMap).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0));
+      } catch (err) { /* 讀取失敗就維持原本的數字，不影響其他區塊 */ }
+    })();
+    return () => { cancelled = true; };
+  }, [albums]);
+
+  const backupData = { clocks, events, lang, isDark, customIcons, albums };
+  const hasSyncIssue = localSaveError || syncStatus === 'error';
+  const eventCount = events ? events.length : 0;
+  const albumCount = albums ? albums.length : 0;
+
+  const subpageTitle = {
+    account: t.accountManageLabel, overview: t.myTimeOverviewTitle, backup: t.backupSectionTitle,
+    importExport: t.importExportLabel, sync: t.syncDataLabel, about: t.aboutLabel, privacy: t.privacyLabel, terms: t.termsLabel,
+  }[renderedSubpage] || '';
+
+  let syncRightText = t.notSyncedStatus;
+  if (fbUser) {
+    if (syncStatus === 'syncing') syncRightText = t.syncing;
+    else if (syncStatus === 'synced') syncRightText = t.synced;
+    else if (syncStatus === 'error') syncRightText = t.syncErrorStatus;
+  }
+
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
-      <ProfileRow
-        icon={
-          <span className="relative flex-shrink-0" style={{ color: fbUser ? MINT : INK }}>
-            <User size={18} />
-            {(localSaveError || syncStatus === 'error') && (
-              <span className="absolute rounded-full" style={{ width: 8, height: 8, top: -1, right: -1, background: DANGER, border: '1.5px solid var(--card-bg)' }} />
-            )}
+    <div className="flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-5">
+      {/* 一、帳戶區域：置頂、有一定視覺存在感，但不做成大型會員中心 */}
+      {fbUser ? (
+        <div className="rounded-3xl p-5 flex items-center gap-4" style={glass()}>
+          <ProfileAvatar fbUser={fbUser} size={56} />
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-black truncate" style={{ color: INK }}>{fbUser.displayName || (fbUser.email ? fbUser.email.split('@')[0] : t.account)}</p>
+            {fbUser.email && <p className="text-xs truncate" style={{ color: INK_SOFT }}>{fbUser.email}</p>}
+          </div>
+          <button onClick={() => setSubpage('account')} className="relative flex items-center gap-1 text-xs font-bold px-3 py-2 rounded-full flex-shrink-0" style={{ background: accentAlpha('18'), color: ACCENT }}>
+            {t.accountManageLabel}
+            {hasSyncIssue && <span className="absolute rounded-full" style={{ width: 7, height: 7, top: -1, right: -1, background: DANGER, border: '1.5px solid var(--card-bg)' }} />}
+            <ChevronRight size={13} />
+          </button>
+        </div>
+      ) : (
+        <button onClick={onOpenAuth} className="rounded-3xl p-5 flex items-center gap-4 text-left w-full" style={glass()}>
+          <span className="flex-shrink-0 rounded-full flex items-center justify-center" style={{ width: 56, height: 56, background: accentAlpha('18'), color: ACCENT }}>
+            <User size={24} />
           </span>
-        }
-        label={fbUser ? t.loggedInAs(fbUser.email || fbUser.displayName || '') : t.loginToSync}
-        onClick={onOpenAuth}
-      />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black" style={{ color: INK }}>{t.loginPromptTitle}</p>
+            <p className="text-xs mt-0.5" style={{ color: INK_SOFT }}>{t.loginToSync}</p>
+          </div>
+          <ChevronRight size={16} style={{ color: INK_SOFT, flexShrink: 0 }} />
+        </button>
+      )}
 
-      <div className="rounded-2xl p-3 flex items-center justify-between" style={glass()}>
-        <span className="text-sm font-bold" style={{ color: INK }}>{t.notifyButtonLabel}</span>
-        <NotifySettingsButton
-          enabled={notifyEnabled}
-          onToggle={onToggleNotify}
-          daysBefore={notifyDaysBefore}
-          setDaysBefore={setNotifyDaysBefore}
-          permission={notifyPermission}
-          t={t}
+      {/* 二、我的時光：簡潔的橫向統計，只給概況、不重複展示時間軸／相冊本身的內容 */}
+      <button onClick={() => setSubpage('overview')} className="rounded-2xl p-5 flex flex-col gap-3 text-left" style={glass()}>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-black" style={{ color: INK }}>{t.myTimeLabel}</span>
+          <ChevronRight size={15} style={{ color: INK_SOFT }} />
+        </div>
+        <div className="flex items-center">
+          {[[eventCount, t.myTimeOverviewEvents], [albumCount, t.myTimeOverviewAlbums], [photoCount, t.myTimeOverviewPhotos]].map(([val, label], i) => (
+            <div key={label} className="flex-1 flex flex-col items-center gap-0.5" style={{ borderLeft: i === 0 ? 'none' : CARD_BORDER }}>
+              <span className="text-lg font-black" style={{ color: ACCENT }}>{val}</span>
+              <span className="text-[11px] font-bold" style={{ color: INK_SOFT }}>{label}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-[11px]" style={{ color: INK_SOFT }}>{t.myTimeCaption}</p>
+      </button>
+
+      {/* 三、資料 */}
+      <SettingsGroupCard title={t.dataGroupLabel}>
+        <SettingsRow isFirst icon={<Database size={18} />} label={t.backupSectionTitle} onClick={() => setSubpage('backup')} />
+        <SettingsRow icon={<Share2 size={18} />} label={t.importExportLabel} onClick={() => setSubpage('importExport')} />
+        <SettingsRow
+          icon={<RefreshCw size={18} />} label={t.syncDataLabel} onClick={() => setSubpage('sync')}
+          right={<span className="text-xs font-bold" style={{ color: syncStatus === 'error' ? DANGER : INK_SOFT }}>{syncRightText}</span>}
         />
+      </SettingsGroupCard>
+
+      {/* 四、偏好 */}
+      <SettingsGroupCard title={t.prefGroupLabel}>
+        <SettingsRow
+          isFirst icon={isDark ? <Sun size={18} /> : <Moon size={18} />} label={t.appearanceLabel}
+          right={<ToggleSwitch checked={isDark} onChange={() => setIsDark(v => !v)} label={t.darkModeLabel} />}
+        />
+        <SettingsRow
+          icon={notifyEnabled ? <Bell size={18} /> : <BellOff size={18} />} label={t.notifyPrefLabel}
+          right={<NotifySettingsButton enabled={notifyEnabled} onToggle={onToggleNotify} daysBefore={notifyDaysBefore} setDaysBefore={setNotifyDaysBefore} permission={notifyPermission} t={t} />}
+        />
+        <SettingsRow icon={<Globe size={18} />} label={t.languageLabel} right={<LangSwitcher lang={lang} setLang={setLang} />} />
+        <SettingsRow icon={<Calendar size={18} />} label={t.calendarPrefLabel} right={<CalendarPrefButton t={t} />} />
+      </SettingsGroupCard>
+
+      {/* 五、其他 */}
+      <SettingsGroupCard title={t.otherGroupLabel}>
+        <SettingsRow isFirst icon={<Mail size={18} />} label={t.feedbackLabel} onClick={onOpenFeedback} />
+        <SettingsRow icon={<Info size={18} />} label={t.aboutLabel} onClick={() => setSubpage('about')} />
+        <SettingsRow icon={<Shield size={18} />} label={t.privacyLabel} onClick={() => setSubpage('privacy')} />
+        <SettingsRow icon={<FileText size={18} />} label={t.termsLabel} onClick={() => setSubpage('terms')} />
+      </SettingsGroupCard>
+
+      <div className="flex flex-col items-center gap-0.5 pt-2 pb-2">
+        <span className="text-xs font-bold" style={{ color: INK_SOFT }}>時光線</span>
+        {appVersion && <span className="text-[11px]" style={{ color: INK_SOFT, opacity: 0.7 }}>Version {appVersion}</span>}
       </div>
 
-      <ProfileRow icon={<Mail size={18} />} label={t.feedbackLabel} onClick={onOpenFeedback} />
-
-      <ProfileRow
-        icon={isDark ? <Sun size={18} /> : <Moon size={18} />}
-        label={`${t.darkModeLabel}（${isDark ? t.darkModeOn : t.darkModeOff}）`}
-        onClick={() => setIsDark(v => !v)}
-      />
-
-      <div className="rounded-2xl p-3 flex items-center justify-between" style={glass()}>
-        <span className="text-sm font-bold" style={{ color: INK }}>{LANG_NAMES[lang]}</span>
-        <LangSwitcher lang={lang} setLang={setLang} />
-      </div>
+      <ProfileSubpageShell title={subpageTitle} onBack={() => setSubpage(null)} mounted={mounted} shown={shown}>
+        {renderedSubpage === 'account' && <AccountManagementPage t={t} fbUser={fbUser} onClose={() => setSubpage(null)} />}
+        {renderedSubpage === 'overview' && <MyTimeOverviewPage t={t} eventCount={eventCount} albumCount={albumCount} photoCount={photoCount} />}
+        {renderedSubpage === 'backup' && <BackupDataPage t={t} backupData={backupData} onImportBackup={onImportBackup} variant="backup" />}
+        {renderedSubpage === 'importExport' && <BackupDataPage t={t} backupData={backupData} onImportBackup={onImportBackup} variant="importExport" />}
+        {renderedSubpage === 'sync' && <SyncDataPage t={t} fbUser={fbUser} syncStatus={syncStatus} lastSyncedAt={lastSyncedAt} onOpenAuth={onOpenAuth} />}
+        {renderedSubpage === 'about' && <p className="text-sm leading-relaxed" style={{ color: INK }}>{t.aboutBody}</p>}
+        {renderedSubpage === 'privacy' && <p className="text-sm leading-relaxed" style={{ color: INK_SOFT }}>{t.legalPlaceholder}</p>}
+        {renderedSubpage === 'terms' && <p className="text-sm leading-relaxed" style={{ color: INK_SOFT }}>{t.legalPlaceholder}</p>}
+      </ProfileSubpageShell>
     </div>
   );
 }
@@ -7323,6 +7868,11 @@ export default function App() {
   const [scheduleControlsEl, setScheduleControlsEl] = useState(null);
   const [pendingMerge, setPendingMerge] = useState(null); // { local, cloud } 需要使用者選擇時才會有值
   const [syncStatus, setSyncStatus] = useState(null); // null | 'syncing' | 'synced'
+  // 「我的」頁面「同步與資料」子頁面要顯示的「最後同步：X 前」——不新增一整套時間戳同步機制，
+  // 單純在 syncStatus 變成 'synced' 的當下記一次本機時間即可，重新整理後歸零也沒關係
+  // （沒有同步過就不顯示這行文字，不會顯示錯誤的時間）。
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
+  useEffect(() => { if (syncStatus === 'synced') setLastSyncedAt(Date.now()); }, [syncStatus]);
   const syncReadyRef = useRef(false); // 是否已經完成登入時的資料比對／合併，之後才開始自動推送變更
   const mergeCheckedUidRef = useRef(null); // 避免同一次登入重複檢查合併
   // 記錄「最近一次成功同步到雲端的相片內容長什麼樣子」（每個相冊底下有哪些相片 id、依序排列）。
@@ -7701,6 +8251,24 @@ export default function App() {
         StatusBar.setOverlaysWebView({ overlay: false });
       }
     }
+  }, []);
+
+  // 「我的」頁面最下方顯示的實際版本號——只在原生 App 環境讀得到（App.getInfo().version，
+  // 對應 android/app/build.gradle 的 versionName），刻意跟下面的 GitHub 版本更新檢查分開一個
+  // effect：就算裝置離線／GitHub API 打不通，也不該連「目前版本號」都顯示不出來。
+  // 網頁版（非原生殼）沒有這支 API，appVersion 會維持 null，「我的」頁面就不顯示版本這一行，
+  // 不虛構一個版本號出來。
+  const [appVersion, setAppVersion] = useState(null);
+  useEffect(() => {
+    if (!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) return;
+    (async () => {
+      try {
+        const appInfo = await window.Capacitor.Plugins.App.getInfo();
+        if (appInfo && appInfo.version) setAppVersion(appInfo.version);
+      } catch (err) {
+        // 讀不到就維持 null，「我的」頁面版本號那一行會直接不顯示
+      }
+    })();
   }, []);
 
   // 版本更新檢查：只在 App 環境跑，透過 @capacitor/app 外掛讀出目前安裝版本（App.getInfo().version，
@@ -8140,6 +8708,13 @@ export default function App() {
                   setIsDark={setIsDark}
                   lang={lang}
                   setLang={setLang}
+                  events={events}
+                  albums={albums}
+                  clocks={clocks}
+                  customIcons={customIcons}
+                  onImportBackup={applyCloudData}
+                  lastSyncedAt={lastSyncedAt}
+                  appVersion={appVersion}
                 />
               )}
             </main>
