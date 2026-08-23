@@ -1,11 +1,3 @@
-const INK = 'var(--ink)';
-const INK_SOFT = 'var(--ink-soft)';
-const ACCENT = 'var(--accent, #6C7BE0)';
-const DANGER = '#FF004A';
-const MINT = '#3FBF9B';
-const CARD_BG = 'var(--card-bg)';
-const CARD_BORDER = '1px solid var(--card-border)';
-const INPUT_BG = 'var(--input-bg)';
 // 底部導覽列中央「時光線」分頁的品牌圖示素材路徑
 const BOTTOM_NAV_LOGO_SRC = '/nav-logo.png';const CARE_MODE_VARS = {
   '--ink': '#57565C',
