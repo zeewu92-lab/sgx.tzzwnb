@@ -750,3 +750,68 @@ export function getCalendarMonthDays(calendarId, year, month) {
 
   return 30;
 }
+const JP_ERAS = [
+  { id: 'meiji', label: '明治', startYear: 1868 },
+  { id: 'taisho', label: '大正', startYear: 1912 },
+  { id: 'showa', label: '昭和', startYear: 1926 },
+  { id: 'heisei', label: '平成', startYear: 1989 },
+  { id: 'reiwa', label: '令和', startYear: 2019 },
+];
+
+export function japaneseEraToGregorianYear(eraId, year) {
+  const e =
+    JP_ERAS.find(x => x.id === eraId) ||
+    JP_ERAS[JP_ERAS.length - 1];
+
+  return e.startYear + year - 1;
+}
+
+export function getJapaneseEra(date) {
+  try {
+    const dtf = new Intl.DateTimeFormat(
+      'zh-TW-u-ca-japanese',
+      {
+        year: 'numeric',
+        era: 'short',
+      }
+    );
+
+    const o = {};
+    dtf.formatToParts(date).forEach(
+      p => (o[p.type] = p.value)
+    );
+
+    const found =
+      JP_ERAS.find(x => x.label === o.era) ||
+      JP_ERAS[JP_ERAS.length - 1];
+
+    return {
+      id: found.id,
+      year: parseInt(o.year) || 1,
+    };
+  } catch (e) {
+    return { id: 'reiwa', year: 1 };
+  }
+}
+
+export function japaneseEraYearMax(eraId) {
+  const idx = JP_ERAS.findIndex(e => e.id === eraId);
+
+  if (idx === -1) return 60;
+
+  if (idx === JP_ERAS.length - 1) {
+    return new Date().getFullYear() -
+      JP_ERAS[idx].startYear + 15;
+  }
+
+  return JP_ERAS[idx + 1].startYear -
+    JP_ERAS[idx].startYear + 1;
+}
+
+export function isoDateStr(d) {
+  return `${d.getFullYear()}-${String(
+    d.getMonth() + 1
+  ).padStart(2, '0')}-${String(
+    d.getDate()
+  ).padStart(2, '0')}`;
+}
