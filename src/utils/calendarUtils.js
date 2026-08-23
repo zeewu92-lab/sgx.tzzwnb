@@ -815,3 +815,100 @@ export function isoDateStr(d) {
     d.getDate()
   ).padStart(2, '0')}`;
 }
+return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex gap-1.5">
+        {calendarId === 'japanese' && (
+          <select
+            value={era}
+            onChange={e => {
+              const nextEra = e.target.value;
+              const maxY = japaneseEraYearMax(nextEra);
+              const clamped = Math.min(year || 1, maxY);
+              if (yearDebounceRef.current) { clearTimeout(yearDebounceRef.current); yearDebounceRef.current = null; }
+              setEra(nextEra);
+              setYear(clamped);
+              setYearText(String(clamped));
+            }}
+            className={SELECT_CLASS} style={SELECT_STYLE}
+          >
+            {JP_ERAS.map(e => <option key={e.id} value={e.id}>{e.label}</option>)}
+          </select>
+        )}
+        <input
+          type="number"
+          inputMode="numeric"
+          value={yearText}
+          onChange={e => {
+            const raw = e.target.value;
+            setYearText(raw); // 只更新輸入框自己的顯示文字，不會被其他地方的同步邏輯覆蓋，打字/刪除不會卡頓
+            if (yearDebounceRef.current) clearTimeout(yearDebounceRef.current);
+            if (raw === '' || raw === '-') return; // 使用者正在清空輸入框或準備輸入負數，先不換算，避免中途被當成 NaN
+            const v = parseInt(raw, 10);
+            if (Number.isNaN(v)) return;
+            // 日本曆的「年」是年號內的年份，範圍有限；其餘曆法的年份原則上不特別限制，讓使用者可直接手動鍵入任何年份
+            const clamped = calendarId === 'japanese' ? Math.min(Math.max(v, 1), japaneseEraYearMax(era)) : v;
+            // 伊斯蘭曆／希伯來曆／農曆的換算需要逐日掃描比對，延遲一小段時間再真正觸發，避免每敲一個數字就卡一下
+            yearDebounceRef.current = setTimeout(() => setYear(clamped), 220);
+          }}
+          onBlur={() => {
+            if (yearDebounceRef.current) { clearTimeout(yearDebounceRef.current); yearDebounceRef.current = null; }
+            // 使用者把輸入框留空或輸入無效內容就離開時，還原成目前生效中的年份，避免留下空白欄位
+            if (yearText === '' || Number.isNaN(parseInt(yearText, 10))) { setYearText(String(year)); return; }
+            // 離開欄位時立即把還沒套用的數值套用，不用等延遲時間跑完
+            const v = parseInt(yearText, 10);
+            setYear(calendarId === 'japanese' ? Math.min(Math.max(v, 1), japaneseEraYearMax(era)) : v);
+          }}
+          className={SELECT_CLASS} style={SELECT_STYLE}
+        />
+        {/* 快速選單：跟月份／日期選單一樣是普通原生 <select>，一定會顯示出瀏覽器原生的下拉箭頭，不會有箭頭消失的問題。
+            為了不要跟左邊的輸入框重複顯示同一組數字，這裡把「目前被選中的那個年份」的選項文字故意留空，
+            所以收合狀態只會看到一個空白按鈕＋原生箭頭；點開清單時，其餘年份仍會正常顯示數字可以選。 */}
+        <select
+          value={year}
+          onChange={e => {
+            const v = parseInt(e.target.value, 10);
+            if (Number.isNaN(v)) return;
+            const clamped = calendarId === 'japanese' ? Math.min(Math.max(v, 1), japaneseEraYearMax(era)) : v;
+            if (yearDebounceRef.current) { clearTimeout(yearDebounceRef.current); yearDebounceRef.current = null; }
+            setYear(clamped);
+            setYearText(String(clamped));
+          }}
+          aria-label={t.yearPickerLabel || (lang === 'en' ? 'Pick year' : '選擇年份')}
+          className="flex-shrink-0 w-8 py-2 rounded-lg text-sm outline-none text-center"
+          style={SELECT_STYLE}
+        >
+          {yearOptions.map(y => <option key={y} value={y}>{y === year ? '' : y}</option>)}
+        </select>
+        <select
+          value={month}
+          onChange={e => {
+            const val = isChinese ? e.target.value : parseInt(e.target.value);
+            setMonth(val);
+            setDay(1);
+          }}
+          className={SELECT_CLASS} style={SELECT_STYLE}
+        >
+          {isChinese
+            ? chineseMonths.map(m => <option key={m.label} value={m.label}>{m.label}</option>)
+            : Array.from({ length: monthCount }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+        <select
+          value={day}
+          onChange={e => setDay(parseInt(e.target.value))}
+          className={SELECT_CLASS} style={SELECT_STYLE}
+        >
+          {Array.from({ length: dayCount }, (_, i) => i + 1).map(d => (
+            <option key={d} value={d}>{isChinese ? chineseDayName(d) : d}</option>
+          ))}
+        </select>
+      </div>
+      {isoDate && (
+        <p className="text-xs px-1" style={{ color: ACCENT }}>
+          → {new Date(isoDate + 'T00:00:00').toLocaleDateString(LOCALE_MAP[lang] || 'zh-TW')}
+        </p>
+      )}
+    </div>
+  );
+}
+function glass(extra = {}) { return { background: CARD_BG, border: CARD_BORDER, boxShadow: '0 2px 10px rgba(35,39,51,0.05)', ...extra }; }
