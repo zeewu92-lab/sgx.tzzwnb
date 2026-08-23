@@ -39,6 +39,46 @@ const JP_ERAS = [
   { id: 'reiwa', label: '令和', startYear: 2019 },
 ];
 
+/* =========================================================
+ * 基礎日期工具
+ * ========================================================= */
+
+export function combineDateTime(dateStr, timeStr) {
+  return new Date(
+    `${dateStr}T${timeStr || '00:00'}:00`
+  );
+}
+
+export function addMonths(d, n) {
+  const r = new Date(d);
+  r.setMonth(r.getMonth() + n);
+  return r;
+}
+
+export function addYears(d, n) {
+  const r = new Date(d);
+  r.setFullYear(r.getFullYear() + n);
+  return r;
+}
+
+export function addDays(d, n) {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
+
+export function isoDateStr(d) {
+  return `${d.getFullYear()}-${String(
+    d.getMonth() + 1
+  ).padStart(2, '0')}-${String(
+    d.getDate()
+  ).padStart(2, '0')}`;
+}
+
+/* =========================================================
+ * 一般曆法資料
+ * ========================================================= */
+
 export function calNumericParts(date, calendarId) {
   try {
     const dtf = new Intl.DateTimeFormat(
@@ -69,12 +109,15 @@ export function calNumericParts(date, calendarId) {
 export function getCalendarParts(date, calendarId) {
   try {
     if (calendarId === 'chinese') {
-      const dtf = new Intl.DateTimeFormat('en-US', {
-        calendar: 'chinese',
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-      });
+      const dtf = new Intl.DateTimeFormat(
+        'en-US',
+        {
+          calendar: 'chinese',
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric',
+        }
+      );
 
       const obj = {};
 
@@ -111,29 +154,9 @@ export function getCalendarParts(date, calendarId) {
   }
 }
 
-export function combineDateTime(dateStr, timeStr) {
-  return new Date(
-    `${dateStr}T${timeStr || '00:00'}:00`
-  );
-}
-
-export function addMonths(d, n) {
-  const r = new Date(d);
-  r.setMonth(r.getMonth() + n);
-  return r;
-}
-
-export function addYears(d, n) {
-  const r = new Date(d);
-  r.setFullYear(r.getFullYear() + n);
-  return r;
-}
-
-export function addDays(d, n) {
-  const r = new Date(d);
-  r.setDate(r.getDate() + n);
-  return r;
-}
+/* =========================================================
+ * 干支
+ * ========================================================= */
 
 export function getGanZhi(relatedYear) {
   const stemIdx =
@@ -147,6 +170,10 @@ export function getGanZhi(relatedYear) {
     GANZHI_BRANCHES[branchIdx]
   );
 }
+
+/* =========================================================
+ * 農曆月份與日期
+ * ========================================================= */
 
 export function chineseDayName(day) {
   const num = [
@@ -200,11 +227,13 @@ export function chineseMonthLabel(monthNum, isLeap) {
 
 export function chineseMonthLabelToNumeric(label) {
   const isLeap = label.startsWith('閏');
+
   const bare = isLeap
     ? label.slice(1)
     : label;
 
-  const idx = LUNAR_MONTHS.indexOf(bare);
+  const idx =
+    LUNAR_MONTHS.indexOf(bare);
 
   return {
     num: idx === -1 ? null : idx + 1,
@@ -255,10 +284,11 @@ export function chineseMonthInfo(date) {
 }
 
 export function getChineseDateInfo(date) {
-  const parts = getCalendarParts(
-    date,
-    'chinese'
-  );
+  const parts =
+    getCalendarParts(
+      date,
+      'chinese'
+    );
 
   if (!parts) return null;
 
@@ -273,13 +303,18 @@ export function getChineseDateInfo(date) {
 
   return {
     year: parseInt(
-      parts.relatedYear || parts.year
+      parts.relatedYear ||
+      parts.year
     ),
     month: num,
     isLeap,
     day: parseInt(parts.day),
   };
 }
+
+/* =========================================================
+ * 農曆年份月份表
+ * ========================================================= */
 
 export function buildChineseYearMonths(
   lunarYear
@@ -294,7 +329,8 @@ export function buildChineseYearMonths(
   let started = false;
 
   for (let i = 0; i < 480; i++) {
-    const info = chineseMonthInfo(d);
+    const info =
+      chineseMonthInfo(d);
 
     if (
       info &&
@@ -351,6 +387,10 @@ export function chineseCalendarToGregorian(
     ) - 1
   );
 }
+
+/* =========================================================
+ * 其他曆法 → 西曆
+ * ========================================================= */
 
 export function calendarDateToGregorian(
   calendarId,
@@ -485,6 +525,10 @@ export function getCalendarMonthDays(
   return 30;
 }
 
+/* =========================================================
+ * 日本年號
+ * ========================================================= */
+
 export function japaneseEraToGregorianYear(
   eraId,
   year
@@ -566,6 +610,10 @@ export function japaneseEraYearMax(
     1
   );
 }
+
+/* =========================================================
+ * 曆法顯示文字
+ * ========================================================= */
 
 export function formatAltCalendar(
   date,
@@ -651,13 +699,9 @@ export function formatAltCalendar(
   } ${parts.year}/${m}/${d}`;
 }
 
-export function isoDateStr(d) {
-  return `${d.getFullYear()}-${String(
-    d.getMonth() + 1
-  ).padStart(2, '0')}-${String(
-    d.getDate()
-  ).padStart(2, '0')}`;
-}
+/* =========================================================
+ * 農曆週期匹配
+ * ========================================================= */
 
 export function findNextChineseMatch(
   targetMonth,
@@ -710,6 +754,9 @@ export function findNextChineseMatch(
         info
       )
     ) {
+      /*
+       * 先結算剛剛結束的月份區塊。
+       */
       if (
         prevInfo &&
         isTargetPlainBlock(
@@ -717,12 +764,23 @@ export function findNextChineseMatch(
         )
       ) {
         if (!targetIsLeap) {
+          /*
+           * 一般農曆月份：
+           * 找不到目標日，例如目標為三十，
+           * 但該月份只有二十九天，
+           * 就使用該月份最後一天。
+           */
           return (
             blockExactDay ||
             blockLastDay
           );
         }
 
+        /*
+         * 閏月事件：
+         * 先記錄普通月份的替代日期，
+         * 等待確認今年是否真的存在對應閏月。
+         */
         plainFallback =
           blockExactDay ||
           blockLastDay;
@@ -733,18 +791,31 @@ export function findNextChineseMatch(
         ) &&
         targetIsLeap
       ) {
+        /*
+         * 目標閏月已經完整掃描完，
+         * 若目標日不存在，例如閏月只有二十九天，
+         * 使用閏月最後一天。
+         */
         return (
           blockExactDay ||
           blockLastDay
         );
       }
 
+      /*
+       * 如果上一個普通月份是目標月份，
+       * 但接下來並沒有同編號閏月，
+       * 表示今年沒有對應閏月。
+       *
+       * 例如：
+       * 閏八月初一
+       * →
+       * 八月初一
+       */
       if (
         plainFallback &&
         targetIsLeap &&
-        !isTargetLeapBlock(
-          info
-        )
+        !isTargetLeapBlock(info)
       ) {
         return plainFallback;
       }
@@ -753,6 +824,9 @@ export function findNextChineseMatch(
       blockExactDay = null;
     }
 
+    /*
+     * 只處理目標月份的普通月或閏月。
+     */
     if (
       isTargetPlainBlock(info) ||
       isTargetLeapBlock(info)
@@ -764,20 +838,22 @@ export function findNextChineseMatch(
       ) {
         blockExactDay = d;
 
+        /*
+         * 普通月份事件完全吻合。
+         */
         if (
           !targetIsLeap &&
-          isTargetPlainBlock(
-            info
-          )
+          isTargetPlainBlock(info)
         ) {
           return d;
         }
 
+        /*
+         * 閏月事件完全吻合。
+         */
         if (
           targetIsLeap &&
-          isTargetLeapBlock(
-            info
-          )
+          isTargetLeapBlock(info)
         ) {
           return d;
         }
@@ -787,8 +863,16 @@ export function findNextChineseMatch(
     prevInfo = info;
   }
 
+  /*
+   * 掃描結束仍未找到目標閏月，
+   * 使用最近記錄的普通月份替代日期。
+   */
   return plainFallback;
 }
+
+/* =========================================================
+ * 其他曆法週期匹配
+ * ========================================================= */
 
 export function findNextCalendarMatch(
   calendarId,
@@ -833,6 +917,9 @@ export function findNextCalendarMatch(
 
     enteredTargetMonth = true;
 
+    /*
+     * 完全匹配目標日期。
+     */
     if (
       parseInt(parts.day) ===
       targetDay
@@ -840,6 +927,11 @@ export function findNextCalendarMatch(
       return d;
     }
 
+    /*
+     * 記錄目前目標月份最後一天，
+     * 如果目標日不存在，例如某月沒有 31 日，
+     * 最後返回該月最後一天。
+     */
     lastDayOfTargetMonth = d;
   }
 
