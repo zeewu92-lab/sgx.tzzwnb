@@ -621,4 +621,36 @@ function findNextChineseMatch(targetMonth, targetDay, targetIsLeap, fromDate, ma
       blockLastDay = null;
       blockExactDay = null;
     }
+    export function findNextCalendarMatch(
+  calendarId,
+  targetMonth,
+  targetDay,
+  fromDate,
+  maxDays = 400
+) {
+  let lastDayOfTargetMonth = null;
+  let enteredTargetMonth = false;
+
+  for (let i = 0; i < maxDays; i++) {
+    const d = addDays(fromDate, i);
+    const parts = getCalendarParts(d, calendarId);
+
+    if (!parts) continue;
+
+    const month = parseInt(parts.month);
+
+    if (month !== targetMonth) {
+      if (enteredTargetMonth) return lastDayOfTargetMonth;
+      continue;
+    }
+
+    enteredTargetMonth = true;
+
+    if (parseInt(parts.day) === targetDay) return d;
+
+    lastDayOfTargetMonth = d;
+  }
+
+  return lastDayOfTargetMonth;
+}
 
