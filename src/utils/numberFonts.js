@@ -72,3 +72,21 @@ export const BIG_NUMBER_FONT_SIZES = {
 export function getBigNumberFontSize(digitCount) {
   return BIG_NUMBER_FONT_SIZES[digitCount] || BIG_NUMBER_FONT_SIZES[5];
 }
+const _loadedFontLinks = new Set();
+
+export function ensureGoogleFontLoaded(googleFont) {
+  if (
+    !googleFont ||
+    _loadedFontLinks.has(googleFont) ||
+    typeof document === 'undefined'
+  ) {
+    return;
+  }
+
+  _loadedFontLinks.add(googleFont);
+
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${googleFont}&display=swap`;
+  document.head.appendChild(link);
+}
