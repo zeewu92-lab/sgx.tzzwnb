@@ -559,7 +559,24 @@ export function formatAltCalendar(
 
   return `${calLabel[lang] || calendarId} ${parts.year}/${m}/${d}`;
 }
+export function getChineseDateInfo(date) {
+  const parts = getCalendarParts(date, 'chinese');
 
+  if (!parts) return null;
+
+  const { num, isLeap } = parseChineseNumericMonth(
+    parts.month || ''
+  );
+
+  if (num == null) return null;
+
+  return {
+    year: parseInt(parts.relatedYear || parts.year),
+    month: num,
+    isLeap,
+    day: parseInt(parts.day),
+  };
+}
 export function isoDateStr(d) {
   return `${d.getFullYear()}-${String(
     d.getMonth() + 1
