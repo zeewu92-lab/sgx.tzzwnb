@@ -4237,15 +4237,18 @@ function TimelineSection({
   // 不去動 processedEvents 原本的邏輯與用途（時間軸分頁、編輯/刪除/相冊彈窗依然完全依賴它）。
   // 年檢視需要逐月掃描 12 次，才能抓到「每個月各自最近一次落在那個月裡的發生日」——例如每月
   // 重複的事件，一整年應該出現 12 次，不是只出現一次。
-  // 「展示全部事件」開啟時（showAll），不分月份／年份，直接沿用 processedEvents（每個事件
-  // 最近一次發生日、已經照日期排序好，過去未來都包含），不用再逐月掃描一次。
+  // 「展示全部事件」開啟時（showAll），不分月份／年份，直接沿用 upcomingEvents（每個事件
+  // 最近一次發生日、已經照日期排序好，只保留還沒過去的），不用再逐月掃描一次。
+  // 日程分頁不論「展示全部事件」開關或選到哪個月份／年份，一律不列出已經過去（diffDays < 0）
+  // 的地標本身——不只是把它們收進可收合區塊而已，是整個不出現在卡片列表裡（見使用者需求：
+  // 日程分頁不要顯示「往日地標」的內容，不只是那個收合按鈕/區塊）。
   // 同樣包進 useMemo：這一份對農曆／其他曆法事件來說本來就不便宜（getEffectiveDate 內部要
   // 逐日掃描比對），年檢視還要乘以 12 個月，如果不快取，父層 App 每 30 秒跳一次「現在時間」、
   // 或是在這個分頁打字搜尋、開合新增表單，都會讓它重新整個算一次，正是先前「開啟日程頁卡頓、
   // 操作反應慢」的主因——改成只有 events／rangeFilter／showAll／now 真的變動時才重算。
   const rangedEvents = useMemo(() => {
     if (!isCardsLayout) return [];
-    if (showAll) return processedEvents;
+    if (showAll) return upcomingEvents;
     if (!rangeFilter) return [];
     const monthsToScan = rangeFilter.mode === 'year'
       ? Array.from({ length: 12 }, (_, m) => m)
@@ -4259,6 +4262,7 @@ function TimelineSection({
         if (occ.getFullYear() !== rangeFilter.year || occ.getMonth() !== m) return;
         const targetTime = new Date(occ.getFullYear(), occ.getMonth(), occ.getDate()).getTime();
         const diffDays = Math.ceil((targetTime - todayTime) / (1000 * 60 * 60 * 24));
+        if (diffDays < 0) return; // 日程分頁不列出已經過去的地標，直接跳過，不進 results
         let age = null;
         if ((ev.isBirthday || ev.isCare) && ev.repeat) {
           const origDate = combineDateTime(ev.date, ev.time);
@@ -4273,7 +4277,7 @@ function TimelineSection({
     });
     results.sort((a, b) => a.targetDate - b.targetDate);
     return results;
-  }, [isCardsLayout, rangeFilter, events, now, showAll, processedEvents]);
+  }, [isCardsLayout, rangeFilter, events, now, showAll, upcomingEvents]);
 
   // 搜尋：輸入關鍵字時，直接在全部地標（不分過去／未來）中比對標題，跳出原本的分區顯示
   const searchQueryNormalized = searchQuery.trim().toLowerCase();
@@ -8828,7 +8832,7 @@ export default function App() {
                   AnniversaryCalendar／TimelineSection 整個卸載再重新掛載，所有 useMemo 快取、
                   日曆目前選的月份、捲動位置全部歸零，這正是「從其他頁面切進日程頁很慢」的主因；
                   改成常駐掛載後，切分頁純粹是 CSS 顯示/隱藏，不會重新渲染整棵子樹。 */}
-              <div className="flex-1 min-h-0 flex flex-col gap-2" style={{ display: activeTab === 'schedule' ? 'flex' : 'none' }}>
+              <div className="flex-1 min-h-0 flex flex-col gap-2" style={{ display: activeTab === 'schedule' ? 'flex' : 'none', marginTop: -8 }}>
                   {/* 「新增日程／搜尋」按鈕的實際掛載點：內容由下面的 TimelineSection（cards 模式）
                       透過 createPortal 掛進來，這裡只是預留一個節點，讓按鈕視覺上出現在日曆
                       上方、彼此形成清楚的上下關係（見需求三）。 */}
@@ -8836,11 +8840,12 @@ export default function App() {
 
                   <AnniversaryCalendar events={events} lang={lang} t={t} now={now} onRangeChange={setScheduleRange} />
 
-                  {/* 日程篩選設定：左邊是純文字提示（灰色小字，不可點擊），描述預設狀態；
-                      右邊「展示全部事件」是真正的操作，文字＋開關放在一起，打開後改成不分
-                      月份、列出全部事件（見 TimelineSection 的 showAll）。 */}
-                  <div className="rounded-2xl px-4 py-2.5 flex items-center justify-between flex-shrink-0" style={glass()}>
-                    <span className="text-xs" style={{ color: INK_SOFT }}>{t.futureOnlyLabel}</span>
+                  {/* 純文字提示，描述預設狀態，不可點擊——獨立一行，不放進下面的按鈕模組（那裡
+                      只留真正可操作的「展示全部事件」開關），避免看起來像是可以點的選項。 */}
+                  <span className="text-xs px-1 flex-shrink-0" style={{ color: INK_SOFT }}>{t.futureOnlyLabel}</span>
+
+                  {/* 「展示全部事件」按鈕模組：打開後改成不分月份、列出全部事件（見 TimelineSection 的 showAll）。 */}
+                  <div className="rounded-2xl px-4 py-2.5 flex items-center justify-end flex-shrink-0" style={glass()}>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className="text-xs" style={{ color: INK_SOFT }}>{t.scheduleShowAllLabel}</span>
                       <button
