@@ -491,6 +491,7 @@ const STRINGS = {
     aboutBody: '時光線是一款用來記錄生活中重要時刻與紀念日的應用程式，陪你留住值得回味的時光。',
     legalPlaceholder: '完整內容準備中，稍後將於此提供。',
     loginPromptTitle: '登入以同步你的時光',
+    appearanceModeSystem: '跟隨系統', appearanceModeLight: '淺色', appearanceModeDark: '深色',
   },
   en: {
     todayIs: d => `Today is ${d}`, greetMorning: 'Good morning', greetForenoon: 'Good morning', greetAfternoon: 'Good afternoon', greetLateAfternoon: 'Good afternoon', greetEvening: 'Good evening',
@@ -611,6 +612,7 @@ const STRINGS = {
     aboutBody: 'Timeline is an app for keeping track of the moments and anniversaries that matter, helping you hold on to time worth remembering.',
     legalPlaceholder: 'Full content coming soon.',
     loginPromptTitle: 'Sign in to sync your moments',
+    appearanceModeSystem: 'System', appearanceModeLight: 'Light', appearanceModeDark: 'Dark',
   },
   ja: {
     todayIs: d => `今日は ${d}`, greetMorning: 'おはようございます', greetForenoon: 'おはようございます', greetAfternoon: 'こんにちは', greetLateAfternoon: 'こんにちは', greetEvening: 'こんばんは',
@@ -731,6 +733,7 @@ const STRINGS = {
     aboutBody: 'タイムラインは、人生の大切な瞬間や記念日を記録するためのアプリです。心に残る時間をともに残していきます。',
     legalPlaceholder: '詳細な内容は準備中です。近日中に掲載予定です。',
     loginPromptTitle: 'サインインして時間を同期',
+    appearanceModeSystem: 'システムに従う', appearanceModeLight: 'ライト', appearanceModeDark: 'ダーク',
   },
   ko: {
     todayIs: d => `오늘은 ${d}`, greetMorning: '좋은 아침이에요', greetForenoon: '좋은 아침이에요', greetAfternoon: '좋은 오후예요', greetLateAfternoon: '좋은 오후예요', greetEvening: '좋은 저녁이에요',
@@ -851,6 +854,7 @@ const STRINGS = {
     aboutBody: '타임라인은 삶의 중요한 순간과 기념일을 기록하는 앱으로, 소중한 시간을 함께 간직합니다.',
     legalPlaceholder: '전체 내용은 준비 중이며 곧 제공될 예정입니다.',
     loginPromptTitle: '로그인하여 시간을 동기화하세요',
+    appearanceModeSystem: '시스템 설정 따르기', appearanceModeLight: '라이트', appearanceModeDark: '다크',
   },
 };
 
@@ -5860,6 +5864,10 @@ const EVENTS_KEY = 'countdown-timeline-events';
 const CLOCKS_KEY = 'world-clock-list';
 const LANG_KEY = 'app-language';
 const DARK_KEY = 'app-dark-mode';
+// 「外觀」偏好：跟隨系統／淺色／深色。isDark（實際套用的布林值）維持不變，全 App 其他地方
+// 完全不用改；themeMode 只多加一層「isDark 應該怎麼算出來」的邏輯，獨立存一個新 key，
+// 不影響舊版 DARK_KEY 的讀寫與雲端同步欄位（同步／備份仍然只帶 isDark 這個布林值即可）。
+const THEME_MODE_KEY = 'app-theme-mode';
 const CUSTOM_ICONS_KEY = 'custom-icon-emojis';
 const HOME_TZ_ID_KEY = 'world-clock-home-id'; // 世界時鐘「目前位置」設定的是哪一筆時鐘（存 id），修好重新整理後會回復原狀的問題
 const NOTIFY_ENABLED_KEY = 'event-notify-enabled';
@@ -7170,31 +7178,147 @@ function ProfileAvatar({ fbUser, size = 48 }) {
   );
 }
 
-// 開／關切換：跟日程分頁「只展示未來代辦事件」用的是同一套視覺（圓形滑鈕＋膠囊底），
-// 這裡抽成獨立元件方便在「外觀」設定列直接重複使用。
-function ToggleSwitch({ checked, onChange, label }) {
-  return (
-    <button
-      type="button" role="switch" aria-checked={checked} aria-label={label}
-      onClick={onChange}
-      className="relative flex-shrink-0 rounded-full"
+// 「外觀」點擊後彈出的二級選單：跟隨系統／淺色／深色，跟 LangSwitcher 用同一套下拉面板骨架
+// （點按鈕展開、點外面關閉、跟其他下拉選單互斥），選好的選項直接寫回 themeMode。
+// 「偏好」分組裡幾個內容單薄的設定項（外觀／通知／語言／日曆）原本是「點右側小按鈕→彈出下拉
+// 面板」，但下拉面板是絕對定位掛在列表項目底下，而外層 SettingsGroupCard 的卡片有
+// overflow-hidden（用來讓分組列表四角保持圓角），面板一長就會被自己的父層卡片裁切、看起來像
+// 「被下面的容器蓋住」。改成點整列直接跳出一個置中的獨立視窗（用 createPortal 掛到
+// document.body，不再是任何卡片的子孫），從根本解決層級被裁切的問題，視覺上沿用跟 AuthModal
+// 完全一致的毛玻璃彈窗樣式（AUTH_GLASS），維持風格統一。
+function SettingsChoiceModal({ title, onClose, children }) {
+  const [modalPhase, setModalPhase] = useState('enter');
+  const DURATION = 160;
+  useEffect(() => { const id = requestAnimationFrame(() => setModalPhase('shown')); return () => cancelAnimationFrame(id); }, []);
+  function handleClose() {
+    if (modalPhase === 'closing') return;
+    setModalPhase('closing');
+    setTimeout(onClose, DURATION);
+  }
+  useModalBackClose(true, handleClose);
+  const shown = modalPhase === 'shown';
+  return createPortal(
+    <div
+      className="fixed inset-0 flex items-center justify-center px-6"
       style={{
-        width: 44, height: 26, padding: 3,
-        background: checked ? ACCENT : 'rgba(120,125,135,0.22)',
-        border: checked ? `1px solid ${ACCENT}` : '1px solid rgba(120,125,135,0.16)',
-        transition: 'background 180ms ease, border-color 180ms ease',
+        zIndex: 300, // 高於「我的」子頁面（260）與其他所有彈窗，確保一定疊在最上層
+        background: shown ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0)',
+        transition: `background ${DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
       }}
+      onClick={handleClose}
     >
-      <span
-        className="absolute rounded-full"
-        style={{ width: 18, height: 18, top: 2, left: checked ? 21 : 2, background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.18)', transition: 'left 180ms cubic-bezier(0.22, 1, 0.36, 1)' }}
-      />
-    </button>
+      <div
+        className="w-full max-w-xs p-5 rounded-2xl flex flex-col gap-3"
+        style={{
+          ...AUTH_GLASS,
+          opacity: shown ? 1 : 0,
+          transform: shown ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.97)',
+          transition: `opacity ${DURATION}ms ease, transform ${DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-black" style={{ color: INK }}>{title}</h2>
+          <button onClick={handleClose} aria-label="close" style={{ color: INK_SOFT }}><X size={16} /></button>
+        </div>
+        {children}
+      </div>
+    </div>,
+    document.body
   );
 }
 
-// 分組列表的單一列：整列可點擊（右側自動補上箭頭）或右側掛一個獨立的互動元件（開關／下拉面板），
-// 兩種情境擇一，不會同時出現，避免整列的 onClick 跟右側元件自己的點擊互相搶事件。
+// 「外觀」視窗內容：跟隨系統／淺色／深色，選到哪個就直接關窗。
+function AppearanceChoiceContent({ themeMode, setThemeMode, t, onClose }) {
+  const options = [
+    { id: 'system', label: t.appearanceModeSystem },
+    { id: 'light', label: t.appearanceModeLight },
+    { id: 'dark', label: t.appearanceModeDark },
+  ];
+  return (
+    <div className="flex flex-col gap-1">
+      {options.map(o => (
+        <button
+          key={o.id}
+          onClick={() => { setThemeMode(o.id); onClose(); }}
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold text-left"
+          style={{ color: o.id === themeMode ? ACCENT : INK, background: o.id === themeMode ? accentAlpha('14') : 'transparent' }}
+        >
+          {o.label}
+          {o.id === themeMode && <Check size={15} />}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// 「語言」視窗內容：跟 LangSwitcher 顯示同一份語言清單，選到哪個就直接關窗。
+function LanguageChoiceContent({ lang, setLang, onClose }) {
+  return (
+    <div className="flex flex-col gap-1">
+      {LANGS.map(l => (
+        <button
+          key={l}
+          onClick={() => { setLang(l); onClose(); }}
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold text-left"
+          style={{ color: l === lang ? ACCENT : INK, background: l === lang ? accentAlpha('14') : 'transparent' }}
+        >
+          {LANG_NAMES[l]}
+          {l === lang && <Check size={15} />}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// 「通知」視窗內容：跟原本 NotifySettingsButton 下拉面板裡的欄位完全一致（啟用開關＋提前幾天提醒），
+// 只是換成置中視窗的呈現方式，排程／通知邏輯完全不動，仍然由 App 那一層負責。
+function NotifyChoiceContent({ enabled, onToggle, daysBefore, setDaysBefore, permission, t }) {
+  const unsupported = permission === 'unsupported';
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-bold" style={{ color: INK }}>{t.notifyEnableLabel}</span>
+        <button
+          onClick={() => onToggle(!enabled)}
+          className="relative flex-shrink-0"
+          style={{ width: 40, height: 24, borderRadius: 12, background: enabled ? ACCENT : 'var(--card-border)', transition: 'background 0.2s ease' }}
+        >
+          <span
+            className="absolute rounded-full bg-white"
+            style={{ width: 18, height: 18, top: 3, left: enabled ? 19 : 3, transition: 'left 0.2s ease', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }}
+          />
+        </button>
+      </div>
+      <p className="text-xs" style={{ color: INK_SOFT }}>{t.notifyEnableHint}</p>
+
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-bold" style={{ color: INK }}>{t.notifyDaysBeforeLabel}</span>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <input
+            type="number"
+            min={0}
+            max={365}
+            value={daysBefore}
+            onChange={e => {
+              const v = parseInt(e.target.value, 10);
+              setDaysBefore(Number.isFinite(v) ? Math.max(0, Math.min(365, v)) : 0);
+            }}
+            className="text-sm text-center rounded-lg px-2 py-1"
+            style={{ width: 52, background: 'var(--card-border)', color: INK, border: 'none' }}
+          />
+          <span className="text-xs" style={{ color: INK_SOFT }}>{t.notifyDaysBeforeUnit}</span>
+        </div>
+      </div>
+
+      {unsupported && <p className="text-xs font-medium" style={{ color: DANGER }}>{t.notifyUnsupported}</p>}
+      {permission === 'denied' && <p className="text-xs font-medium" style={{ color: DANGER }}>{t.notifyPermissionDenied}</p>}
+    </div>
+  );
+}
+
+// 分組列表的單一列：整列可點擊時右側自動補上箭頭（就算同時帶了 right 提示文字／圖示也一樣顯示，
+// 讓使用者清楚知道整列都可以點，而不是只有某個小按鈕能點）；不可點擊時純粹展示，不出現箭頭。
 function SettingsRow({ icon, label, onClick, danger, right, isFirst }) {
   const Comp = onClick ? 'button' : 'div';
   return (
@@ -7207,7 +7331,7 @@ function SettingsRow({ icon, label, onClick, danger, right, isFirst }) {
       <span className="flex-shrink-0" style={{ color: danger ? DANGER : INK_SOFT }}>{icon}</span>
       <span className="flex-1 text-sm font-bold truncate">{label}</span>
       {right}
-      {onClick && !right && <ChevronRight size={16} style={{ color: INK_SOFT, opacity: 0.55, flexShrink: 0 }} />}
+      {onClick && <ChevronRight size={16} style={{ color: INK_SOFT, opacity: 0.55, flexShrink: 0 }} />}
     </Comp>
   );
 }
@@ -7219,41 +7343,6 @@ function SettingsGroupCard({ title, children }) {
     <div className="flex flex-col gap-2">
       {title && <p className="px-1 text-xs font-bold" style={{ color: INK_SOFT, letterSpacing: '0.02em' }}>{title}</p>}
       <div className="rounded-2xl overflow-hidden" style={glass()}>{children}</div>
-    </div>
-  );
-}
-
-// 「日曆」目前在 App 裡沒有一個全域偏好可以設定——曆法（西曆／農曆等）是各別地標自己的欄位
-// （新增／編輯地標表單裡的「曆法參照」）。與其為了塞滿選單而虛構一個並不存在的全域開關，
-// 這裡改成一個小面板，如實說明目前曆法是在哪裡設定的，不做過度包裝。
-function CalendarPrefButton({ t }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  useEffect(() => {
-    function handleClickOutside(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-  useExclusiveDropdown('calendarPref', open, () => setOpen(false));
-  return (
-    <div className="relative flex-shrink-0" ref={ref}>
-      <button
-        onClick={() => setOpen(v => { const next = !v; if (next) openDropdownExclusive('calendarPref'); return next; })}
-        aria-label={t.calendarPrefLabel}
-        className="flex items-center justify-center rounded-full"
-        style={{ ...glass(), width: '1.75rem', height: '1.75rem', color: INK_SOFT }}
-      >
-        <ChevronRight size={14} style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 150ms ease' }} />
-      </button>
-      {open && (
-        <div
-          className="absolute right-0 mt-2 rounded-xl p-3 z-20"
-          style={{ ...glass(), width: 224, boxShadow: '0 10px 30px rgba(35,39,51,0.15)' }}
-          onClick={e => e.stopPropagation()}
-        >
-          <p className="text-xs leading-relaxed" style={{ color: INK }}>{t.calendarPrefHint}</p>
-        </div>
-      )}
     </div>
   );
 }
@@ -7409,34 +7498,8 @@ function AccountManagementPage({ t, fbUser, onClose }) {
   );
 }
 
-// 「我的時光」點進去的資料總覽：只放大呈現首頁那三個統計數字，不重新展示時間軸／相冊的實際內容，
-// 避免變成「第二個時間軸」或「第二個相冊頁」。
-function MyTimeOverviewPage({ t, eventCount, albumCount, photoCount }) {
-  const stats = [
-    { label: t.myTimeOverviewEvents, value: eventCount },
-    { label: t.myTimeOverviewAlbums, value: albumCount },
-    { label: t.myTimeOverviewPhotos, value: photoCount },
-  ];
-  return (
-    <div className="flex flex-col gap-4">
-      <p className="text-sm" style={{ color: INK_SOFT }}>{t.myTimeOverviewDesc}</p>
-      <div className="grid grid-cols-3 gap-3">
-        {stats.map(s => (
-          <div key={s.label} className="rounded-2xl p-4 flex flex-col items-center gap-1" style={glass()}>
-            <span className="text-2xl font-black" style={{ color: INK }}>{s.value}</span>
-            <span className="text-xs font-bold" style={{ color: INK_SOFT }}>{s.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// 「本機備份」／「匯入與匯出」共用同一套底層邏輯（跟原本 AuthModal 裡的匯出／匯入完全一致，
-// 只是搬到獨立頁面），因為目前 App 裡「備份」與「匯入匯出」本來就是同一個檔案格式（.tzzwnb）
-// 的一體兩面，不存在兩套互不相關的實作——variant 只決定文案的側重（備份提醒 vs. 兩個按鈕並重），
-// 不會產生使用者看不懂的重複功能。
-function BackupDataPage({ t, backupData, onImportBackup, variant }) {
+// 「本機備份」：跟原本 AuthModal 裡的匯出／匯入邏輯完全一致，只是搬到獨立頁面呈現。
+function BackupDataPage({ t, backupData, onImportBackup }) {
   const importFileRef = useRef(null);
   const [backupMsg, setBackupMsg] = useState(null);
 
@@ -7489,7 +7552,7 @@ function BackupDataPage({ t, backupData, onImportBackup, variant }) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm" style={{ color: INK_SOFT }}>{t.backupHint}</p>
-      {variant === 'backup' && <p className="text-xs leading-relaxed" style={{ color: INK_SOFT }}>{t.albumBackupReminder}</p>}
+      <p className="text-xs leading-relaxed" style={{ color: INK_SOFT }}>{t.albumBackupReminder}</p>
       <div className="flex gap-2">
         <button type="button" onClick={handleExportBackup} className="flex-1 py-3 rounded-xl text-sm font-bold" style={{ ...glass(), color: INK }}>
           {t.backupExportBtn}
@@ -7552,12 +7615,16 @@ function SyncDataPage({ t, fbUser, syncStatus, lastSyncedAt, onOpenAuth }) {
 function ProfilePage({
   t, fbUser, localSaveError, syncStatus, onOpenAuth,
   notifyEnabled, onToggleNotify, notifyDaysBefore, setNotifyDaysBefore, notifyPermission,
-  onOpenFeedback, isDark, setIsDark, lang, setLang,
+  onOpenFeedback, isDark, themeMode, setThemeMode, lang, setLang,
   events, albums, clocks, customIcons, onImportBackup, lastSyncedAt, appVersion,
 }) {
   const [subpage, setSubpage] = useState(null);
   const [mounted, shown] = useOverlayTransition(subpage !== null, 200);
   useModalBackClose(subpage !== null, () => setSubpage(null));
+
+  // 「偏好」分組裡外觀／通知／語言／日曆這四項，點整列跳出的置中視窗——跟 subpage（獨立滑入頁面）
+  // 是兩種不同層級的呈現，這裡另外用一個 state 管理，彼此互不影響。
+  const [choiceModal, setChoiceModal] = useState(null); // null | 'appearance' | 'notify' | 'language' | 'calendar'
 
   // 淡出動畫播放期間 subpage 已經變成 null，但畫面還在，這裡另外記一份「最後顯示過的子頁面」，
   // 讓子頁面內容跟著淡出、而不是在動畫播到一半時瞬間清空變成空白。
@@ -7582,8 +7649,8 @@ function ProfilePage({
   const albumCount = albums ? albums.length : 0;
 
   const subpageTitle = {
-    account: t.accountManageLabel, overview: t.myTimeOverviewTitle, backup: t.backupSectionTitle,
-    importExport: t.importExportLabel, sync: t.syncDataLabel, about: t.aboutLabel, privacy: t.privacyLabel, terms: t.termsLabel,
+    account: t.accountManageLabel, backup: t.backupSectionTitle,
+    sync: t.syncDataLabel, about: t.aboutLabel, privacy: t.privacyLabel, terms: t.termsLabel,
   }[renderedSubpage] || '';
 
   let syncRightText = t.notSyncedStatus;
@@ -7592,6 +7659,10 @@ function ProfilePage({
     else if (syncStatus === 'synced') syncRightText = t.synced;
     else if (syncStatus === 'error') syncRightText = t.syncErrorStatus;
   }
+
+  const appearanceValueText = { system: t.appearanceModeSystem, light: t.appearanceModeLight, dark: t.appearanceModeDark }[themeMode] || t.appearanceModeSystem;
+  const notifyValueText = notifyEnabled ? t.darkModeOn : t.darkModeOff;
+  const choiceModalTitle = { appearance: t.appearanceLabel, notify: t.notifyPrefLabel, language: t.languageLabel, calendar: t.calendarPrefLabel }[choiceModal] || '';
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-5">
@@ -7622,12 +7693,9 @@ function ProfilePage({
         </button>
       )}
 
-      {/* 二、我的時光：簡潔的橫向統計，只給概況、不重複展示時間軸／相冊本身的內容 */}
-      <button onClick={() => setSubpage('overview')} className="rounded-2xl p-5 flex flex-col gap-3 text-left" style={glass()}>
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-black" style={{ color: INK }}>{t.myTimeLabel}</span>
-          <ChevronRight size={15} style={{ color: INK_SOFT }} />
-        </div>
+      {/* 二、我的時光：簡潔的橫向統計，純展示、不做成可點擊的入口 */}
+      <div className="rounded-2xl p-5 flex flex-col gap-3" style={glass()}>
+        <span className="text-sm font-black" style={{ color: INK }}>{t.myTimeLabel}</span>
         <div className="flex items-center">
           {[[eventCount, t.myTimeOverviewEvents], [albumCount, t.myTimeOverviewAlbums], [photoCount, t.myTimeOverviewPhotos]].map(([val, label], i) => (
             <div key={label} className="flex-1 flex flex-col items-center gap-0.5" style={{ borderLeft: i === 0 ? 'none' : CARD_BORDER }}>
@@ -7637,12 +7705,11 @@ function ProfilePage({
           ))}
         </div>
         <p className="text-[11px]" style={{ color: INK_SOFT }}>{t.myTimeCaption}</p>
-      </button>
+      </div>
 
       {/* 三、資料 */}
       <SettingsGroupCard title={t.dataGroupLabel}>
         <SettingsRow isFirst icon={<Database size={18} />} label={t.backupSectionTitle} onClick={() => setSubpage('backup')} />
-        <SettingsRow icon={<Share2 size={18} />} label={t.importExportLabel} onClick={() => setSubpage('importExport')} />
         <SettingsRow
           icon={<RefreshCw size={18} />} label={t.syncDataLabel} onClick={() => setSubpage('sync')}
           right={<span className="text-xs font-bold" style={{ color: syncStatus === 'error' ? DANGER : INK_SOFT }}>{syncRightText}</span>}
@@ -7652,15 +7719,18 @@ function ProfilePage({
       {/* 四、偏好 */}
       <SettingsGroupCard title={t.prefGroupLabel}>
         <SettingsRow
-          isFirst icon={isDark ? <Sun size={18} /> : <Moon size={18} />} label={t.appearanceLabel}
-          right={<ToggleSwitch checked={isDark} onChange={() => setIsDark(v => !v)} label={t.darkModeLabel} />}
+          isFirst icon={<Sun size={18} />} label={t.appearanceLabel} onClick={() => setChoiceModal('appearance')}
+          right={<span className="text-xs font-bold" style={{ color: INK_SOFT }}>{appearanceValueText}</span>}
         />
         <SettingsRow
-          icon={notifyEnabled ? <Bell size={18} /> : <BellOff size={18} />} label={t.notifyPrefLabel}
-          right={<NotifySettingsButton enabled={notifyEnabled} onToggle={onToggleNotify} daysBefore={notifyDaysBefore} setDaysBefore={setNotifyDaysBefore} permission={notifyPermission} t={t} />}
+          icon={notifyEnabled ? <Bell size={18} /> : <BellOff size={18} />} label={t.notifyPrefLabel} onClick={() => setChoiceModal('notify')}
+          right={<span className="text-xs font-bold" style={{ color: INK_SOFT }}>{notifyValueText}</span>}
         />
-        <SettingsRow icon={<Globe size={18} />} label={t.languageLabel} right={<LangSwitcher lang={lang} setLang={setLang} />} />
-        <SettingsRow icon={<Calendar size={18} />} label={t.calendarPrefLabel} right={<CalendarPrefButton t={t} />} />
+        <SettingsRow
+          icon={<Globe size={18} />} label={t.languageLabel} onClick={() => setChoiceModal('language')}
+          right={<span className="text-xs font-bold" style={{ color: INK_SOFT }}>{LANG_NAMES[lang]}</span>}
+        />
+        <SettingsRow icon={<Calendar size={18} />} label={t.calendarPrefLabel} onClick={() => setChoiceModal('calendar')} />
       </SettingsGroupCard>
 
       {/* 五、其他 */}
@@ -7678,14 +7748,23 @@ function ProfilePage({
 
       <ProfileSubpageShell title={subpageTitle} onBack={() => setSubpage(null)} mounted={mounted} shown={shown}>
         {renderedSubpage === 'account' && <AccountManagementPage t={t} fbUser={fbUser} onClose={() => setSubpage(null)} />}
-        {renderedSubpage === 'overview' && <MyTimeOverviewPage t={t} eventCount={eventCount} albumCount={albumCount} photoCount={photoCount} />}
-        {renderedSubpage === 'backup' && <BackupDataPage t={t} backupData={backupData} onImportBackup={onImportBackup} variant="backup" />}
-        {renderedSubpage === 'importExport' && <BackupDataPage t={t} backupData={backupData} onImportBackup={onImportBackup} variant="importExport" />}
+        {renderedSubpage === 'backup' && <BackupDataPage t={t} backupData={backupData} onImportBackup={onImportBackup} />}
         {renderedSubpage === 'sync' && <SyncDataPage t={t} fbUser={fbUser} syncStatus={syncStatus} lastSyncedAt={lastSyncedAt} onOpenAuth={onOpenAuth} />}
         {renderedSubpage === 'about' && <p className="text-sm leading-relaxed" style={{ color: INK }}>{t.aboutBody}</p>}
         {renderedSubpage === 'privacy' && <p className="text-sm leading-relaxed" style={{ color: INK_SOFT }}>{t.legalPlaceholder}</p>}
         {renderedSubpage === 'terms' && <p className="text-sm leading-relaxed" style={{ color: INK_SOFT }}>{t.legalPlaceholder}</p>}
       </ProfileSubpageShell>
+
+      {choiceModal && (
+        <SettingsChoiceModal title={choiceModalTitle} onClose={() => setChoiceModal(null)}>
+          {choiceModal === 'appearance' && <AppearanceChoiceContent themeMode={themeMode} setThemeMode={setThemeMode} t={t} onClose={() => setChoiceModal(null)} />}
+          {choiceModal === 'notify' && (
+            <NotifyChoiceContent enabled={notifyEnabled} onToggle={onToggleNotify} daysBefore={notifyDaysBefore} setDaysBefore={setNotifyDaysBefore} permission={notifyPermission} t={t} />
+          )}
+          {choiceModal === 'language' && <LanguageChoiceContent lang={lang} setLang={setLang} onClose={() => setChoiceModal(null)} />}
+          {choiceModal === 'calendar' && <p className="text-sm leading-relaxed" style={{ color: INK }}>{t.calendarPrefHint}</p>}
+        </SettingsChoiceModal>
+      )}
     </div>
   );
 }
@@ -7697,6 +7776,21 @@ export default function App() {
   const [clocks, setClocks] = useState([]);
   const [events, setEvents] = useState([]);
   const [isDark, setIsDark] = useState(false);
+  // 「外觀」設定的三段選項：'system'（跟隨系統）｜'light'｜'dark'。isDark 仍然是全 App 實際拿來
+  // 判斷深色／淺色的唯一布林值，themeMode 只負責「決定 isDark 應該是什麼」，兩者用下面這個
+  // effect 接起來——system 模式下跟著 prefers-color-scheme 走，並監聽系統切換即時更新；
+  // 選定 light／dark 則直接固定，不受系統影響。
+  const [themeMode, setThemeMode] = useState('system');
+  useEffect(() => {
+    if (themeMode === 'light') { setIsDark(false); return; }
+    if (themeMode === 'dark') { setIsDark(true); return; }
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => setIsDark(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, [themeMode]);
   const [loaded, setLoaded] = useState(false);
   // 版本更新提醒：只在 App(Capacitor 原生環境)裡，啟動時去問 GitHub 目前「已發布」的
   // 最新版本是多少（GitHub API 只回傳已發布的正式版，草稿不會出現，不用擔心把還在測試的
@@ -7946,7 +8040,7 @@ export default function App() {
     if (Array.isArray(data.clocks)) setClocks(data.clocks);
     if (Array.isArray(data.events)) setEvents(data.events);
     if (typeof data.lang === 'string' && LANGS.includes(data.lang)) setLang(data.lang);
-    if (typeof data.isDark === 'boolean') setIsDark(data.isDark);
+    if (typeof data.isDark === 'boolean') { setIsDark(data.isDark); setThemeMode(data.isDark ? 'dark' : 'light'); }
     if (Array.isArray(data.customIcons)) setCustomIcons(data.customIcons);
     // 相冊：優先用資料裡明確帶的頂層 albums（新格式），並用 events 反推出的舊格式相冊補齊，
     // 確保不管這份資料是新版本存的還是舊版本存的，相冊都不會憑空消失。
@@ -8067,7 +8161,18 @@ export default function App() {
       try { const al = await window.storage.get(ALBUMS_KEY, false); if (al && al.value) loadedAlbumsRaw = JSON.parse(al.value); } catch (err) {}
       setAlbums(resolveAlbumsField({ events: loadedEventsRaw, albums: loadedAlbumsRaw }));
       try { const l = await window.storage.get(LANG_KEY, false); if (l && l.value && LANGS.includes(l.value)) setLang(l.value); } catch (err) {}
-      try { const d = await window.storage.get(DARK_KEY, false); if (d && d.value) setIsDark(d.value === 'true'); } catch (err) {}
+      // 外觀偏好：優先讀新的 THEME_MODE_KEY；舊版使用者只有 DARK_KEY（單純的淺色／深色布林值，
+      // 沒有「跟隨系統」這個概念），第一次升級到新版時用它推回對應的 'light' / 'dark'，
+      // 讓原本手動選好的主題不會因為升級就被重置成「跟隨系統」而突然變色。
+      try {
+        const tm = await window.storage.get(THEME_MODE_KEY, false);
+        if (tm && tm.value && ['system', 'light', 'dark'].includes(tm.value)) {
+          setThemeMode(tm.value);
+        } else {
+          const d = await window.storage.get(DARK_KEY, false);
+          if (d && d.value) setThemeMode(d.value === 'true' ? 'dark' : 'light');
+        }
+      } catch (err) {}
       try { const ci = await window.storage.get(CUSTOM_ICONS_KEY, false); if (ci && ci.value) setCustomIcons(JSON.parse(ci.value)); } catch (err) {}
       try { const h = await window.storage.get(HOME_TZ_ID_KEY, false); if (h && h.value) setHomeTzId(h.value); } catch (err) {}
       try { const ne = await window.storage.get(NOTIFY_ENABLED_KEY, false); if (ne && ne.value) setNotifyEnabled(ne.value === 'true'); } catch (err) {}
@@ -8083,6 +8188,7 @@ export default function App() {
   useEffect(() => { if (loaded) window.storage.set(CLOCKS_KEY, JSON.stringify(clocks), false).catch(err => console.error(err)); }, [clocks, loaded]);
   useEffect(() => { if (loaded) window.storage.set(LANG_KEY, lang, false).catch(err => console.error(err)); }, [lang, loaded]);
   useEffect(() => { if (loaded) window.storage.set(DARK_KEY, String(isDark), false).catch(err => console.error(err)); }, [isDark, loaded]);
+  useEffect(() => { if (loaded) window.storage.set(THEME_MODE_KEY, themeMode, false).catch(err => console.error(err)); }, [themeMode, loaded]);
   useEffect(() => { if (loaded) window.storage.set(CUSTOM_ICONS_KEY, JSON.stringify(customIcons), false).catch(err => console.error(err)); }, [customIcons, loaded]);
   useEffect(() => { if (loaded) window.storage.set(HOME_TZ_ID_KEY, homeTzId || '', false).catch(err => console.error(err)); }, [homeTzId, loaded]);
   useEffect(() => { if (loaded) window.storage.set(NOTIFY_ENABLED_KEY, String(notifyEnabled), false).catch(err => console.error(err)); }, [notifyEnabled, loaded]);
@@ -8486,7 +8592,7 @@ export default function App() {
                 <Mail size={16} />
               </button>
               <button
-                onClick={() => setIsDark(v => !v)}
+                onClick={() => setThemeMode(isDark ? 'light' : 'dark')}
                 className="flex items-center justify-center rounded-full flex-shrink-0"
                 style={{ ...glass(), width: '2.125rem', height: '2.125rem', color: INK }}
               >
@@ -8705,7 +8811,8 @@ export default function App() {
                   notifyPermission={notifyPermission}
                   onOpenFeedback={() => setShowFeedbackModal(true)}
                   isDark={isDark}
-                  setIsDark={setIsDark}
+                  themeMode={themeMode}
+                  setThemeMode={setThemeMode}
                   lang={lang}
                   setLang={setLang}
                   events={events}
