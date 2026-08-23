@@ -11,3 +11,11 @@ export function accentAlpha(hexAlpha) {
   const pct = (parseInt(hexAlpha, 16) / 255) * 100;
   return `color-mix(in srgb, ${ACCENT} ${pct.toFixed(1)}%, transparent)`;
 }
+export const SELECT_STYLE = {
+  border: CARD_BORDER,
+  background: INPUT_BG,
+  color: INK,
+};
+
+export const SELECT_CLASS =
+  'px-2 py-2 rounded-lg text-sm outline-none flex-1 min-w-0';
