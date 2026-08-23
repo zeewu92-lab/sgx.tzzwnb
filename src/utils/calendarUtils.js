@@ -584,3 +584,41 @@ export function isoDateStr(d) {
     d.getDate()
   ).padStart(2, '0')}`;
 }
+function findNextChineseMatch(targetMonth, targetDay, targetIsLeap, fromDate, maxDays = 400) {
+  const isTargetPlainBlock = (info) => info.month === targetMonth && !info.isLeap;
+  const isTargetLeapBlock = (info) => info.month === targetMonth && info.isLeap;
+  const isSameBlock = (a, b) => a && b && a.month === b.month && a.isLeap === b.isLeap;
+
+  let prevInfo = null;      // 前一天所在區塊的簽章：{ month, isLeap }
+  let blockLastDay = null;  // 目前區塊已經掃到的最後一天（區塊天數不足、找不到目標日時的頂替候選）
+  let blockExactDay = null; // 目前區塊裡若已出現目標日（day === targetDay），記下那一天
+  let plainFallback = null; // 事件本身是閏月時，最近一次「正月（非閏）目標月份」區塊結束的候選日期，
+                             // 用來在確定「這個農曆年沒有對應閏月」時立刻頂替回傳。
+
+  for (let i = 0; i < maxDays; i++) {
+    const d = addDays(fromDate, i);
+    const info = getChineseDateInfo(d);
+    if (!info) continue;
+
+    if (!isSameBlock(prevInfo, info)) {
+      // 換到新月份區塊之前，先「結算」剛剛結束的那個區塊
+      if (prevInfo && isTargetPlainBlock(prevInfo)) {
+        if (!targetIsLeap) {
+          // 非閏月事件：正月區塊掃完卻沒吻合到目標日 → 目標日是「三十」但該月是小月，退到最後一天
+          return blockExactDay || blockLastDay;
+        }
+        // 閏月事件：先記下這個正月區塊的候選日期，暫不回傳，等看看緊接著是不是同編號的閏月
+        plainFallback = blockExactDay || blockLastDay;
+      } else if (prevInfo && isTargetLeapBlock(prevInfo) && targetIsLeap) {
+        // 閏月事件，剛結束的正是目標閏月區塊，但整段掃完都沒吻合到目標日（閏月本身「三十」撞小月）
+        return blockExactDay || blockLastDay;
+      }
+      // 閏月事件、剛結算完正月區塊、且緊接著的新區塊不是同編號的閏月 → 這個農曆年沒有這個閏月，
+      // 直接用剛剛正月區塊的候選日期頂替（「閏八月初一」→「八月初一」／「閏七月三十」→「七月二十九」）
+      if (plainFallback && targetIsLeap && !isTargetLeapBlock(info)) {
+        return plainFallback;
+      }
+      blockLastDay = null;
+      blockExactDay = null;
+    }
+
