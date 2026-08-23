@@ -654,3 +654,99 @@ function findNextChineseMatch(targetMonth, targetDay, targetIsLeap, fromDate, ma
   return lastDayOfTargetMonth;
 }
 
+const CAL_EPOCH_GUESS = {
+  islamic: y => Math.floor(
+    622 + ((y - 1) * 354.36667) / 365.2425
+  ),
+  hebrew: y => y - 3760,
+};
+
+export function calendarDateToGregorian(calendarId, year, month, day) {
+  if (calendarId === 'buddhist') {
+    return new Date(year - 543, month - 1, day);
+  }
+
+  if (calendarId === 'japanese') {
+    return new Date(year, month - 1, day);
+  }
+
+  if (calendarId === 'chinese') {
+    return null;
+  }
+
+  const guessFn = CAL_EPOCH_GUESS[calendarId];
+  if (!guessFn) return null;
+
+  let d = new Date(guessFn(year), 0, 1);
+  d = addDays(d, -60);
+
+  for (let i = 0; i < 800; i++) {
+    const p = calNumericParts(d, calendarId);
+
+    if (
+      p &&
+      p.year === year &&
+      p.month === month &&
+      p.day === day
+    ) {
+      return d;
+    }
+
+    d = addDays(d, 1);
+  }
+
+  return null;
+}
+
+export function getCalendarMonthCount(calendarId, year) {
+  if (calendarId === 'hebrew') {
+    return calendarDateToGregorian(
+      'hebrew',
+      year,
+      13,
+      1
+    ) ? 13 : 12;
+  }
+
+  return 12;
+}
+
+export function getCalendarMonthDays(calendarId, year, month) {
+  if (
+    calendarId === 'buddhist' ||
+    calendarId === 'japanese'
+  ) {
+    const gYear =
+      calendarId === 'buddhist'
+        ? year - 543
+        : year;
+
+    return new Date(gYear, month, 0).getDate();
+  }
+
+  const start = calendarDateToGregorian(
+    calendarId,
+    year,
+    month,
+    1
+  );
+
+  if (!start) return 30;
+
+  for (let len = 25; len <= 31; len++) {
+    const p = calNumericParts(
+      addDays(start, len),
+      calendarId
+    );
+
+    if (
+      !p ||
+      p.month !== month ||
+      p.year !== year
+    ) {
+      return len;
+    }
+  }
+
+  return 30;
+}
