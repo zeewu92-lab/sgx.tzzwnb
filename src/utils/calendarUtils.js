@@ -31,17 +31,114 @@ const CAL_EPOCH_GUESS = {
   hebrew: y => y - 3760,
 };
 
-const JP_ERAS = [
-  { id: 'meiji', label: '明治', startYear: 1868 },
-  { id: 'taisho', label: '大正', startYear: 1912 },
-  { id: 'showa', label: '昭和', startYear: 1926 },
-  { id: 'heisei', label: '平成', startYear: 1989 },
-  { id: 'reiwa', label: '令和', startYear: 2019 },
+export const JP_ERAS = [
+  {
+    id: 'meiji',
+    label: '明治',
+    startYear: 1868,
+  },
+  {
+    id: 'taisho',
+    label: '大正',
+    startYear: 1912,
+  },
+  {
+    id: 'showa',
+    label: '昭和',
+    startYear: 1926,
+  },
+  {
+    id: 'heisei',
+    label: '平成',
+    startYear: 1989,
+  },
+  {
+    id: 'reiwa',
+    label: '令和',
+    startYear: 2019,
+  },
 ];
 
-/* =========================================================
- * 基礎日期工具
- * ========================================================= */
+export function calNumericParts(date, calendarId) {
+  try {
+    const dtf = new Intl.DateTimeFormat(
+      'zh-TW-u-ca-' + calendarId,
+      {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+      }
+    );
+
+    const o = {};
+
+    dtf.formatToParts(date).forEach(
+      p => {
+        o[p.type] = p.value;
+      }
+    );
+
+    return {
+      year: parseInt(o.year, 10),
+      month: parseInt(o.month, 10),
+      day: parseInt(o.day, 10),
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+export function getCalendarParts(date, calendarId) {
+  try {
+    if (calendarId === 'chinese') {
+      const dtf = new Intl.DateTimeFormat(
+        'en-US',
+        {
+          calendar: 'chinese',
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric',
+        }
+      );
+
+      const obj = {};
+
+      dtf.formatToParts(date).forEach(
+        p => {
+          obj[p.type] = p.value;
+        }
+      );
+
+      if (obj.relatedYear && !obj.year) {
+        obj.year = obj.relatedYear;
+      }
+
+      return obj;
+    }
+
+    const dtf = new Intl.DateTimeFormat(
+      `zh-TW-u-ca-${calendarId}`,
+      {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        era: 'short',
+      }
+    );
+
+    const obj = {};
+
+    dtf.formatToParts(date).forEach(
+      p => {
+        obj[p.type] = p.value;
+      }
+    );
+
+    return obj;
+  } catch (e) {
+    return null;
+  }
+}
 
 export function combineDateTime(dateStr, timeStr) {
   return new Date(
@@ -67,97 +164,6 @@ export function addDays(d, n) {
   return r;
 }
 
-export function isoDateStr(d) {
-  return `${d.getFullYear()}-${String(
-    d.getMonth() + 1
-  ).padStart(2, '0')}-${String(
-    d.getDate()
-  ).padStart(2, '0')}`;
-}
-
-/* =========================================================
- * 一般曆法資料
- * ========================================================= */
-
-export function calNumericParts(date, calendarId) {
-  try {
-    const dtf = new Intl.DateTimeFormat(
-      'zh-TW-u-ca-' + calendarId,
-      {
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-      }
-    );
-
-    const o = {};
-
-    dtf.formatToParts(date).forEach(
-      p => (o[p.type] = p.value)
-    );
-
-    return {
-      year: parseInt(o.year),
-      month: parseInt(o.month),
-      day: parseInt(o.day),
-    };
-  } catch (e) {
-    return null;
-  }
-}
-
-export function getCalendarParts(date, calendarId) {
-  try {
-    if (calendarId === 'chinese') {
-      const dtf = new Intl.DateTimeFormat(
-        'en-US',
-        {
-          calendar: 'chinese',
-          year: 'numeric',
-          month: 'numeric',
-          day: 'numeric',
-        }
-      );
-
-      const obj = {};
-
-      dtf.formatToParts(date).forEach(
-        p => (obj[p.type] = p.value)
-      );
-
-      if (obj.relatedYear && !obj.year) {
-        obj.year = obj.relatedYear;
-      }
-
-      return obj;
-    }
-
-    const dtf = new Intl.DateTimeFormat(
-      `zh-TW-u-ca-${calendarId}`,
-      {
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-        era: 'short',
-      }
-    );
-
-    const obj = {};
-
-    dtf.formatToParts(date).forEach(
-      p => (obj[p.type] = p.value)
-    );
-
-    return obj;
-  } catch (e) {
-    return null;
-  }
-}
-
-/* =========================================================
- * 干支
- * ========================================================= */
-
 export function getGanZhi(relatedYear) {
   const stemIdx =
     (((relatedYear - 4) % 10) + 10) % 10;
@@ -170,10 +176,6 @@ export function getGanZhi(relatedYear) {
     GANZHI_BRANCHES[branchIdx]
   );
 }
-
-/* =========================================================
- * 農曆月份與日期
- * ========================================================= */
 
 export function chineseDayName(day) {
   const num = [
@@ -256,7 +258,9 @@ export function chineseMonthInfo(date) {
     const o = {};
 
     dtf.formatToParts(date).forEach(
-      p => (o[p.type] = p.value)
+      p => {
+        o[p.type] = p.value;
+      }
     );
 
     const {
@@ -270,13 +274,14 @@ export function chineseMonthInfo(date) {
 
     return {
       year: parseInt(
-        o.relatedYear || o.year
+        o.relatedYear || o.year,
+        10
       ),
       month: chineseMonthLabel(
         num,
         isLeap
       ),
-      day: parseInt(o.day),
+      day: parseInt(o.day, 10),
     };
   } catch (e) {
     return null;
@@ -303,18 +308,14 @@ export function getChineseDateInfo(date) {
 
   return {
     year: parseInt(
-      parts.relatedYear ||
-      parts.year
+      parts.relatedYear || parts.year,
+      10
     ),
     month: num,
     isLeap,
-    day: parseInt(parts.day),
+    day: parseInt(parts.day, 10),
   };
 }
-
-/* =========================================================
- * 農曆年份月份表
- * ========================================================= */
 
 export function buildChineseYearMonths(
   lunarYear
@@ -373,9 +374,10 @@ export function chineseCalendarToGregorian(
       lunarYear
     );
 
-  const m = months.find(
-    x => x.label === monthLabel
-  );
+  const m =
+    months.find(
+      x => x.label === monthLabel
+    );
 
   if (!m) return null;
 
@@ -388,15 +390,29 @@ export function chineseCalendarToGregorian(
   );
 }
 
-/* =========================================================
- * 其他曆法 → 西曆
- * ========================================================= */
+export function japaneseEraToGregorianYear(
+  eraId,
+  year
+) {
+  const e =
+    JP_ERAS.find(
+      x => x.id === eraId
+    ) ||
+    JP_ERAS[JP_ERAS.length - 1];
+
+  return (
+    e.startYear +
+    year -
+    1
+  );
+}
 
 export function calendarDateToGregorian(
   calendarId,
   year,
   month,
-  day
+  day,
+  eraId = 'reiwa'
 ) {
   if (calendarId === 'buddhist') {
     return new Date(
@@ -408,7 +424,10 @@ export function calendarDateToGregorian(
 
   if (calendarId === 'japanese') {
     return new Date(
-      year,
+      japaneseEraToGregorianYear(
+        eraId,
+        year
+      ),
       month - 1,
       day
     );
@@ -455,7 +474,8 @@ export function calendarDateToGregorian(
 
 export function getCalendarMonthCount(
   calendarId,
-  year
+  year,
+  eraId = 'reiwa'
 ) {
   if (calendarId === 'hebrew') {
     return calendarDateToGregorian(
@@ -474,7 +494,8 @@ export function getCalendarMonthCount(
 export function getCalendarMonthDays(
   calendarId,
   year,
-  month
+  month,
+  eraId = 'reiwa'
 ) {
   if (
     calendarId === 'buddhist' ||
@@ -483,7 +504,10 @@ export function getCalendarMonthDays(
     const gYear =
       calendarId === 'buddhist'
         ? year - 543
-        : year;
+        : japaneseEraToGregorianYear(
+            eraId,
+            year
+          );
 
     return new Date(
       gYear,
@@ -497,7 +521,8 @@ export function getCalendarMonthDays(
       calendarId,
       year,
       month,
-      1
+      1,
+      eraId
     );
 
   if (!start) return 30;
@@ -525,27 +550,6 @@ export function getCalendarMonthDays(
   return 30;
 }
 
-/* =========================================================
- * 日本年號
- * ========================================================= */
-
-export function japaneseEraToGregorianYear(
-  eraId,
-  year
-) {
-  const e =
-    JP_ERAS.find(
-      x => x.id === eraId
-    ) ||
-    JP_ERAS[JP_ERAS.length - 1];
-
-  return (
-    e.startYear +
-    year -
-    1
-  );
-}
-
 export function getJapaneseEra(date) {
   try {
     const dtf =
@@ -560,7 +564,9 @@ export function getJapaneseEra(date) {
     const o = {};
 
     dtf.formatToParts(date).forEach(
-      p => (o[p.type] = p.value)
+      p => {
+        o[p.type] = p.value;
+      }
     );
 
     const found =
@@ -574,7 +580,7 @@ export function getJapaneseEra(date) {
     return {
       id: found.id,
       year:
-        parseInt(o.year) || 1,
+        parseInt(o.year, 10) || 1,
     };
   } catch (e) {
     return {
@@ -610,10 +616,6 @@ export function japaneseEraYearMax(
     1
   );
 }
-
-/* =========================================================
- * 曆法顯示文字
- * ========================================================= */
 
 export function formatAltCalendar(
   date,
@@ -680,10 +682,10 @@ export function formatAltCalendar(
   if (!parts) return '';
 
   const m =
-    parseInt(parts.month);
+    parseInt(parts.month, 10);
 
   const d =
-    parseInt(parts.day);
+    parseInt(parts.day, 10);
 
   const calLabel =
     (
@@ -699,9 +701,13 @@ export function formatAltCalendar(
   } ${parts.year}/${m}/${d}`;
 }
 
-/* =========================================================
- * 農曆週期匹配
- * ========================================================= */
+export function isoDateStr(d) {
+  return `${d.getFullYear()}-${String(
+    d.getMonth() + 1
+  ).padStart(2, '0')}-${String(
+    d.getDate()
+  ).padStart(2, '0')}`;
+}
 
 export function findNextChineseMatch(
   targetMonth,
@@ -728,11 +734,8 @@ export function findNextChineseMatch(
       a.isLeap === b.isLeap;
 
   let prevInfo = null;
-
   let blockLastDay = null;
-
   let blockExactDay = null;
-
   let plainFallback = null;
 
   for (
@@ -754,9 +757,6 @@ export function findNextChineseMatch(
         info
       )
     ) {
-      /*
-       * 先結算剛剛結束的月份區塊。
-       */
       if (
         prevInfo &&
         isTargetPlainBlock(
@@ -764,23 +764,12 @@ export function findNextChineseMatch(
         )
       ) {
         if (!targetIsLeap) {
-          /*
-           * 一般農曆月份：
-           * 找不到目標日，例如目標為三十，
-           * 但該月份只有二十九天，
-           * 就使用該月份最後一天。
-           */
           return (
             blockExactDay ||
             blockLastDay
           );
         }
 
-        /*
-         * 閏月事件：
-         * 先記錄普通月份的替代日期，
-         * 等待確認今年是否真的存在對應閏月。
-         */
         plainFallback =
           blockExactDay ||
           blockLastDay;
@@ -791,31 +780,18 @@ export function findNextChineseMatch(
         ) &&
         targetIsLeap
       ) {
-        /*
-         * 目標閏月已經完整掃描完，
-         * 若目標日不存在，例如閏月只有二十九天，
-         * 使用閏月最後一天。
-         */
         return (
           blockExactDay ||
           blockLastDay
         );
       }
 
-      /*
-       * 如果上一個普通月份是目標月份，
-       * 但接下來並沒有同編號閏月，
-       * 表示今年沒有對應閏月。
-       *
-       * 例如：
-       * 閏八月初一
-       * →
-       * 八月初一
-       */
       if (
         plainFallback &&
         targetIsLeap &&
-        !isTargetLeapBlock(info)
+        !isTargetLeapBlock(
+          info
+        )
       ) {
         return plainFallback;
       }
@@ -824,9 +800,6 @@ export function findNextChineseMatch(
       blockExactDay = null;
     }
 
-    /*
-     * 只處理目標月份的普通月或閏月。
-     */
     if (
       isTargetPlainBlock(info) ||
       isTargetLeapBlock(info)
@@ -838,22 +811,20 @@ export function findNextChineseMatch(
       ) {
         blockExactDay = d;
 
-        /*
-         * 普通月份事件完全吻合。
-         */
         if (
           !targetIsLeap &&
-          isTargetPlainBlock(info)
+          isTargetPlainBlock(
+            info
+          )
         ) {
           return d;
         }
 
-        /*
-         * 閏月事件完全吻合。
-         */
         if (
           targetIsLeap &&
-          isTargetLeapBlock(info)
+          isTargetLeapBlock(
+            info
+          )
         ) {
           return d;
         }
@@ -863,16 +834,8 @@ export function findNextChineseMatch(
     prevInfo = info;
   }
 
-  /*
-   * 掃描結束仍未找到目標閏月，
-   * 使用最近記錄的普通月份替代日期。
-   */
   return plainFallback;
 }
-
-/* =========================================================
- * 其他曆法週期匹配
- * ========================================================= */
 
 export function findNextCalendarMatch(
   calendarId,
@@ -901,7 +864,7 @@ export function findNextCalendarMatch(
     if (!parts) continue;
 
     const month =
-      parseInt(parts.month);
+      parseInt(parts.month, 10);
 
     if (
       month !== targetMonth
@@ -917,21 +880,13 @@ export function findNextCalendarMatch(
 
     enteredTargetMonth = true;
 
-    /*
-     * 完全匹配目標日期。
-     */
     if (
-      parseInt(parts.day) ===
+      parseInt(parts.day, 10) ===
       targetDay
     ) {
       return d;
     }
 
-    /*
-     * 記錄目前目標月份最後一天，
-     * 如果目標日不存在，例如某月沒有 31 日，
-     * 最後返回該月最後一天。
-     */
     lastDayOfTargetMonth = d;
   }
 
