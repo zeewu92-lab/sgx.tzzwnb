@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Trash2, ChevronDown, ChevronLeft, ChevronRight, X, MapPin, Check, Clock, Globe, Sun, Moon, Pencil, User, LogOut, Mail, Eye, EyeOff, Search, SlidersHorizontal, Share2, Bell, BellOff, Settings, Images, Move, Calendar, Shield, Info, FileText, Database, RefreshCw } from 'lucide-react';
 import {
@@ -387,7 +387,7 @@ const STRINGS = {
     modeBirthday: '生日', modeCompanion: '陪伴', modeCare: '關懷', modeAnniversary: '紀念日', modeRegular: '常規',
     navSchedule: '日程', navGallery: '相冊', navProfile: '我的', myPageTitle: '我的', addSchedule: '添加日程',
     calendarMonthView: '月', calendarYearView: '年', calendarChooseDate: '選擇年份與月份',
-    calendarPrev: '上一個', calendarNext: '下一個', calendarConfirmYear: '確定',
+    calendarPrev: '上一個', calendarNext: '下一個', calendarConfirmYear: '確定', calendarViewWholeYear: '檢視整年', calendarToggleCollapse: '收合／展開日曆',
     futureOnlyLabel: '只展示未來代辦事件',
     darkModeLabel: '深色模式', darkModeOn: '開', darkModeOff: '關', feedbackLabel: '意見回饋',
     modeCompanionHint: '設定情誼開始的日子，得到你們相伴的時長。',
@@ -508,7 +508,7 @@ const STRINGS = {
     modeBirthday: 'Birthday', modeCompanion: 'Companion', modeCare: 'Care', modeAnniversary: 'Anniversary', modeRegular: 'Regular',
     navSchedule: 'Schedule', navGallery: 'Albums', navProfile: 'Profile', myPageTitle: 'Profile', addSchedule: 'Add Schedule',
     calendarMonthView: 'Month', calendarYearView: 'Year', calendarChooseDate: 'Choose year and month',
-    calendarPrev: 'Previous', calendarNext: 'Next', calendarConfirmYear: 'Done',
+    calendarPrev: 'Previous', calendarNext: 'Next', calendarConfirmYear: 'Done', calendarViewWholeYear: 'View whole year', calendarToggleCollapse: 'Collapse/expand calendar',
     futureOnlyLabel: 'Show upcoming events only',
     darkModeLabel: 'Dark Mode', darkModeOn: 'On', darkModeOff: 'Off', feedbackLabel: 'Feedback',
     modeCompanionHint: "Set the day your bond began, and see how long you've been together.",
@@ -629,7 +629,7 @@ const STRINGS = {
     modeBirthday: '誕生日', modeCompanion: '寄り添い', modeCare: '追悼', modeAnniversary: '記念日', modeRegular: '通常',
     navSchedule: 'スケジュール', navGallery: 'アルバム', navProfile: 'マイページ', myPageTitle: 'マイページ', addSchedule: '予定を追加',
     calendarMonthView: '月', calendarYearView: '年', calendarChooseDate: '年月を選択',
-    calendarPrev: '前へ', calendarNext: '次へ', calendarConfirmYear: '決定',
+    calendarPrev: '前へ', calendarNext: '次へ', calendarConfirmYear: '決定', calendarViewWholeYear: '年間表示', calendarToggleCollapse: 'カレンダーを折りたたむ／展開',
     futureOnlyLabel: '今後の予定のみ表示',
     darkModeLabel: 'ダークモード', darkModeOn: 'オン', darkModeOff: 'オフ', feedbackLabel: 'フィードバック',
     modeCompanionHint: '絆が始まった日を設定して、二人が共に過ごした時間を確認しましょう。',
@@ -750,7 +750,7 @@ const STRINGS = {
     modeBirthday: '생일', modeCompanion: '동반', modeCare: '추모', modeAnniversary: '기념일', modeRegular: '일반',
     navSchedule: '일정', navGallery: '앨범', navProfile: '마이페이지', myPageTitle: '마이페이지', addSchedule: '일정 추가',
     calendarMonthView: '월', calendarYearView: '년', calendarChooseDate: '연도와 월 선택',
-    calendarPrev: '이전', calendarNext: '다음', calendarConfirmYear: '확인',
+    calendarPrev: '이전', calendarNext: '다음', calendarConfirmYear: '확인', calendarViewWholeYear: '연간 보기', calendarToggleCollapse: '캘린더 접기/펼치기',
     futureOnlyLabel: '앞으로의 일정만 표시',
     darkModeLabel: '다크 모드', darkModeOn: '켜짐', darkModeOff: '꺼짐', feedbackLabel: '피드백',
     modeCompanionHint: '인연이 시작된 날을 설정하고 함께한 시간을 확인해 보세요.',
@@ -4191,25 +4191,29 @@ function TimelineSection({
   }
 
   // 計算每個事件的有效日期與差異天數
-  const processedEvents = events.map(ev => {
-    const targetDate = getEffectiveDate(ev, now);
-    // 簡單的天數計算（忽略時分秒的精確度，以本地日期為基準）
-    const targetTime = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()).getTime();
-    const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const diffDays = Math.ceil((targetTime - todayTime) / (1000 * 60 * 60 * 24));
+  // 包進 useMemo：只有 events／now 真的變動時才重算，避免元件因為其他無關的 local state
+  // （例如打字搜尋、開關表單）重新渲染時，跟著白白重算一次全部事件（見「日程頁操作反應慢」）。
+  const processedEvents = useMemo(() => {
+    return events.map(ev => {
+      const targetDate = getEffectiveDate(ev, now);
+      // 簡單的天數計算（忽略時分秒的精確度，以本地日期為基準）
+      const targetTime = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()).getTime();
+      const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const diffDays = Math.ceil((targetTime - todayTime) / (1000 * 60 * 60 * 24));
 
-    // 生日／關懷模式：以原始日期為起點，計算本次週年所對應的年數。
-    let age = null;
-    if ((ev.isBirthday || ev.isCare) && ev.repeat) {
-      const origDate = combineDateTime(ev.date, ev.time);
-      age = Math.max(0, targetDate.getFullYear() - origDate.getFullYear());
-    }
-    // 陪伴模式不循環，中央數字改為「從開始日期至今」的累積天數。
-    const origDateOnly = new Date(`${ev.date}T00:00:00`);
-    const elapsedDays = Math.floor((todayTime - origDateOnly.getTime()) / (1000 * 60 * 60 * 24));
+      // 生日／關懷模式：以原始日期為起點，計算本次週年所對應的年數。
+      let age = null;
+      if ((ev.isBirthday || ev.isCare) && ev.repeat) {
+        const origDate = combineDateTime(ev.date, ev.time);
+        age = Math.max(0, targetDate.getFullYear() - origDate.getFullYear());
+      }
+      // 陪伴模式不循環，中央數字改為「從開始日期至今」的累積天數。
+      const origDateOnly = new Date(`${ev.date}T00:00:00`);
+      const elapsedDays = Math.floor((todayTime - origDateOnly.getTime()) / (1000 * 60 * 60 * 24));
 
-    return { ...ev, targetDate, diffDays, age, elapsedDays };
-  }).sort((a, b) => a.diffDays - b.diffDays);
+      return { ...ev, targetDate, diffDays, age, elapsedDays };
+    }).sort((a, b) => a.diffDays - b.diffDays);
+  }, [events, now]);
 
   // 目前開啟「地標詳情」視窗所對應的事件（含算好的 targetDate/diffDays/age），
   // 從 processedEvents 現查而不是另外存一份快照，這樣視窗開著時倒數天數等資訊會隨 now 自然更新
@@ -4232,7 +4236,11 @@ function TimelineSection({
   // 不去動 processedEvents 原本的邏輯與用途（時間軸分頁、編輯/刪除/相冊彈窗依然完全依賴它）。
   // 年檢視需要逐月掃描 12 次，才能抓到「每個月各自最近一次落在那個月裡的發生日」——例如每月
   // 重複的事件，一整年應該出現 12 次，不是只出現一次。
-  const rangedEvents = (() => {
+  // 同樣包進 useMemo：這一份對農曆／其他曆法事件來說本來就不便宜（getEffectiveDate 內部要
+  // 逐日掃描比對），年檢視還要乘以 12 個月，如果不快取，父層 App 每 30 秒跳一次「現在時間」、
+  // 或是在這個分頁打字搜尋、開合新增表單，都會讓它重新整個算一次，正是先前「開啟日程頁卡頓、
+  // 操作反應慢」的主因——改成只有 events／rangeFilter／futureOnly／now 真的變動時才重算。
+  const rangedEvents = useMemo(() => {
     if (!isCardsLayout || !rangeFilter) return [];
     const monthsToScan = rangeFilter.mode === 'year'
       ? Array.from({ length: 12 }, (_, m) => m)
@@ -4262,7 +4270,7 @@ function TimelineSection({
     // 開關開啟：只留「尚未發生的未來事件」；關閉：該時間範圍內的全部事件都顯示，
     // 包括已經過去／已發生的（見需求七）。
     return futureOnly ? results.filter(ev => ev.diffDays >= 0) : results;
-  })();
+  }, [isCardsLayout, rangeFilter, events, now, futureOnly]);
 
   // 搜尋：輸入關鍵字時，直接在全部地標（不分過去／未來）中比對標題，跳出原本的分區顯示
   const searchQueryNormalized = searchQuery.trim().toLowerCase();
@@ -4374,8 +4382,15 @@ function TimelineSection({
   const headerControls = (
     <div className="flex-shrink-0">
       <div
-        className="flex items-center justify-between mb-3 select-none"
-        style={isCardsLayout ? undefined : { cursor: 'ns-resize', touchAction: 'none' }}
+        className="flex items-center justify-between select-none"
+        style={{
+          ...(isCardsLayout ? undefined : { cursor: 'ns-resize', touchAction: 'none' }),
+          // cards 模式（日程分頁）：這排按鈕現在透過 portal 掛在日曆上方，外層的 flex 容器
+          // 本身已經用 gap 在管理跟下一個元素（日曆）之間的距離，這裡不再額外加 mb-3，
+          // 避免兩邊間距疊加，日程頁最上面看起來留白過多（見「頁面上部分留白過多」）。
+          // 只有展開搜尋輸入框時才需要在按鈕列跟輸入框之間留一點內部間距。
+          marginBottom: isCardsLayout ? (searchOpen ? 12 : 0) : 12,
+        }}
         onPointerDown={e => {
           if (isCardsLayout) return; // cards 模式（日程分頁）沒有可拖曳收合的世界時鐘在上面，這個手勢用不到
           if (e.target.closest('button')) return; // 標題列右側的按鈕不應觸發拖曳
@@ -4416,7 +4431,7 @@ function TimelineSection({
         </div>
       </div>
       {searchOpen && (
-        <div className="relative mb-3">
+        <div className={isCardsLayout ? 'relative' : 'relative mb-3'}>
           <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: INK_SOFT, pointerEvents: 'none' }} />
           <input
             type="text"
@@ -6119,24 +6134,39 @@ function BottomNavigation({ activeTab, setActiveTab, t }) {
 // 這個元件現在還多負責兩件事：① 支援直接選年份／月份跳頁，不用一直點上一月/下一月；
 // ② 把目前顯示的時間範圍（月或年）透過 onRangeChange 往上回報給 App，讓下面的日程列表
 // （TimelineSection layout="cards"）跟著這個範圍同步顯示，兩邊不會各自用不同的時間範圍。
+// eventsByDay／monthsHaveEvents 都包進 useMemo：這兩個都要對全部事件跑 getEffectiveDate
+// （農曆／其他曆法事件內部還要逐日掃描比對，不便宜），如果不做快取，父層 App 每 30 秒
+// 更新一次「現在時間」就會讓這個元件重新渲染、重新整個算一次，即使使用者什麼都沒點，
+// 這正是先前「開啟日程頁卡頓、操作反應慢」的主因之一，改成只有 events／year／month／
+// viewMode 真的變動時才重算。
 function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth()); // 0-11，viewMode==='year' 時不使用
   const [viewMode, setViewMode] = useState('month'); // 'month'＝月曆格子（原本的樣子）；'year'＝12 個月的年曆格子
   const [selectedDay, setSelectedDay] = useState(null); // 只有月檢視才有意義，點日期在下面秀一小段當天預覽
+  // 收合／展開：預設展開。收合時只留標題列（含收合鈕），下面的日期格子／年曆格子、選中日
+  // 預覽、上一個/下一個切換整塊收合，讓下面的事件卡片能拿到更多空間——用 maxHeight+opacity
+  // 做轉場，跟其他彈窗輸入框放大/收合是同一套手法。
+  const [collapsed, setCollapsed] = useState(false);
+  const COLLAPSE_TRANSITION_MS = 260;
 
   // 年份／月份選擇面板：沿用「刪除地標」確認彈窗同一套置中卡片＋淡入淡出/位移縮放動畫
   // （enter -> shown -> closing 三段式 phase），跟整個 App 目前所有彈窗是同一種呈現方式，
   // 不另外發明這個 App 裡沒出現過的「由下往上彈出」樣式。
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerPhase, setPickerPhase] = useState('hidden');
-  const [pickerYear, setPickerYear] = useState(year); // 面板裡暫存的年份，選定月份或按下確定前不影響外面的日曆
-  const [pickerMode, setPickerMode] = useState('month'); // 面板裡的「月檢視／年檢視」分頁，開啟當下才同步目前的 viewMode
+  const [pickerYear, setPickerYear] = useState(year); // 面板裡暫存的年份，選定月份或年份選單確認前不影響外面的日曆
   const PICKER_DURATION = 200;
+
+  // 年份選單：從第一層面板點目前年份彈出的第二層選單，疊在第一層之上，選好一個年份就
+  // 收回第一層繼續選月份，不用先關掉整個面板。gridStart 是目前選單顯示的 12 年區間起點，
+  // 開啟當下以 pickerYear 為中心，前後翻頁各自 ±12 年，一樣可以跳到很久以前或以後的年份。
+  const [yearMenuOpen, setYearMenuOpen] = useState(false);
+  const [yearMenuPhase, setYearMenuPhase] = useState('hidden');
+  const [yearMenuGridStart, setYearMenuGridStart] = useState(year - 5);
 
   function openPicker() {
     setPickerYear(year);
-    setPickerMode(viewMode);
     setPickerOpen(true);
     setPickerPhase('enter');
     requestAnimationFrame(() => setPickerPhase('shown'));
@@ -6148,29 +6178,52 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
   }
   useModalBackClose(pickerOpen, closePicker);
 
+  function openYearMenu() {
+    setYearMenuGridStart(pickerYear - 5);
+    setYearMenuOpen(true);
+    setYearMenuPhase('enter');
+    requestAnimationFrame(() => setYearMenuPhase('shown'));
+  }
+  function closeYearMenu() {
+    if (yearMenuPhase === 'closing') return;
+    setYearMenuPhase('closing');
+    setTimeout(() => { setYearMenuOpen(false); setYearMenuPhase('hidden'); }, PICKER_DURATION);
+  }
+  useModalBackClose(yearMenuOpen, closeYearMenu);
+  function pickYearFromMenu(y) {
+    setPickerYear(y);
+    closeYearMenu();
+  }
+
   const firstOfMonth = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const startWeekday = firstOfMonth.getDay();
   const daysInPrevMonth = new Date(year, month, 0).getDate();
 
-  const eventsByDay = {};
-  events.forEach(ev => {
-    const occ = getEffectiveDate(ev, firstOfMonth);
-    if (occ.getFullYear() === year && occ.getMonth() === month) {
-      const d = occ.getDate();
-      (eventsByDay[d] = eventsByDay[d] || []).push(ev);
-    }
-  });
+  const eventsByDay = useMemo(() => {
+    const map = {};
+    events.forEach(ev => {
+      const occ = getEffectiveDate(ev, firstOfMonth);
+      if (occ.getFullYear() === year && occ.getMonth() === month) {
+        const d = occ.getDate();
+        (map[d] = map[d] || []).push(ev);
+      }
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, year, month]);
 
   // 年檢視：12 個月各自算一次「這個月有沒有落上任何事件」，跟月檢視同一套 getEffectiveDate 用法，
   // 只是逐月掃描，不會跟月檢視或下面的日程列表算出兩套不同的日期判斷結果。
-  const monthsHaveEvents = Array.from({ length: 12 }, (_, m) => {
-    const ref = new Date(year, m, 1);
-    return events.some(ev => {
-      const occ = getEffectiveDate(ev, ref);
-      return occ.getFullYear() === year && occ.getMonth() === m;
+  const monthsHaveEvents = useMemo(() => {
+    return Array.from({ length: 12 }, (_, m) => {
+      const ref = new Date(year, m, 1);
+      return events.some(ev => {
+        const occ = getEffectiveDate(ev, ref);
+        return occ.getFullYear() === year && occ.getMonth() === m;
+      });
     });
-  });
+  }, [events, year]);
 
   const weekdayLabels = Array.from({ length: 7 }, (_, i) =>
     new Intl.DateTimeFormat(LOCALE_MAP[lang], { weekday: 'short' }).format(new Date(2023, 0, 1 + i))
@@ -6227,113 +6280,140 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
     ? new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric' }).format(new Date(year, 0, 1))
     : new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric', month: 'long' }).format(firstOfMonth);
   const pickerYearLabel = new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric' }).format(new Date(pickerYear, 0, 1));
+  const yearMenuYears = Array.from({ length: 12 }, (_, i) => yearMenuGridStart + i);
 
   return (
-    <div className="rounded-2xl p-4 flex-shrink-0" style={glass()}>
-      {/* 標題列：只留一顆按鈕（標題本身＋一個小箭頭），點開年份／月份選擇面板；
-          避免標題兩側同時塞「上一月」「收合」「下一月」三顆權重相同的按鈕。 */}
-      <button onClick={openPicker} className="flex items-center gap-1.5 mb-3" aria-label={t.calendarChooseDate}>
-        <span className="font-bold text-sm" style={{ color: INK }}>{titleLabel}</span>
-        <ChevronDown size={14} style={{ color: INK_SOFT }} />
-      </button>
-
-      {viewMode === 'month' ? (
-        <div className="grid grid-cols-7 gap-y-1 text-center">
-          {weekdayLabels.map((w, i) => (
-            <span key={i} className="text-[10px] font-bold" style={{ color: INK_SOFT }}>{w}</span>
-          ))}
-          {cells.map((c, i) => {
-            const dayEvents = c.inMonth ? (eventsByDay[c.day] || []) : [];
-            const selected = c.inMonth && selectedDay === c.day;
-            return (
-              <button
-                key={i}
-                disabled={!c.inMonth}
-                onClick={() => setSelectedDay(prev => (prev === c.day ? null : c.day))}
-                className="flex flex-col items-center justify-center py-1"
-                style={{ opacity: c.inMonth ? 1 : 0.25 }}
-              >
-                <span
-                  className="flex items-center justify-center rounded-full text-xs font-bold"
-                  style={{
-                    width: 26,
-                    height: 26,
-                    background: selected ? ACCENT : (isToday(c.day) && c.inMonth ? 'var(--card-border)' : 'transparent'),
-                    color: selected ? '#fff' : INK,
-                  }}
-                >
-                  {c.day}
-                </span>
-                <span className="flex items-center justify-center gap-0.5 mt-0.5" style={{ height: 4 }}>
-                  {dayEvents.slice(0, 3).map((ev, di) => (
-                    <span key={di} className="rounded-full" style={{ width: 4, height: 4, background: colorHex(ev.colorId) }} />
-                  ))}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        // 年檢視：12 個月排成 3x4 格子取代日格子，只標示「這個月有沒有事件」，
-        // 點一個月直接切回月檢視並定位到那個月（跟選擇面板裡點月份宮格是同一個函式 pickMonth）。
-        <div className="grid grid-cols-3 gap-2">
-          {monthLabels.map((label, m) => {
-            const isCurrentMonth = m === now.getMonth() && year === now.getFullYear();
-            return (
-              <button
-                key={m}
-                onClick={() => { setMonth(m); setViewMode('month'); setSelectedDay(null); }}
-                className="flex flex-col items-center justify-center py-3 rounded-xl"
-                style={{ background: isCurrentMonth ? 'var(--card-border)' : 'transparent' }}
-              >
-                <span className="text-sm font-bold" style={{ color: INK }}>{label}</span>
-                <span className="flex items-center justify-center mt-1" style={{ height: 4 }}>
-                  {monthsHaveEvents[m] && <span className="rounded-full" style={{ width: 4, height: 4, background: ACCENT }} />}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {viewMode === 'month' && selectedDay != null && (
-        <div className="mt-3 pt-3 flex flex-col gap-2" style={{ borderTop: CARD_BORDER }}>
-          {selectedEvents.length === 0 ? (
-            <p className="text-xs text-center" style={{ color: INK_SOFT }}>—</p>
-          ) : (
-            selectedEvents.map(ev => (
-              <div key={ev.id} className="flex items-center gap-2">
-                <span className="text-lg">{ev.icon}</span>
-                <span className="text-sm font-bold flex-1 truncate" style={{ color: INK }}>{ev.title}</span>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* 日曆切換操作：改放右下角，只負責「往前一個／往後一個」，不再堆在標題旁邊（見需求四）。 */}
-      <div className="flex items-center justify-end gap-1 mt-3">
-        <button
-          onClick={goPrev}
-          aria-label={t.calendarPrev}
-          className="flex items-center justify-center rounded-full"
-          style={{ width: 28, height: 28, color: INK_SOFT, background: 'var(--card-border)' }}
-        >
-          <ChevronLeft size={16} />
+    <div className="rounded-2xl p-3 flex-shrink-0" style={glass()}>
+      {/* 標題列：左邊是標題本身（點開年份／月份選擇面板），右邊另外放一顆獨立的收合鈕
+          （點了整塊日曆格子／上一個下一個都收合，只留這一列），兩顆按鈕功能不同、分開放，
+          不會互相干擾。 */}
+      <div className="flex items-center justify-between mb-2">
+        <button onClick={openPicker} className="flex items-center gap-1.5" aria-label={t.calendarChooseDate}>
+          <span className="font-bold text-sm" style={{ color: INK }}>{titleLabel}</span>
+          <ChevronDown size={14} style={{ color: INK_SOFT }} />
         </button>
         <button
-          onClick={goNext}
-          aria-label={t.calendarNext}
+          onClick={() => setCollapsed(v => !v)}
+          aria-label={t.calendarToggleCollapse}
           className="flex items-center justify-center rounded-full"
-          style={{ width: 28, height: 28, color: INK_SOFT, background: 'var(--card-border)' }}
+          style={{ width: 24, height: 24, color: INK_SOFT }}
         >
-          <ChevronRight size={16} />
+          <ChevronDown
+            size={16}
+            style={{
+              transform: collapsed ? 'rotate(-90deg)' : 'none',
+              transition: `transform ${COLLAPSE_TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+            }}
+          />
         </button>
       </div>
 
-      {/* 年份／月份選擇面板（見需求五）：先選「月檢視／年檢視」，月檢視底下再選要跳去的月份
-          （12 宮格，點了立即套用並關閉面板），年檢視則只需要選年份，按「確定」套用。
-          這樣不論要跳到很久以前或很久以後的日期，都不用連續點好幾次上一月/下一月。 */}
+      <div
+        style={{
+          maxHeight: collapsed ? 0 : 480,
+          opacity: collapsed ? 0 : 1,
+          overflow: 'hidden',
+          transition: `max-height ${COLLAPSE_TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1), opacity ${COLLAPSE_TRANSITION_MS * 0.7}ms ease`,
+        }}
+      >
+        {viewMode === 'month' ? (
+          <div className="grid grid-cols-7 gap-y-1 text-center">
+            {weekdayLabels.map((w, i) => (
+              <span key={i} className="text-[10px] font-bold" style={{ color: INK_SOFT }}>{w}</span>
+            ))}
+            {cells.map((c, i) => {
+              const dayEvents = c.inMonth ? (eventsByDay[c.day] || []) : [];
+              const selected = c.inMonth && selectedDay === c.day;
+              return (
+                <button
+                  key={i}
+                  disabled={!c.inMonth}
+                  onClick={() => setSelectedDay(prev => (prev === c.day ? null : c.day))}
+                  className="flex flex-col items-center justify-center py-1"
+                  style={{ opacity: c.inMonth ? 1 : 0.25 }}
+                >
+                  <span
+                    className="flex items-center justify-center rounded-full text-xs font-bold"
+                    style={{
+                      width: 26,
+                      height: 26,
+                      background: selected ? ACCENT : (isToday(c.day) && c.inMonth ? 'var(--card-border)' : 'transparent'),
+                      color: selected ? '#fff' : INK,
+                    }}
+                  >
+                    {c.day}
+                  </span>
+                  <span className="flex items-center justify-center gap-0.5 mt-0.5" style={{ height: 4 }}>
+                    {dayEvents.slice(0, 3).map((ev, di) => (
+                      <span key={di} className="rounded-full" style={{ width: 4, height: 4, background: colorHex(ev.colorId) }} />
+                    ))}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          // 年檢視：12 個月排成 3x4 格子取代日格子，只標示「這個月有沒有事件」，
+          // 點一個月直接切回月檢視並定位到那個月（跟選擇面板裡點月份宮格是同一個函式 pickMonth）。
+          <div className="grid grid-cols-3 gap-2">
+            {monthLabels.map((label, m) => {
+              const isCurrentMonth = m === now.getMonth() && year === now.getFullYear();
+              return (
+                <button
+                  key={m}
+                  onClick={() => { setMonth(m); setViewMode('month'); setSelectedDay(null); }}
+                  className="flex flex-col items-center justify-center py-3 rounded-xl"
+                  style={{ background: isCurrentMonth ? 'var(--card-border)' : 'transparent' }}
+                >
+                  <span className="text-sm font-bold" style={{ color: INK }}>{label}</span>
+                  <span className="flex items-center justify-center mt-1" style={{ height: 4 }}>
+                    {monthsHaveEvents[m] && <span className="rounded-full" style={{ width: 4, height: 4, background: ACCENT }} />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {viewMode === 'month' && selectedDay != null && (
+          <div className="mt-3 pt-3 flex flex-col gap-2" style={{ borderTop: CARD_BORDER }}>
+            {selectedEvents.length === 0 ? (
+              <p className="text-xs text-center" style={{ color: INK_SOFT }}>—</p>
+            ) : (
+              selectedEvents.map(ev => (
+                <div key={ev.id} className="flex items-center gap-2">
+                  <span className="text-lg">{ev.icon}</span>
+                  <span className="text-sm font-bold flex-1 truncate" style={{ color: INK }}>{ev.title}</span>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* 日曆切換操作：改放右下角，只負責「往前一個／往後一個」，不再堆在標題旁邊（見需求四）。 */}
+        <div className="flex items-center justify-end gap-1 mt-3">
+          <button
+            onClick={goPrev}
+            aria-label={t.calendarPrev}
+            className="flex items-center justify-center rounded-full"
+            style={{ width: 28, height: 28, color: INK_SOFT, background: 'var(--card-border)' }}
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            onClick={goNext}
+            aria-label={t.calendarNext}
+            className="flex items-center justify-center rounded-full"
+            style={{ width: 28, height: 28, color: INK_SOFT, background: 'var(--card-border)' }}
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* 年份／月份選擇面板：月份直接用 12 宮格挑（點了立即套用並關閉面板），不再用「月／年」
+          分頁文字切換；面板頂端的年份數字本身就是按鈕，點下去彈出第二層年份選單（見下方），
+          在裡面挑好年份後收回這一層繼續選月份。想直接檢視整年，用月份宮格下面的文字連結。 */}
       {pickerOpen && createPortal(
         <div
           className="fixed inset-0 flex items-center justify-center px-6"
@@ -6357,59 +6437,85 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold" style={{ color: INK }}>{t.calendarChooseDate}</span>
+              {/* 目前年份：直接點下去開第二層年份選單，取代原本的「月／年」分頁切換文字 */}
+              <button onClick={openYearMenu} className="flex items-center gap-1" aria-label={t.calendarChooseDate}>
+                <span className="text-base font-black" style={{ color: INK }}>{pickerYearLabel}</span>
+                <ChevronDown size={14} style={{ color: INK_SOFT }} />
+              </button>
               <button onClick={closePicker} aria-label={t.close} style={{ color: INK_SOFT }}><X size={16} /></button>
             </div>
 
-            {/* 月檢視／年檢視分頁切換：兩個分頁互斥，跟語言／曆法那類 segmented control 是一樣的做法 */}
-            <div className="flex items-center rounded-xl p-1" style={{ background: 'var(--card-border)' }}>
-              {[{ id: 'month', label: t.calendarMonthView }, { id: 'year', label: t.calendarYearView }].map(opt => (
+            <div className="grid grid-cols-3 gap-2">
+              {monthLabels.map((label, m) => {
+                const isCurrentSelection = viewMode === 'month' && pickerYear === year && m === month;
+                return (
+                  <button
+                    key={m}
+                    onClick={() => pickMonth(m)}
+                    className="py-2 rounded-lg text-sm font-bold"
+                    style={{
+                      background: isCurrentSelection ? ACCENT : 'var(--card-border)',
+                      color: isCurrentSelection ? '#fff' : INK,
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button onClick={pickWholeYear} className="py-2 rounded-xl text-sm font-bold" style={{ background: 'var(--card-border)', color: INK }}>
+              {t.calendarViewWholeYear}
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* 第二層年份選單：疊在第一層面板之上，12 年一頁，用左右箭頭翻頁，選一個年份就收回
+          第一層繼續選月份（見需求：點目前年份彈出二級選單選擇年份）。 */}
+      {yearMenuOpen && createPortal(
+        <div
+          className="fixed inset-0 flex items-center justify-center px-6"
+          style={{
+            zIndex: 215,
+            background: yearMenuPhase === 'shown' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0)',
+            opacity: yearMenuPhase === 'hidden' ? 0 : 1,
+            transition: `background ${PICKER_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1), opacity ${PICKER_DURATION}ms ease`,
+          }}
+          onClick={closeYearMenu}
+        >
+          <div
+            className="w-full max-w-xs p-4 rounded-2xl flex flex-col gap-3"
+            style={{
+              ...AUTH_GLASS,
+              opacity: yearMenuPhase === 'shown' ? 1 : 0,
+              transform: yearMenuPhase === 'shown' ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.97)',
+              transition: `opacity ${PICKER_DURATION}ms ease, transform ${PICKER_DURATION}ms cubic-bezier(0.34, 1.2, 0.64, 1)`,
+              willChange: 'opacity, transform',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <button onClick={() => setYearMenuGridStart(s => s - 12)} aria-label={t.calendarPrev} style={{ color: INK_SOFT }}><ChevronLeft size={18} /></button>
+              <span className="text-sm font-bold" style={{ color: INK }}>{yearMenuYears[0]} - {yearMenuYears[11]}</span>
+              <button onClick={() => setYearMenuGridStart(s => s + 12)} aria-label={t.calendarNext} style={{ color: INK_SOFT }}><ChevronRight size={18} /></button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {yearMenuYears.map(y => (
                 <button
-                  key={opt.id}
-                  onClick={() => setPickerMode(opt.id)}
-                  className="flex-1 py-1.5 rounded-lg text-xs font-bold"
+                  key={y}
+                  onClick={() => pickYearFromMenu(y)}
+                  className="py-2 rounded-lg text-sm font-bold"
                   style={{
-                    background: pickerMode === opt.id ? CARD_BG : 'transparent',
-                    color: pickerMode === opt.id ? INK : INK_SOFT,
-                    transition: 'background 150ms ease, color 150ms ease',
+                    background: y === pickerYear ? ACCENT : 'var(--card-border)',
+                    color: y === pickerYear ? '#fff' : INK,
                   }}
                 >
-                  {opt.label}
+                  {y}
                 </button>
               ))}
             </div>
-
-            {/* 年份選擇：月檢視／年檢視共用同一個年份步進器 */}
-            <div className="flex items-center justify-center gap-4">
-              <button onClick={() => setPickerYear(y => y - 1)} aria-label={t.calendarPrev} style={{ color: INK_SOFT }}><ChevronLeft size={18} /></button>
-              <span className="text-base font-black" style={{ color: INK, minWidth: '4.5rem', textAlign: 'center' }}>{pickerYearLabel}</span>
-              <button onClick={() => setPickerYear(y => y + 1)} aria-label={t.calendarNext} style={{ color: INK_SOFT }}><ChevronRight size={18} /></button>
-            </div>
-
-            {pickerMode === 'month' ? (
-              <div className="grid grid-cols-3 gap-2">
-                {monthLabels.map((label, m) => {
-                  const isCurrentSelection = viewMode === 'month' && pickerYear === year && m === month;
-                  return (
-                    <button
-                      key={m}
-                      onClick={() => pickMonth(m)}
-                      className="py-2 rounded-lg text-sm font-bold"
-                      style={{
-                        background: isCurrentSelection ? ACCENT : 'var(--card-border)',
-                        color: isCurrentSelection ? '#fff' : INK,
-                      }}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <button onClick={pickWholeYear} className="py-2.5 rounded-xl text-sm font-bold" style={{ background: ACCENT, color: '#fff' }}>
-                {t.calendarConfirmYear}
-              </button>
-            )}
           </div>
         </div>,
         document.body
@@ -8715,7 +8821,7 @@ export default function App() {
                   layout="cards"）資料共用同一份 events／處理邏輯，只是不再顯示時間軸的視覺結構，
                   改成單純的事件卡片，且列表內容跟著日曆目前選的月份／年份同步（見需求二、六）。 */}
               {activeTab === 'schedule' && (
-                <div className="flex-1 min-h-0 flex flex-col gap-3">
+                <div className="flex-1 min-h-0 flex flex-col gap-2">
                   {/* 「新增日程／搜尋」按鈕的實際掛載點：內容由下面的 TimelineSection（cards 模式）
                       透過 createPortal 掛進來，這裡只是預留一個節點，讓按鈕視覺上出現在日曆
                       上方、彼此形成清楚的上下關係（見需求三）。 */}
@@ -8723,10 +8829,9 @@ export default function App() {
 
                   <AnniversaryCalendar events={events} lang={lang} t={t} now={now} onRangeChange={setScheduleRange} />
 
-                  {/* 日程篩選設定：「只展示未來代辦事件」＋開關，放在日曆與下方事件列表之間，
-                      沿用跟外層容器一致的 gap-3 垂直間距，不因為新增這一行而壓縮這個區域
+                  {/* 日程篩選設定：「只展示未來代辦事件」＋開關，放在日曆與下方事件列表之間
                       （見需求七）。開關樣式跟「新增地標」表單裡的「循環」開關同一套設計。 */}
-                  <div className="rounded-2xl px-4 py-3 flex items-center justify-between flex-shrink-0" style={glass()}>
+                  <div className="rounded-2xl px-4 py-2.5 flex items-center justify-between flex-shrink-0" style={glass()}>
                     <span className="text-sm font-bold" style={{ color: INK }}>{t.futureOnlyLabel}</span>
                     <button
                       type="button"
