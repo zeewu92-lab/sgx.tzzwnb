@@ -12,7 +12,3 @@ const TEST_WATERMARK_TEXT = '測試版088888';
 // ▲▲▲ 臨時測試版浮水印開關 ▲▲▲
 // Apple 登入按鈕開關：
 const SHOW_APPLE_LOGIN = false;
-
-const LANGS = ['zh-TW', 'en', 'ja', 'ko'];
-const LANG_NAMES = { 'zh-TW': '繁體中文', en: 'English', ja: '日本語', ko: '한국어' };
-const LOCALE_MAP = { 'zh-TW': 'zh-TW', en: 'en-US', ja: 'ja-JP', ko: 'ko-KR' };
