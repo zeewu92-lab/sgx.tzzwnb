@@ -388,7 +388,7 @@ const STRINGS = {
     navSchedule: '日程', navGallery: '相冊', navProfile: '我的', myPageTitle: '我的', addSchedule: '添加日程',
     calendarMonthView: '月', calendarYearView: '年', calendarChooseDate: '選擇年份與月份',
     calendarPrev: '上一個', calendarNext: '下一個', calendarConfirmYear: '確定', calendarViewWholeYear: '檢視整年', calendarToggleCollapse: '收合／展開日曆',
-    futureOnlyLabel: '只展示未來代辦事件', scheduleShowAllLabel: '展示全部事件',
+    futureOnlyLabel: '只展示未來待辦事件', scheduleShowAllLabel: '展示全部事件',
     darkModeLabel: '深色模式', darkModeOn: '開', darkModeOff: '關', feedbackLabel: '意見回饋',
     modeCompanionHint: '設定情誼開始的日子，得到你們相伴的時長。',
     modeAnniversaryHint: '設定一個值得銘記的日子，讓時光線替你記錄一路點滴。',
@@ -1359,6 +1359,27 @@ function getEffectiveDate(ev, now) {
   if (!found) return orig;
   found.setHours(orig.getHours(), orig.getMinutes(), 0, 0);
   return found;
+}
+// 修復「同一個年重複事件（尤其生日模式的農曆生日）會同時出現在連續兩個月份，多出來的
+// 那個卡在月底」這個 bug：日程分頁在「整年檢視」逐月掃描時，原本對每個月各自組一個
+// ref＝那個月 1 號，分別呼叫 getEffectiveDate(ev, ref) 判斷「這個月有沒有落上這個事件」。
+// 這對西曆固定重複（addMonths／addYears 逐年比較）沒問題，但對農曆／伊斯蘭曆／希伯來曆
+// 這類「要往未來逐日掃描、找下一個符合月＋日的區塊」的曆法來說是錯的：如果某個月的 ref
+// （該月 1 號）剛好落在目標區塊「中途」——也就是這個事件在該農曆月份的實際西曆日期，
+// 已經在這個月 1 號之前就發生過了——find...Match 系列函式找不到「今天以後」還吻合的
+// 那一天，就會誤判成「今年這個月份根本沒有這個日期」，退而返回區塊最後一天頂替，而那個
+// 頂替出來的日期常常已經跨進下一個西曆月份，造成同一個年度事件被算成分別出現在兩個
+// 連續月份（其中一個是錯的、卡在月底）。
+// 修法：年重複（含不循環的固定日期）事件一年最多只會發生一次，不需要對 12 個月各自重算
+// 一次，只要用「目標年份的前一年 12 月 1 號」當基準點，往未來掃描一次，保證這個基準點
+// 一定落在任何可能的目標發生日「之前」（不會是中途），得到的結果就是這個事件在目標年份
+// 唯一、正確的那一次發生日，用它落在哪個月份就好，不再有「多算出一個月」的問題。
+// 只有「每 N 個月」重複（repeatUnit==='month'，只有西曆才會這樣設定）才可能一年出現
+// 好幾次，那個不受這個 bug 影響（西曆逐月比較是精確的日期比大小，不需要「找不到就退而
+// 求其次」這種容易誤判的區塊掃描），繼續維持原本逐月重算即可。
+function getYearlyOccurrenceInYear(ev, targetYear) {
+  const safeRef = new Date(targetYear - 1, 11, 1);
+  return getEffectiveDate(ev, safeRef);
 }
 const SELECT_STYLE = { border: CARD_BORDER, background: INPUT_BG, color: INK };
 const SELECT_CLASS = 'px-2 py-2 rounded-lg text-sm outline-none flex-1 min-w-0';
@@ -4281,25 +4302,44 @@ function TimelineSection({
       : [rangeFilter.month];
     const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const results = [];
+    // 加進 results 前共用的整理步驟（算 diffDays／age／elapsedDays、組 __occKey），
+    // 兩種掃描方式（逐月／一年一次）都要用到，抽出來避免重複程式碼。
+    function pushOccurrence(ev, occ) {
+      const targetTime = new Date(occ.getFullYear(), occ.getMonth(), occ.getDate()).getTime();
+      const diffDays = Math.ceil((targetTime - todayTime) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) return; // 日程分頁不列出已經過去的地標，直接跳過，不進 results
+      let age = null;
+      if ((ev.isBirthday || ev.isCare) && ev.repeat) {
+        const origDate = combineDateTime(ev.date, ev.time);
+        age = Math.max(0, occ.getFullYear() - origDate.getFullYear());
+      }
+      const origDateOnly = new Date(`${ev.date}T00:00:00`);
+      const elapsedDays = Math.floor((todayTime - origDateOnly.getTime()) / (1000 * 60 * 60 * 24));
+      // 同一筆事件在年檢視底下可能一年出現好幾次（例如每月重複），key 不能只用 ev.id，
+      // 另外帶上發生日期時間戳記做成 __occKey，渲染卡片時才不會撞 key。
+      results.push({ ...ev, targetDate: occ, diffDays, age, elapsedDays, __occKey: `${ev.id}::${occ.getTime()}` });
+    }
     events.forEach(ev => {
-      monthsToScan.forEach(m => {
-        const ref = new Date(rangeFilter.year, m, 1);
-        const occ = getEffectiveDate(ev, ref);
-        if (occ.getFullYear() !== rangeFilter.year || occ.getMonth() !== m) return;
-        const targetTime = new Date(occ.getFullYear(), occ.getMonth(), occ.getDate()).getTime();
-        const diffDays = Math.ceil((targetTime - todayTime) / (1000 * 60 * 60 * 24));
-        if (diffDays < 0) return; // 日程分頁不列出已經過去的地標，直接跳過，不進 results
-        let age = null;
-        if ((ev.isBirthday || ev.isCare) && ev.repeat) {
-          const origDate = combineDateTime(ev.date, ev.time);
-          age = Math.max(0, occ.getFullYear() - origDate.getFullYear());
-        }
-        const origDateOnly = new Date(`${ev.date}T00:00:00`);
-        const elapsedDays = Math.floor((todayTime - origDateOnly.getTime()) / (1000 * 60 * 60 * 24));
-        // 同一筆事件在年檢視底下可能一年出現好幾次（例如每月重複），key 不能只用 ev.id，
-        // 另外帶上發生日期時間戳記做成 __occKey，渲染卡片時才不會撞 key。
-        results.push({ ...ev, targetDate: occ, diffDays, age, elapsedDays, __occKey: `${ev.id}::${occ.getTime()}` });
-      });
+      // 「每 N 個月」重複（只有西曆才會這樣設定）一年可能出現好幾次，必須逐月各自算一次；
+      // 西曆的月份比較是精確的日期大小比較，不會有下面「年重複」那種區塊搜尋誤判的問題，
+      // 繼續維持原本逐月重算即可。
+      if (ev.repeat && ev.repeatUnit === 'month') {
+        monthsToScan.forEach(m => {
+          const ref = new Date(rangeFilter.year, m, 1);
+          const occ = getEffectiveDate(ev, ref);
+          if (occ.getFullYear() !== rangeFilter.year || occ.getMonth() !== m) return;
+          pushOccurrence(ev, occ);
+        });
+        return;
+      }
+      // 不循環的固定日期、或年重複（含農曆／伊斯蘭曆／希伯來曆等，以及生日／關懷模式）：
+      // 一年最多只會發生一次，用「目標年份前一年 12 月 1 號」當基準往未來掃描一次即可，
+      // 不要對 12 個月各自重算——見 getYearlyOccurrenceInYear 開頭註解，這正是修復「同一個
+      // 年重複事件被誤判成出現在兩個連續月份」的關鍵。
+      const occ = getYearlyOccurrenceInYear(ev, rangeFilter.year);
+      if (occ.getFullYear() !== rangeFilter.year) return;
+      if (rangeFilter.mode === 'month' && occ.getMonth() !== rangeFilter.month) return;
+      pushOccurrence(ev, occ);
     });
     results.sort((a, b) => a.targetDate - b.targetDate);
     return results;
@@ -6233,10 +6273,19 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
   const startWeekday = firstOfMonth.getDay();
   const daysInPrevMonth = new Date(year, month, 0).getDate();
 
+  // 修復同一個 bug（見 getYearlyOccurrenceInYear 開頭註解）：月檢視原本直接用「這個月 1 號」
+  // 當基準呼叫 getEffectiveDate，對農曆等需要「往未來逐日掃描找符合區塊」的曆法來說，如果
+  // 事件在該農曆月份的實際西曆日期已經在這個月 1 號之前發生過，就會誤判、退而返回區塊最後
+  // 一天頂替，常常跨進下個月——導致同一個農曆生日在切換月份瀏覽時，連續兩個月都被點上圓點。
+  // 月重複（repeatUnit==='month'，只有西曆才會這樣設定）本來就該每個月各自出現一次，
+  // 繼續用「這個月 1 號」當基準沒問題；不循環或年重複的事件改用 getYearlyOccurrenceInYear
+  // （用去年 12 月 1 號當基準，保證一定在目標發生日之前），一年只算一次、只會落在唯一一個月份。
   const eventsByDay = useMemo(() => {
     const map = {};
     events.forEach(ev => {
-      const occ = getEffectiveDate(ev, firstOfMonth);
+      const occ = ev.repeat && ev.repeatUnit === 'month'
+        ? getEffectiveDate(ev, firstOfMonth)
+        : getYearlyOccurrenceInYear(ev, year);
       if (occ.getFullYear() === year && occ.getMonth() === month) {
         const d = occ.getDate();
         (map[d] = map[d] || []).push(ev);
@@ -6246,12 +6295,18 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events, year, month]);
 
-  // 年檢視：12 個月各自算一次「這個月有沒有落上任何事件」，跟月檢視同一套 getEffectiveDate 用法，
-  // 只是逐月掃描，不會跟月檢視或下面的日程列表算出兩套不同的日期判斷結果。
+  // 年檢視：12 個月各自算一次「這個月有沒有落上任何事件」，跟月檢視同一套邏輯（見上面
+  // eventsByDay 的註解），只是逐月掃描，不會跟月檢視或下面的日程列表算出兩套不同的日期判斷結果。
   const monthsHaveEvents = useMemo(() => {
+    const monthlyRepeatEvents = events.filter(ev => ev.repeat && ev.repeatUnit === 'month');
+    const yearlyOrFixedOccurrences = events
+      .filter(ev => !(ev.repeat && ev.repeatUnit === 'month'))
+      .map(ev => getYearlyOccurrenceInYear(ev, year))
+      .filter(occ => occ.getFullYear() === year);
     return Array.from({ length: 12 }, (_, m) => {
+      if (yearlyOrFixedOccurrences.some(occ => occ.getMonth() === m)) return true;
       const ref = new Date(year, m, 1);
-      return events.some(ev => {
+      return monthlyRepeatEvents.some(ev => {
         const occ = getEffectiveDate(ev, ref);
         return occ.getFullYear() === year && occ.getMonth() === m;
       });
@@ -8869,12 +8924,13 @@ export default function App() {
 
                   <AnniversaryCalendar events={events} lang={lang} t={t} now={now} onRangeChange={setScheduleRange} />
 
-                  {/* 「展示全部事件」按鈕模組：整塊縮小（padding／開關尺寸都變小），並把原本
-                      獨立一行的「只展示未來代辦事件」說明文字放回同一行的左邊——不可點擊的純文字
-                      跟右邊真正可操作的開關文字＋開關本身並排，兩者合一行，省下一行的高度。 */}
-                  <div className="rounded-2xl px-3 py-1.5 flex items-center justify-between gap-2 flex-shrink-0" style={glass()}>
+                  {/* 這一整行本身不套毛玻璃背景，只有純文字提示＋真正的按鈕模組並排。
+                      左邊「只展示未來待辦事件」是不可點擊的純文字說明，不需要背景卡片；
+                      右邊「展示全部事件」文字＋開關才是真正的按鈕模組，毛玻璃背景縮小到只
+                      包住這一小塊，不再整行都套上卡片背景。 */}
+                  <div className="flex items-center justify-between gap-2 flex-shrink-0 px-1">
                     <span className="text-xs" style={{ color: INK_SOFT }}>{t.futureOnlyLabel}</span>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="rounded-2xl px-3 py-1.5 flex items-center gap-2 flex-shrink-0" style={glass()}>
                       <span className="text-xs" style={{ color: INK_SOFT }}>{t.scheduleShowAllLabel}</span>
                       <button
                         type="button"
