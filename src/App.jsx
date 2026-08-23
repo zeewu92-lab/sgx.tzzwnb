@@ -388,7 +388,7 @@ const STRINGS = {
     navSchedule: '日程', navGallery: '相冊', navProfile: '我的', myPageTitle: '我的', addSchedule: '添加日程',
     calendarMonthView: '月', calendarYearView: '年', calendarChooseDate: '選擇年份與月份',
     calendarPrev: '上一個', calendarNext: '下一個', calendarConfirmYear: '確定', calendarViewWholeYear: '檢視整年', calendarToggleCollapse: '收合／展開日曆',
-    futureOnlyLabel: '只展示未來代辦事件',
+    futureOnlyLabel: '只展示未來代辦事件', scheduleShowAllLabel: '展示全部事件',
     darkModeLabel: '深色模式', darkModeOn: '開', darkModeOff: '關', feedbackLabel: '意見回饋',
     modeCompanionHint: '設定情誼開始的日子，得到你們相伴的時長。',
     modeAnniversaryHint: '設定一個值得銘記的日子，讓時光線替你記錄一路點滴。',
@@ -509,7 +509,7 @@ const STRINGS = {
     navSchedule: 'Schedule', navGallery: 'Albums', navProfile: 'Profile', myPageTitle: 'Profile', addSchedule: 'Add Schedule',
     calendarMonthView: 'Month', calendarYearView: 'Year', calendarChooseDate: 'Choose year and month',
     calendarPrev: 'Previous', calendarNext: 'Next', calendarConfirmYear: 'Done', calendarViewWholeYear: 'View whole year', calendarToggleCollapse: 'Collapse/expand calendar',
-    futureOnlyLabel: 'Show upcoming events only',
+    futureOnlyLabel: 'Show upcoming events only', scheduleShowAllLabel: 'Show all events',
     darkModeLabel: 'Dark Mode', darkModeOn: 'On', darkModeOff: 'Off', feedbackLabel: 'Feedback',
     modeCompanionHint: "Set the day your bond began, and see how long you've been together.",
     modeAnniversaryHint: 'Set a day worth remembering, and let TimeLine track every moment along the way.',
@@ -630,7 +630,7 @@ const STRINGS = {
     navSchedule: 'スケジュール', navGallery: 'アルバム', navProfile: 'マイページ', myPageTitle: 'マイページ', addSchedule: '予定を追加',
     calendarMonthView: '月', calendarYearView: '年', calendarChooseDate: '年月を選択',
     calendarPrev: '前へ', calendarNext: '次へ', calendarConfirmYear: '決定', calendarViewWholeYear: '年間表示', calendarToggleCollapse: 'カレンダーを折りたたむ／展開',
-    futureOnlyLabel: '今後の予定のみ表示',
+    futureOnlyLabel: '今後の予定のみ表示', scheduleShowAllLabel: '全ての予定を表示',
     darkModeLabel: 'ダークモード', darkModeOn: 'オン', darkModeOff: 'オフ', feedbackLabel: 'フィードバック',
     modeCompanionHint: '絆が始まった日を設定して、二人が共に過ごした時間を確認しましょう。',
     modeAnniversaryHint: '心に刻みたい日を設定すれば、時間軸がここまでの歩みをそっと記録します。',
@@ -751,7 +751,7 @@ const STRINGS = {
     navSchedule: '일정', navGallery: '앨범', navProfile: '마이페이지', myPageTitle: '마이페이지', addSchedule: '일정 추가',
     calendarMonthView: '월', calendarYearView: '년', calendarChooseDate: '연도와 월 선택',
     calendarPrev: '이전', calendarNext: '다음', calendarConfirmYear: '확인', calendarViewWholeYear: '연간 보기', calendarToggleCollapse: '캘린더 접기/펼치기',
-    futureOnlyLabel: '앞으로의 일정만 표시',
+    futureOnlyLabel: '앞으로의 일정만 표시', scheduleShowAllLabel: '전체 일정 표시',
     darkModeLabel: '다크 모드', darkModeOn: '켜짐', darkModeOff: '꺼짐', feedbackLabel: '피드백',
     modeCompanionHint: '인연이 시작된 날을 설정하고 함께한 시간을 확인해 보세요.',
     modeAnniversaryHint: '기억하고 싶은 날을 설정하면 타임라인이 그동안의 발자취를 기록해 줍니다.',
@@ -3867,12 +3867,13 @@ function TimelineSection({
   // searchQuery……）完全不用搬家，還是留在 TimelineSection 內部，只是渲染輸出的落點不同。
   // rangeFilter — 日曆目前顯示的時間範圍｛mode:'month'|'year', year, month?｝，由
   // AnniversaryCalendar 算出、透過 App() 往下傳，日程卡片列表依這個範圍重新計算要顯示哪些事件
-  // （見下方 rangedEvents），取代原本「只看未來」的算法。
-  // futureOnly —「只展示未來代辦事件」開關目前的狀態，同樣由 App() 持有（放在按鈕列跟日曆
-  // 之間，不是這個元件自己的內部狀態）。
+  // （見下方 rangedEvents）。
+  // showAll —「展示全部事件」開關目前的狀態，同樣由 App() 持有（放在按鈕列跟日曆之間，
+  // 不是這個元件自己的內部狀態）。關閉（預設）＝只列出 rangeFilter 範圍內（本月／該年）的事件；
+  // 開啟＝忽略日曆目前選的範圍，直接列出全部事件（跟 processedEvents 同一份排序結果）。
   controlsPortalEl = null,
   rangeFilter = null,
-  futureOnly = true,
+  showAll = false,
 }) {
   const isCardsLayout = layout === 'cards';
   const [showForm, setShowForm] = useState(false);
@@ -4236,12 +4237,16 @@ function TimelineSection({
   // 不去動 processedEvents 原本的邏輯與用途（時間軸分頁、編輯/刪除/相冊彈窗依然完全依賴它）。
   // 年檢視需要逐月掃描 12 次，才能抓到「每個月各自最近一次落在那個月裡的發生日」——例如每月
   // 重複的事件，一整年應該出現 12 次，不是只出現一次。
+  // 「展示全部事件」開啟時（showAll），不分月份／年份，直接沿用 processedEvents（每個事件
+  // 最近一次發生日、已經照日期排序好，過去未來都包含），不用再逐月掃描一次。
   // 同樣包進 useMemo：這一份對農曆／其他曆法事件來說本來就不便宜（getEffectiveDate 內部要
   // 逐日掃描比對），年檢視還要乘以 12 個月，如果不快取，父層 App 每 30 秒跳一次「現在時間」、
   // 或是在這個分頁打字搜尋、開合新增表單，都會讓它重新整個算一次，正是先前「開啟日程頁卡頓、
-  // 操作反應慢」的主因——改成只有 events／rangeFilter／futureOnly／now 真的變動時才重算。
+  // 操作反應慢」的主因——改成只有 events／rangeFilter／showAll／now 真的變動時才重算。
   const rangedEvents = useMemo(() => {
-    if (!isCardsLayout || !rangeFilter) return [];
+    if (!isCardsLayout) return [];
+    if (showAll) return processedEvents;
+    if (!rangeFilter) return [];
     const monthsToScan = rangeFilter.mode === 'year'
       ? Array.from({ length: 12 }, (_, m) => m)
       : [rangeFilter.month];
@@ -4267,10 +4272,8 @@ function TimelineSection({
       });
     });
     results.sort((a, b) => a.targetDate - b.targetDate);
-    // 開關開啟：只留「尚未發生的未來事件」；關閉：該時間範圍內的全部事件都顯示，
-    // 包括已經過去／已發生的（見需求七）。
-    return futureOnly ? results.filter(ev => ev.diffDays >= 0) : results;
-  }, [isCardsLayout, rangeFilter, events, now, futureOnly]);
+    return results;
+  }, [isCardsLayout, rangeFilter, events, now, showAll, processedEvents]);
 
   // 搜尋：輸入關鍵字時，直接在全部地標（不分過去／未來）中比對標題，跳出原本的分區顯示
   const searchQueryNormalized = searchQuery.trim().toLowerCase();
@@ -8052,14 +8055,14 @@ export default function App() {
   // 「日程」分頁（layout='cards'）專用的狀態，放在 App 這一層而不是 AnniversaryCalendar／
   // TimelineSection 自己的 local state，理由跟 activeTab 一樣：分頁切走切回時不希望被重置，
   // 而且日曆（AnniversaryCalendar）跟事件列表（TimelineSection）是兩個獨立元件，
-  // 「目前時間範圍」「只看未來」這兩個狀態要同時餵給兩邊，本來就得放在共同的上層。
+  // 「目前時間範圍」「要不要看全部」這兩個狀態要同時餵給兩邊，本來就得放在共同的上層。
   // scheduleRange：日曆目前顯示的時間範圍，由 AnniversaryCalendar 的 onRangeChange 回報；
   // 初始值先假設是「本月」，等 AnniversaryCalendar 掛載後的第一個 effect 就會立刻覆寫成
   // 它自己算出的正確值（月檢視預設也是本月，兩者一致，不會有畫面閃一下又跳的情況）。
   const [scheduleRange, setScheduleRange] = useState(() => ({ mode: 'month', year: nowTick.getFullYear(), month: nowTick.getMonth() }));
-  // 「只展示未來代辦事件」開關，預設開啟——跟改版前「預設只看未來、過去的收在收合區塊裡」
-  // 的行為最接近，使用者一進日程頁不會被過去／已發生的事件洗版。
-  const [scheduleFutureOnly, setScheduleFutureOnly] = useState(true);
+  // 「展示全部事件」開關，預設關閉——預設只看日曆目前選的月份（本月），跟日曆同步；
+  // 開啟後改成不分月份、列出全部事件（見下方 TimelineSection 的 showAll 用法）。
+  const [scheduleShowAll, setScheduleShowAll] = useState(false);
   // 「新增日程／搜尋」按鈕的實際掛載點：TimelineSection（cards 模式）用 createPortal 把
   // 按鈕渲染到這個節點，讓它們在畫面上出現在日曆上方，而不是 TimelineSection 元件本身
   // 所在的位置（日曆下方）。用 useState 而不是純 useRef，是因為 ref 在節點掛載瞬間拿到的
@@ -8816,12 +8819,16 @@ export default function App() {
               )}
 
               {/* 日程（獨立分頁）：頁面結構由上至下＝頁面標題（在最上面的 Header，這裡看不到）→
-                  「新增日程／搜尋」操作 → 日曆 → 日程篩選設定（只展示未來代辦事件）→
+                  「新增日程／搜尋」操作 → 日曆 → 日程篩選設定（展示全部事件）→
                   對應的日程／事件列表。日曆（AnniversaryCalendar）跟事件列表（TimelineSection，
                   layout="cards"）資料共用同一份 events／處理邏輯，只是不再顯示時間軸的視覺結構，
-                  改成單純的事件卡片，且列表內容跟著日曆目前選的月份／年份同步（見需求二、六）。 */}
-              {activeTab === 'schedule' && (
-                <div className="flex-1 min-h-0 flex flex-col gap-2">
+                  改成單純的事件卡片，且列表內容跟著日曆目前選的月份／年份同步（見需求二、六）。
+                  跟「時光線」（home）分頁一樣，這裡改成永遠掛載、用 display 控制顯示/隱藏，
+                  不再用 activeTab === 'schedule' && (...) 這種條件渲染——後者每次切換分頁都會把
+                  AnniversaryCalendar／TimelineSection 整個卸載再重新掛載，所有 useMemo 快取、
+                  日曆目前選的月份、捲動位置全部歸零，這正是「從其他頁面切進日程頁很慢」的主因；
+                  改成常駐掛載後，切分頁純粹是 CSS 顯示/隱藏，不會重新渲染整棵子樹。 */}
+              <div className="flex-1 min-h-0 flex flex-col gap-2" style={{ display: activeTab === 'schedule' ? 'flex' : 'none' }}>
                   {/* 「新增日程／搜尋」按鈕的實際掛載點：內容由下面的 TimelineSection（cards 模式）
                       透過 createPortal 掛進來，這裡只是預留一個節點，讓按鈕視覺上出現在日曆
                       上方、彼此形成清楚的上下關係（見需求三）。 */}
@@ -8829,40 +8836,44 @@ export default function App() {
 
                   <AnniversaryCalendar events={events} lang={lang} t={t} now={now} onRangeChange={setScheduleRange} />
 
-                  {/* 日程篩選設定：「只展示未來代辦事件」＋開關，放在日曆與下方事件列表之間
-                      （見需求七）。開關樣式跟「新增地標」表單裡的「循環」開關同一套設計。 */}
+                  {/* 日程篩選設定：左邊是純文字提示（灰色小字，不可點擊），描述預設狀態；
+                      右邊「展示全部事件」是真正的操作，文字＋開關放在一起，打開後改成不分
+                      月份、列出全部事件（見 TimelineSection 的 showAll）。 */}
                   <div className="rounded-2xl px-4 py-2.5 flex items-center justify-between flex-shrink-0" style={glass()}>
-                    <span className="text-sm font-bold" style={{ color: INK }}>{t.futureOnlyLabel}</span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={scheduleFutureOnly}
-                      aria-label={t.futureOnlyLabel}
-                      onClick={() => setScheduleFutureOnly(v => !v)}
-                      className="relative flex-shrink-0 rounded-full"
-                      style={{
-                        width: 46,
-                        height: 28,
-                        padding: 3,
-                        background: scheduleFutureOnly ? ACCENT : 'rgba(120,125,135,0.22)',
-                        border: scheduleFutureOnly ? `1px solid ${ACCENT}` : '1px solid rgba(120,125,135,0.16)',
-                        boxShadow: scheduleFutureOnly ? `0 3px 10px ${accentAlpha('30')}` : 'inset 0 1px 2px rgba(0,0,0,0.06)',
-                        transition: 'background 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
-                      }}
-                    >
-                      <span
-                        className="absolute rounded-full"
+                    <span className="text-xs" style={{ color: INK_SOFT }}>{t.futureOnlyLabel}</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-xs" style={{ color: INK_SOFT }}>{t.scheduleShowAllLabel}</span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={scheduleShowAll}
+                        aria-label={t.scheduleShowAllLabel}
+                        onClick={() => setScheduleShowAll(v => !v)}
+                        className="relative flex-shrink-0 rounded-full"
                         style={{
-                          width: 20,
-                          height: 20,
-                          top: 3,
-                          left: scheduleFutureOnly ? 22 : 3,
-                          background: '#fff',
-                          boxShadow: '0 1px 4px rgba(0,0,0,0.18)',
-                          transition: 'left 180ms cubic-bezier(0.22, 1, 0.36, 1)',
+                          width: 46,
+                          height: 28,
+                          padding: 3,
+                          background: scheduleShowAll ? ACCENT : 'rgba(120,125,135,0.22)',
+                          border: scheduleShowAll ? `1px solid ${ACCENT}` : '1px solid rgba(120,125,135,0.16)',
+                          boxShadow: scheduleShowAll ? `0 3px 10px ${accentAlpha('30')}` : 'inset 0 1px 2px rgba(0,0,0,0.06)',
+                          transition: 'background 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
                         }}
-                      />
-                    </button>
+                      >
+                        <span
+                          className="absolute rounded-full"
+                          style={{
+                            width: 20,
+                            height: 20,
+                            top: 3,
+                            left: scheduleShowAll ? 22 : 3,
+                            background: '#fff',
+                            boxShadow: '0 1px 4px rgba(0,0,0,0.18)',
+                            transition: 'left 180ms cubic-bezier(0.22, 1, 0.36, 1)',
+                          }}
+                        />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex-1 min-h-0 overflow-y-auto">
@@ -8881,11 +8892,10 @@ export default function App() {
                       layout="cards"
                       controlsPortalEl={scheduleControlsEl}
                       rangeFilter={scheduleRange}
-                      futureOnly={scheduleFutureOnly}
+                      showAll={scheduleShowAll}
                     />
                   </div>
-                </div>
-              )}
+              </div>
 
               {activeTab === 'gallery' && (
                 <AlbumsFeature
