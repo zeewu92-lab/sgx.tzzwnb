@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>日籤 · 每日求籤</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#4A1119;
+    --bg-deep-2:#5C1A22;
+    --bg-deep-3:#331014;
+    --gold:#C9A44C;
+    --gold-light:#E4C879;
+    --paper:#F5ECD8;
+    --paper-2:#EFE2C4;
+    --ink:#2A211A;
+    --ink-soft:#6B5A47;
+    --cinnabar:#B3282D;
+    --cinnabar-dark:#8C1E22;
+    --jade:#4F6F52;
+    --serif:'Noto Serif TC', serif;
+    --sans:'Noto Sans TC', sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; height:100%;}
+  body{
+    font-family:var(--sans);
+    background:
+      radial-gradient(circle at 20% 0%, rgba(201,164,76,0.12), transparent 45%),
+      radial-gradient(circle at 90% 100%, rgba(179,40,45,0.18), transparent 40%),
+      linear-gradient(160deg, var(--bg-deep-3), var(--bg-deep) 45%, var(--bg-deep-2) 100%);
+    color:var(--paper);
+    min-height:100%;
+    display:flex;
+    justify-content:center;
+  }
+  #app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    background:
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px, transparent 2px, transparent 6px);
+  }
+
+  /* ---------- topbar ---------- */
+  .topbar{
+    padding:22px 20px 14px;
+    text-align:center;
+    position:relative;
+  }
+  .topbar::after{
+    content:"";
+    display:block;
+    width:64px; height:2px;
+    margin:12px auto 0;
+    background:linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .topbar h1{
+    font-family:var(--serif);
+    font-weight:900;
+    font-size:26px;
+    letter-spacing:6px;
+    margin:0;
+    color:var(--gold-light);
+    text-shadow:0 1px 0 rgba(0,0,0,0.3);
+  }
+  .topbar p{
+    margin:6px 0 0;
+    font-size:11px;
+    letter-spacing:3px;
+    color:rgba(245,236,216,0.55);
+  }
+
+  main{flex:1; padding:4px 18px 100px;}
+  .view{display:none;}
+  .view.active{display:block; animation:fadeUp .35s ease both;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+  /* ---------- section headings ---------- */
+  .eyebrow{
+    font-size:11px; letter-spacing:3px; color:var(--gold);
+    text-transform:uppercase; margin:22px 0 8px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow::before, .eyebrow::after{content:""; flex:1; height:1px; background:rgba(201,164,76,0.35);}
+
+  /* ---------- chips ---------- */
+  .chip-row{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:14px 0 6px;}
+  .chip{
+    font-family:var(--sans);
+    font-size:13px;
+    padding:7px 14px;
+    border-radius:999px;
+    border:1px solid rgba(201,164,76,0.4);
+    background:rgba(0,0,0,0.15);
+    color:rgba(245,236,216,0.8);
+    cursor:pointer;
+    transition:.2s;
+  }
+  .chip.active{
+    background:linear-gradient(135deg, var(--gold), #a9812f);
+    color:#2a1c0c;
+    font-weight:700;
+    border-color:var(--gold-light);
+    box-shadow:0 2px 8px rgba(201,164,76,0.35);
+  }
+
+  /* ---------- qian tube (signature element) ---------- */
+  .tube-stage{
+    display:flex; flex-direction:column; align-items:center;
+    padding:18px 0 10px;
+  }
+  .tube-wrap{
+    position:relative;
+    width:150px; height:190px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .sticks{position:absolute; bottom:56px; left:0; right:0; height:120px;}
+  .stick{
+    position:absolute;
+    bottom:0;
+    width:7px;
+    height:110px;
+    left:50%;
+    background:linear-gradient(180deg, #E8D9B0, #C7A85F);
+    border-radius:3px 3px 0 0;
+    box-shadow:inset -2px 0 3px rgba(0,0,0,0.15);
+  }
+  .stick::after{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:10px;
+    background:var(--cinnabar);
+    border-radius:3px 3px 0 0;
+  }
+  .tube{
+    position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+    width:118px; height:96px;
+    background:linear-gradient(180deg, #7A2A2C, #5A1518 70%, #430F12);
+    border:2px solid var(--gold);
+    border-radius:14px 14px 20px 20px;
+    box-shadow:0 10px 24px rgba(0,0,0,0.45), inset 0 3px 6px rgba(255,255,255,0.08);
+  }
+  .tube::before{
+    content:"";
+    position:absolute; top:8px; left:8px; right:8px; height:6px;
+    background:rgba(0,0,0,0.25);
+    border-radius:6px;
+  }
+  .tube-label{
+    position:absolute; bottom:14px; left:0; right:0; text-align:center;
+    font-family:var(--serif); font-weight:700; color:var(--gold-light);
+    font-size:13px; letter-spacing:2px;
+  }
+  .tube-hint{
+    margin-top:14px; font-size:13px; color:rgba(245,236,216,0.7); text-align:center;
+  }
+  .tube-hint b{color:var(--gold-light); font-weight:700;}
+
+  .btn{
+    font-family:var(--sans); font-weight:700; font-size:15px;
+    border:none; border-radius:10px; padding:13px 20px;
+    cursor:pointer; letter-spacing:1px;
+    transition:transform .15s, box-shadow .15s;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{
+    background:linear-gradient(135deg, var(--cinnabar), var(--cinnabar-dark));
+    color:#fff5e8;
+    box-shadow:0 6px 16px rgba(179,40,45,0.4);
+    width:100%;
+  }
+  .btn-gold{
+    background:linear-gradient(135deg, var(--gold-light), var(--gold));
+    color:#2a1c0c;
+    box-shadow:0 6px 16px rgba(201,164,76,0.35);
+  }
+  .btn-ghost{
+    background:transparent; color:var(--gold-light);
+    border:1px solid rgba(201,164,76,0.5);
+  }
+  .btn-block{width:100%; margin-top:10px;}
+  .btn-row{display:flex; gap:10px; margin-top:14px;}
+  .btn-row .btn{flex:1;}
+  .btn:disabled{opacity:.45; cursor:default;}
+
+  /* ---------- already-drawn banner ---------- */
+  .done-banner{
+    text-align:center; font-size:12px; color:rgba(245,236,216,0.6);
+    margin-top:10px; letter-spacing:1px;
+  }
+
+  /* ---------- result card ---------- */
+  .paper-card{
+    background:linear-gradient(180deg, var(--paper), var(--paper-2));
+    color:var(--ink);
+    border-radius:10px;
+    padding:20px 18px;
+    margin-top:16px;
+    position:relative;
+    box-shadow:0 12px 28px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(201,164,76,0.5);
+  }
+  .paper-card::before{
+    content:"";
+    position:absolute; inset:6px;
+    border:1px solid rgba(179,40,45,0.35);
+    border-radius:6px;
+    pointer-events:none;
+  }
+  .qian-head{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    margin-bottom:10px;
+  }
+  .qian-no{
+    font-family:var(--serif); font-weight:900; font-size:20px; color:var(--ink);
+  }
+  .qian-no span{display:block; font-size:11px; font-weight:500; color:var(--ink-soft); letter-spacing:2px; margin-top:2px;}
+  .level-badge{
+    font-family:var(--serif); font-weight:900; font-size:14px;
+    padding:6px 14px; border-radius:4px;
+    color:#fff5e8; white-space:nowrap;
+  }
+  .lv-上上籤{background:linear-gradient(135deg,#C9A44C,#8C6A1E);}
+  .lv-上籤{background:linear-gradient(135deg,#4F6F52,#33482F);}
+  .lv-中籤{background:linear-gradient(135deg,#7C8AA0,#4E5A6E);}
+  .lv-下籤{background:linear-gradient(135deg,#A9642F,#7A4520);}
+  .lv-下下籤{background:linear-gradient(135deg,#8C1E22,#5A1215);}
+
+  .poem-box{
+    display:flex; flex-direction:row-reverse; justify-content:center; gap:14px;
+    padding:18px 6px; margin:8px 0 14px;
+    border-top:1px dashed rgba(179,40,45,0.4);
+    border-bottom:1px dashed rgba(179,40,45,0.4);
+  }
+  .poem-line{
+    writing-mode:vertical-rl;
+    text-orientation:upright;
+    font-family:var(--serif);
+    font-weight:700;
+    font-size:19px;
+    letter-spacing:6px;
+    color:var(--ink);
+  }
+  .qian-section{margin-bottom:12px;}
+  .qian-section h4{
+    margin:0 0 4px; font-size:12px; letter-spacing:2px; color:var(--cinnabar-dark);
+    font-weight:700;
+  }
+  .qian-section p{margin:0; font-size:14.5px; line-height:1.65; color:var(--ink);}
+
+  /* ---------- stars / fortune ---------- */
+  .overall-stars{text-align:center; margin:6px 0 4px;}
+  .overall-stars .stars{font-size:26px; letter-spacing:3px;}
+  .stars .on{color:var(--gold-light); text-shadow:0 0 6px rgba(201,164,76,0.6);}
+  .stars .off{color:rgba(245,236,216,0.25);}
+  .overall-label{font-size:12px; letter-spacing:2px; color:rgba(245,236,216,0.65); margin-top:2px;}
+
+  .cat-list{margin-top:14px; display:flex; flex-direction:column; gap:8px;}
+  .cat-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(201,164,76,0.25);
+    border-radius:8px; padding:9px 12px;
+  }
+  .cat-row.focused{
+    border-color:var(--gold-light);
+    background:rgba(201,164,76,0.14);
+  }
+  .cat-name{font-size:13.5px; font-weight:700; color:var(--paper); display:flex; align-items:center; gap:6px;}
+  .cat-name .tag{font-size:10px; color:var(--gold-light); border:1px solid var(--gold-light); border-radius:4px; padding:1px 5px;}
+  .cat-stars{font-size:15px;}
+  .cat-advice{font-size:12.5px; color:rgba(245,236,216,0.7); margin-top:4px; line-height:1.5;}
+
+  .quote-card{
+    margin-top:22px; padding:16px 18px; border-radius:10px;
+    background:rgba(0,0,0,0.18); border:1px solid rgba(201,164,76,0.25);
+    text-align:center;
+  }
+  .quote-card p{font-family:var(--serif); font-size:15px; line-height:1.6; margin:0; color:var(--gold-light);}
+  .quote-card span{display:block; margin-top:6px; font-size:11px; letter-spacing:2px; color:rgba(245,236,216,0.5);}
+
+  /* ---------- book (history) ---------- */
+  .book-item{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:13px 14px; margin-bottom:10px;
+    background:rgba(0,0,0,0.18); border:1px solid rgba(201,164,76,0.25);
+    border-radius:10px; cursor:pointer;
+  }
+  .book-item:active{background:rgba(201,164,76,0.12);}
+  .book-left{display:flex; flex-direction:column; gap:3px;}
+  .book-date{font-size:11px; color:rgba(245,236,216,0.55); letter-spacing:1px;}
+  .book-title{font-family:var(--serif); font-weight:700; font-size:15px; color:var(--paper);}
+  .empty-state{
+    text-align:center; padding:60px 20px; color:rgba(245,236,216,0.55);
+  }
+  .empty-state .glyph{font-size:34px; display:block; margin-bottom:10px;}
+
+  /* ---------- more / tools ---------- */
+  .tool-card{
+    background:rgba(0,0,0,0.18); border:1px solid rgba(201,164,76,0.25);
+    border-radius:12px; padding:16px; margin-bottom:14px;
+  }
+  .tool-card h3{margin:0 0 6px; font-family:var(--serif); font-size:16px; color:var(--gold-light);}
+  .tool-card p{margin:0 0 10px; font-size:13px; color:rgba(245,236,216,0.7); line-height:1.6;}
+  input[type=text]{
+    width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(201,164,76,0.4);
+    background:rgba(0,0,0,0.2); color:var(--paper); font-family:var(--sans); font-size:14px; margin-bottom:8px;
+  }
+  input[type=text]::placeholder{color:rgba(245,236,216,0.35);}
+
+  /* ---------- tabbar ---------- */
+  .tabbar{
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:480px;
+    display:flex;
+    background:rgba(20,7,9,0.92);
+    backdrop-filter:blur(6px);
+    border-top:1px solid rgba(201,164,76,0.3);
+    padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
+  .tab-btn{
+    flex:1; background:none; border:none; color:rgba(245,236,216,0.55);
+    font-family:var(--sans); font-size:11.5px; padding:6px 0 2px;
+    display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer;
+  }
+  .tab-btn .ic{font-size:19px;}
+  .tab-btn.active{color:var(--gold-light);}
+
+  /* ---------- overlays / modals ---------- */
+  .overlay, .modal{
+    position:fixed; inset:0; z-index:50;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(10,3,4,0.75);
+  }
+  .overlay.hidden, .modal.hidden{display:none;}
+  .modal-panel{
+    width:92%; max-width:420px; max-height:84vh; overflow-y:auto;
+    background:linear-gradient(180deg, var(--bg-deep-2), var(--bg-deep-3));
+    border:1px solid rgba(201,164,76,0.4);
+    border-radius:14px; padding:18px;
+    position:relative;
+  }
+  .modal-close{
+    position:absolute; top:10px; right:12px; background:none; border:none;
+    color:var(--gold-light); font-size:20px; cursor:pointer;
+  }
+
+  /* draw ritual */
+  .draw-stage{
+    position:relative; width:220px; height:280px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .rite-tube{
+    position:absolute; bottom:20px; width:130px; height:104px;
+    background:linear-gradient(180deg, #7A2A2C, #5A1518 70%, #430F12);
+    border:2px solid var(--gold); border-radius:16px 16px 22px 22px;
+    box-shadow:0 14px 30px rgba(0,0,0,0.5);
+  }
+  .rite-sticks{position:absolute; bottom:78px; left:0; right:0; height:130px; width:130px; margin:0 auto;}
+  .rite-stick{
+    position:absolute; bottom:0; left:50%; width:8px; height:120px;
+    background:linear-gradient(180deg, #E8D9B0, #C7A85F);
+    border-radius:4px 4px 0 0;
+  }
+  .rite-stick::after{content:""; position:absolute; top:0; left:0; right:0; height:12px; background:var(--cinnabar); border-radius:4px 4px 0 0;}
+  .shaking .rite-tube{animation:shakeTube .5s ease-in-out infinite;}
+  .shaking .rite-stick{animation:jitterStick .28s ease-in-out infinite;}
+  @keyframes shakeTube{
+    0%,100%{transform:rotate(0deg) translateX(0);}
+    25%{transform:rotate(-4deg) translateX(-3px);}
+    75%{transform:rotate(4deg) translateX(3px);}
+  }
+  @keyframes jitterStick{
+    0%,100%{transform:translateX(-50%) rotate(var(--r,0deg));}
+    50%{transform:translateX(-50%) rotate(calc(var(--r,0deg) * -1));}
+  }
+  .flying-stick{
+    position:absolute; width:64px; height:180px; left:50%; top:60%;
+    transform:translate(-50%,-50%) scale(0.3);
+    opacity:0;
+    transform-style:preserve-3d;
+    transition:transform .55s cubic-bezier(.2,.9,.3,1.2), opacity .3s;
+  }
+  .flying-stick.rise{
+    transform:translate(-50%,-72%) scale(1);
+    opacity:1;
+  }
+  .flying-stick.flip{
+    transform:translate(-50%,-72%) scale(1) rotateY(180deg);
+  }
+  .fs-face{
+    position:absolute; inset:0; backface-visibility:hidden;
+    border-radius:6px; display:flex; align-items:center; justify-content:center;
+    flex-direction:column;
+  }
+  .fs-front{
+    background:linear-gradient(180deg, #E8D9B0, #C7A85F);
+    box-shadow:0 8px 20px rgba(0,0,0,0.4);
+  }
+  .fs-front::before{content:""; position:absolute; top:0; left:0; right:0; height:20px; background:var(--cinnabar); border-radius:6px 6px 0 0;}
+  .fs-back{
+    background:linear-gradient(180deg, var(--paper), var(--paper-2));
+    transform:rotateY(180deg);
+    box-shadow:0 8px 20px rgba(0,0,0,0.4);
+    padding:8px;
+    text-align:center;
+  }
+  .fs-back .n{font-family:var(--serif); font-weight:900; font-size:22px; color:var(--cinnabar-dark);}
+  .fs-back .l{font-family:var(--serif); font-weight:700; font-size:13px; color:var(--ink-soft); margin-top:4px;}
+  .draw-caption{
+    position:absolute; bottom:-6px; text-align:center; width:100%;
+    font-size:13px; color:rgba(245,236,216,0.65); letter-spacing:2px;
+  }
+  .skip-btn{
+    position:absolute; top:18px; right:18px; background:none; border:none;
+    color:rgba(245,236,216,0.5); font-size:12px; cursor:pointer; text-decoration:underline;
+  }
+
+  /* share card */
+  #shareCanvas{width:100%; max-width:320px; border-radius:10px; box-shadow:0 10px 26px rgba(0,0,0,0.5); display:block; margin:0 auto;}
+
+  .ab-result{
+    margin-top:14px; text-align:center; padding:18px; border-radius:10px;
+    background:rgba(201,164,76,0.12); border:1px solid rgba(201,164,76,0.4);
+  }
+  .ab-result .pick{font-family:var(--serif); font-weight:900; font-size:22px; color:var(--gold-light);}
+  .ab-result .why{font-size:13px; color:rgba(245,236,216,0.7); margin-top:6px;}
+
+  .ai-q{min-height:60px; resize:none; width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(201,164,76,0.4); background:rgba(0,0,0,0.2); color:var(--paper); font-family:var(--sans); font-size:14px;}
+  .ai-answer{margin-top:12px; padding:14px; border-radius:8px; background:rgba(0,0,0,0.2); font-size:13.5px; line-height:1.7; color:rgba(245,236,216,0.9); white-space:pre-wrap;}
+  .loading-dots::after{content:'·'; animation:dots 1.2s steps(4) infinite;}
+  @keyframes dots{0%{content:'·';}25%{content:'··';}50%{content:'···';}75%{content:'····';}}
+  .small-muted{font-size:11.5px; color:rgba(245,236,216,0.45); text-align:center; margin-top:16px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <h1>日 籤</h1>
+    <p>一 籤 一 念 · 心 安 一 日</p>
+  </div>
+
+  <main>
+    <!-- ===== TODAY VIEW ===== -->
+    <section id="view-today" class="view active"></section>
+
+    <!-- ===== BOOK VIEW ===== -->
+    <section id="view-book" class="view"></section>
+
+    <!-- ===== MORE VIEW ===== -->
+    <section id="view-more" class="view"></section>
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab-btn active" data-tab="today"><span class="ic">⛩</span>今日</button>
+    <button class="tab-btn" data-tab="book"><span class="ic">📜</span>籤冊</button>
+    <button class="tab-btn" data-tab="more"><span class="ic">✦</span>玩法</button>
+  </nav>
+
+  <!-- draw ritual overlay -->
+  <div id="drawOverlay" class="overlay hidden">
+    <button class="skip-btn" id="skipDraw">跳過動畫</button>
+    <div class="draw-stage" id="drawStage">
+      <div class="rite-sticks" id="riteSticks"></div>
+      <div class="rite-tube"></div>
+      <div class="flying-stick" id="flyingStick">
+        <div class="fs-face fs-front"></div>
+        <div class="fs-face fs-back">
+          <div class="n" id="fsNo"></div>
+          <div class="l" id="fsLevel"></div>
+        </div>
+      </div>
+      <div class="draw-caption" id="drawCaption">搖籤中…</div>
+    </div>
+  </div>
+
+  <!-- detail modal (from 籤冊) -->
+  <div id="detailModal" class="modal hidden">
+    <div class="modal-panel">
+      <button class="modal-close" data-close="detailModal">✕</button>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <!-- share modal -->
+  <div id="shareModal" class="modal hidden">
+    <div class="modal-panel">
+      <button class="modal-close" data-close="shareModal">✕</button>
+      <canvas id="shareCanvas" width="320" height="480"></canvas>
+      <div class="btn-row">
+        <button class="btn btn-gold" id="downloadShare">下載圖片</button>
+        <button class="btn btn-ghost" data-close="shareModal">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- A/B modal -->
+  <div id="abModal" class="modal hidden">
+    <div class="modal-panel">
+      <button class="modal-close" data-close="abModal">✕</button>
+      <h3 style="font-family:var(--serif); color:var(--gold-light); margin-top:0;">A / B 選擇求籤</h3>
+      <p style="font-size:13px; color:rgba(245,236,216,0.7); margin-top:-6px;">拿不定主意時，讓籤來給你一個方向。</p>
+      <input type="text" id="abA" placeholder="選項 A（例如：留下）">
+      <input type="text" id="abB" placeholder="選項 B（例如：離開）">
+      <button class="btn btn-primary" id="abDraw">搖 籤 決 定</button>
+      <div id="abResultBox"></div>
+    </div>
+  </div>
+
+  <!-- AI 解籤 modal -->
+  <div id="aiModal" class="modal hidden">
+    <div class="modal-panel">
+      <button class="modal-close" data-close="aiModal">✕</button>
+      <h3 style="font-family:var(--serif); color:var(--gold-light); margin-top:0;">AI 解籤</h3>
+      <p style="font-size:13px; color:rgba(245,236,216,0.7); margin-top:-6px;" id="aiIntro">針對今日的籤，說說你心裡真正想問的事，讓解籤更貼近你的處境。</p>
+      <textarea class="ai-q" id="aiQuestion" placeholder="例如：我正在猶豫要不要換工作，這支籤是什麼意思？"></textarea>
+      <button class="btn btn-primary btn-block" id="aiAsk">請 籤 師 解 籤</button>
+      <div id="aiAnswerBox"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   DATA — 40 支籤（原創籤文）
+============================================================ */
+const QIAN = [
+{id:1,tier:'good',poem:['春風送喜來','百花齊盛開','貴人扶上馬','一舉登金階'],explain:'象徵時機成熟、貴人相助，努力終將見到成果。',advice:'把握眼前機會，勇敢邁出第一步。'},
+{id:2,tier:'good',poem:['旭日照長空','祥雲
