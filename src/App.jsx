@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Trash2, ChevronDown, ChevronLeft, ChevronRight, X, MapPin, Check, Clock, Globe, Sun, Moon, Pencil, User, LogOut, Mail, Eye, EyeOff, Search, SlidersHorizontal, Share2, Bell, BellOff, Settings, Images, Move, Calendar, Shield, Info, FileText, Database, RefreshCw } from 'lucide-react';
 import {
@@ -388,6 +388,7 @@ const STRINGS = {
     navSchedule: '日程', navGallery: '相冊', navProfile: '我的', myPageTitle: '我的', addSchedule: '添加日程',
     calendarMonthView: '月', calendarYearView: '年', calendarChooseDate: '選擇年份與月份',
     calendarPrev: '上一個', calendarNext: '下一個', calendarConfirmYear: '確定', calendarViewWholeYear: '檢視整年', calendarToggleCollapse: '收合／展開日曆',
+    calendarCollapseLabel: '收合', calendarExpandLabel: '展開',
     futureOnlyLabel: '只展示未來待辦事件', scheduleShowAllLabel: '展示全部事件',
     viewModeYear: '年', viewModeMonth: '月', viewModeWeek: '週',
     emptyScheduleYear: '本年還沒有日程。', emptyScheduleMonth: '本月還沒有日程。', emptyScheduleWeek: '本週還沒有日程。',
@@ -511,6 +512,7 @@ const STRINGS = {
     navSchedule: 'Schedule', navGallery: 'Albums', navProfile: 'Profile', myPageTitle: 'Profile', addSchedule: 'Add Schedule',
     calendarMonthView: 'Month', calendarYearView: 'Year', calendarChooseDate: 'Choose year and month',
     calendarPrev: 'Previous', calendarNext: 'Next', calendarConfirmYear: 'Done', calendarViewWholeYear: 'View whole year', calendarToggleCollapse: 'Collapse/expand calendar',
+    calendarCollapseLabel: 'Collapse', calendarExpandLabel: 'Expand',
     futureOnlyLabel: 'Show upcoming events only', scheduleShowAllLabel: 'Show all events',
     viewModeYear: 'Year', viewModeMonth: 'Month', viewModeWeek: 'Week',
     emptyScheduleYear: 'No events this year yet.', emptyScheduleMonth: 'No events this month yet.', emptyScheduleWeek: 'No events this week yet.',
@@ -634,6 +636,7 @@ const STRINGS = {
     navSchedule: 'スケジュール', navGallery: 'アルバム', navProfile: 'マイページ', myPageTitle: 'マイページ', addSchedule: '予定を追加',
     calendarMonthView: '月', calendarYearView: '年', calendarChooseDate: '年月を選択',
     calendarPrev: '前へ', calendarNext: '次へ', calendarConfirmYear: '決定', calendarViewWholeYear: '年間表示', calendarToggleCollapse: 'カレンダーを折りたたむ／展開',
+    calendarCollapseLabel: '折りたたむ', calendarExpandLabel: '展開',
     futureOnlyLabel: '今後の予定のみ表示', scheduleShowAllLabel: '全ての予定を表示',
     viewModeYear: '年', viewModeMonth: '月', viewModeWeek: '週',
     emptyScheduleYear: '今年の予定はまだありません。', emptyScheduleMonth: '今月の予定はまだありません。', emptyScheduleWeek: '今週の予定はまだありません。',
@@ -757,6 +760,7 @@ const STRINGS = {
     navSchedule: '일정', navGallery: '앨범', navProfile: '마이페이지', myPageTitle: '마이페이지', addSchedule: '일정 추가',
     calendarMonthView: '월', calendarYearView: '년', calendarChooseDate: '연도와 월 선택',
     calendarPrev: '이전', calendarNext: '다음', calendarConfirmYear: '확인', calendarViewWholeYear: '연간 보기', calendarToggleCollapse: '캘린더 접기/펼치기',
+    calendarCollapseLabel: '접기', calendarExpandLabel: '펼치기',
     futureOnlyLabel: '앞으로의 일정만 표시', scheduleShowAllLabel: '전체 일정 표시',
     viewModeYear: '년', viewModeMonth: '월', viewModeWeek: '주',
     emptyScheduleYear: '올해 일정이 아직 없습니다.', emptyScheduleMonth: '이번 달 일정이 아직 없습니다.', emptyScheduleWeek: '이번 주 일정이 아직 없습니다.',
@@ -1511,6 +1515,43 @@ function shiftMonth(year, month, delta) {
   while (m < 0) { m += 12; y -= 1; }
   while (m > 11) { m -= 12; y += 1; }
   return { y, m };
+}
+// 週檢視也要比照月檢視做「上一個／目前／下一個」三面板真跟手拖曳滑動（見需求：年、週跟月
+// 用同一套滑動切換效果），這裡抽出跟月檢視同樣形狀的純函式：給定「這一週裡任一天」算出
+// 這一週實際的 7 個日期，以及對應的事件對照表。
+function buildWeekDates(weekAnchor) {
+  const start = new Date(weekAnchor.getFullYear(), weekAnchor.getMonth(), weekAnchor.getDate());
+  start.setDate(start.getDate() - start.getDay());
+  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+}
+function computeWeekEventsByDateKey(events, weekDates) {
+  const map = {};
+  if (!weekDates.length) return map;
+  const weekStart = weekDates[0];
+  const weekEnd = weekDates[weekDates.length - 1];
+  getEventOccurrencesInRange(events, weekStart, weekEnd).forEach(({ ev, occ }) => {
+    const key = `${occ.getFullYear()}-${occ.getMonth()}-${occ.getDate()}`;
+    (map[key] = map[key] || []).push(ev);
+  });
+  return map;
+}
+// 年檢視也要比照月檢視做三面板滑動：給定年份，算出 12 個月各自「有沒有事件」，邏輯跟
+// AnniversaryCalendar 內部原本的 monthsHaveEvents 一樣，抽成純函式才能對「上一年／下一年」
+// 也各自算一次。
+function computeMonthsHaveEvents(events, year) {
+  const monthlyRepeatEvents = events.filter(ev => ev.repeat && ev.repeatUnit === 'month');
+  const yearlyOrFixedOccurrences = events
+    .filter(ev => !(ev.repeat && ev.repeatUnit === 'month'))
+    .map(ev => getYearlyOccurrenceInYear(ev, year))
+    .filter(occ => occ.getFullYear() === year);
+  return Array.from({ length: 12 }, (_, m) => {
+    if (yearlyOrFixedOccurrences.some(occ => occ.getMonth() === m)) return true;
+    const ref = new Date(year, m, 1);
+    return monthlyRepeatEvents.some(ev => {
+      const occ = getEffectiveDate(ev, ref);
+      return occ.getFullYear() === year && occ.getMonth() === m;
+    });
+  });
 }
 // 拖曳滑動的共用邏輯：不分月／週／年檢視都是同一套「跟手拖曳、放開判斷要不要換頁、換頁後
 // 用 onTransitionEnd 在動畫結束的瞬間把資料换成新的一頁、同時把位移瞬間歸零」，抽成一個
@@ -6421,7 +6462,7 @@ function BottomNavigation({ activeTab, setActiveTab, t }) {
 // 更新一次「現在時間」就會讓這個元件重新渲染、重新整個算一次，即使使用者什麼都沒點，
 // 這正是先前「開啟日程頁卡頓、操作反應慢」的主因之一，改成只有 events／year／month／
 // viewMode 真的變動時才重算。
-function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, setViewMode }) {
+const AnniversaryCalendar = forwardRef(function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, setViewMode }, ref) {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth()); // 0-11，viewMode==='year'／'week' 時不使用
   // viewMode（'month'＝月曆格子；'year'＝12 個月的年曆格子；'week'＝一週 7 天）改由外層 App
@@ -6462,6 +6503,12 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, se
     setTimeout(() => { setPickerOpen(false); setPickerPhase('hidden'); }, PICKER_DURATION);
   }
   useModalBackClose(pickerOpen, closePicker);
+
+  // 年份／月份選擇面板原本是日曆自己左上角標題按鈕觸發，現在改由頂部標題列（Header）的
+  // 標題文字觸發（見需求一：移除日曆左上角選擇年份月份的按鈕，改放到頂部標題列），所以
+  // 用 useImperativeHandle 把開啟面板的函式透過 ref 交給外層 App，App 裡 Header 的標題
+  // 文字直接呼叫 calendarRef.current.openPicker()，不用把整個面板／選單狀態都搬到 App 裡。
+  useImperativeHandle(ref, () => ({ openPicker }));
 
   function openYearMenu() {
     setYearMenuGridStart(pickerYear - 5);
@@ -6571,23 +6618,6 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, se
     if (viewMode === 'week') { setWeekAnchor(d => addDays(d, 7)); setSelectedWeekDate(null); return; }
     if (month === 11) { setYear(y => y + 1); setMonth(0); } else { setMonth(m => m + 1); }
   }
-  // 左右滑動手勢：取代原本畫面上的「上一個／下一個」按鈕（見需求二）。用 touchstart／touchend
-  // 兩點的位移量判斷，橫向位移夠大、且明顯比縱向位移大時才當成滑動翻頁，避免跟上下捲動衝突。
-  const touchStartRef = useRef(null);
-  function handleCalendarTouchStart(e) {
-    const touch = e.touches[0];
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-  }
-  function handleCalendarTouchEnd(e) {
-    const start = touchStartRef.current;
-    touchStartRef.current = null;
-    if (!start) return;
-    const touch = e.changedTouches[0];
-    const dx = touch.clientX - start.x;
-    const dy = touch.clientY - start.y;
-    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    if (dx < 0) goNext(); else goPrev();
-  }
   // 選擇面板裡點了月份宮格：立即套用選定的年份＋月份、切到月檢視並關閉面板
   function pickMonth(m) {
     setYear(pickerYear);
@@ -6632,6 +6662,26 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, se
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [events, year, month]);
   const monthCarousel = useSwipeCarousel((dir) => { if (dir === 'next') goNext(); else goPrev(); });
+
+  // 週檢視左右滑動輪播：跟月檢視同一套「跟手拖曳、放開判斷換頁」邏輯（見 useSwipeCarousel
+  // 開頭註解），上一週／下一週各自的 7 個日期＋事件對照表都各算一次，鋪成三個並排的滑動面板
+  // （見需求二：年、週也要跟月一樣有真正跟手拖曳的滑動切換效果）。
+  const prevWeekDates = useMemo(() => buildWeekDates(addDays(weekStart, -7)), [weekStart]);
+  const nextWeekDates = useMemo(() => buildWeekDates(addDays(weekStart, 7)), [weekStart]);
+  const weekPanelEventsByDateKey = useMemo(() => ({
+    prev: computeWeekEventsByDateKey(events, prevWeekDates),
+    next: computeWeekEventsByDateKey(events, nextWeekDates),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [events, weekStart]);
+  const weekCarousel = useSwipeCarousel((dir) => { if (dir === 'next') goNext(); else goPrev(); });
+
+  // 年檢視左右滑動輪播：同一套邏輯，上一年／下一年各自的 12 個月「有沒有事件」各算一次。
+  const monthsHaveEventsPanel = useMemo(() => ({
+    prev: computeMonthsHaveEvents(events, year - 1),
+    next: computeMonthsHaveEvents(events, year + 1),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [events, year]);
+  const yearCarousel = useSwipeCarousel((dir) => { if (dir === 'next') goNext(); else goPrev(); });
 
   const isToday = (d) => d === now.getDate() && month === now.getMonth() && year === now.getFullYear();
   const selectedEvents = selectedDay != null ? (eventsByDay[selectedDay] || []) : [];
@@ -6681,25 +6731,85 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, se
     );
   }
 
-  const weekRangeFmt = new Intl.DateTimeFormat(LOCALE_MAP[lang], { month: 'short', day: 'numeric' });
-  const titleLabel = viewMode === 'year'
-    ? new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric' }).format(new Date(year, 0, 1))
-    : viewMode === 'week'
-    ? `${weekRangeFmt.format(weekStart)} – ${weekRangeFmt.format(weekEnd)}`
-    : new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric', month: 'long' }).format(firstOfMonth);
+  // 週檢視滑動輪播裡「上一週／目前／下一週」三個面板共用同一份渲染邏輯，跟月檢視的
+  // renderMonthGridPanel 是同一種寫法：只有 isCurrentPanel 那一格會回應點擊、顯示選中狀態，
+  // 兩側面板 pointerEvents:none 純粹是滑動時的視覺預覽。
+  function renderWeekGridPanel(panelDates, panelEventsByDateKey, isCurrentPanel) {
+    return (
+      <div className="grid grid-cols-7 gap-y-1 text-center" style={{ pointerEvents: isCurrentPanel ? 'auto' : 'none' }}>
+        {panelDates.map((d, i) => {
+          const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+          const dayEvents = panelEventsByDateKey[key] || [];
+          const selected = isCurrentPanel && selectedWeekDate && selectedWeekDate.getTime() === d.getTime();
+          return (
+            <button
+              key={i}
+              onClick={() => setSelectedWeekDate(prev => (prev && prev.getTime() === d.getTime() ? null : d))}
+              className="flex flex-col items-center justify-center py-1"
+            >
+              <span
+                className="flex items-center justify-center rounded-full text-xs font-bold"
+                style={{
+                  width: 26,
+                  height: 26,
+                  background: selected ? ACCENT : (isTodayDate(d) ? 'var(--card-border)' : 'transparent'),
+                  color: selected ? '#fff' : INK,
+                }}
+              >
+                {d.getDate()}
+              </span>
+              <span className="flex items-center justify-center gap-0.5 mt-0.5" style={{ height: 4 }}>
+                {dayEvents.slice(0, 3).map((ev, di) => (
+                  <span key={di} className="rounded-full" style={{ width: 4, height: 4, background: colorHex(ev.colorId) }} />
+                ))}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 年檢視滑動輪播裡「上一年／目前／下一年」三個面板共用同一份渲染邏輯，同樣只有
+  // isCurrentPanel 那一格能點擊切回月檢視，兩側面板 pointerEvents:none。
+  function renderYearGridPanel(panelYear, panelMonthsHaveEvents, isCurrentPanel) {
+    return (
+      <div className="grid grid-cols-3 gap-2" style={{ pointerEvents: isCurrentPanel ? 'auto' : 'none' }}>
+        {monthLabels.map((label, m) => {
+          const isCurrentMonth = m === now.getMonth() && panelYear === now.getFullYear();
+          return (
+            <button
+              key={m}
+              onClick={() => { setMonth(m); setViewMode('month'); setSelectedDay(null); }}
+              className="flex flex-col items-center justify-center py-3 rounded-xl"
+              style={{ background: isCurrentMonth ? 'var(--card-border)' : 'transparent' }}
+            >
+              <span className="text-sm font-bold" style={{ color: INK }}>{label}</span>
+              <span className="flex items-center justify-center mt-1" style={{ height: 4 }}>
+                {panelMonthsHaveEvents[m] && <span className="rounded-full" style={{ width: 4, height: 4, background: ACCENT }} />}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 標題文字（年份／年月／週範圍）已經改由頂部標題列（Header）自己格式化顯示（見 App 內
+  // Header 那段跟這裡同一套格式化邏輯），日曆本身不再需要重複算一份、也不再有標題按鈕可以顯示它。
   const pickerYearLabel = new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric' }).format(new Date(pickerYear, 0, 1));
   const yearMenuYears = Array.from({ length: 12 }, (_, i) => yearMenuGridStart + i);
 
   return (
     <div className="rounded-2xl p-3 flex-shrink-0" style={glass()}>
-      {/* 標題列：左邊是標題本身（點開年份／月份選擇面板），右邊另外放一顆獨立的收合鈕
-          （點了整塊日曆格子／上一個下一個都收合，只留這一列），兩顆按鈕功能不同、分開放，
-          不會互相干擾。 */}
-      <div className="flex items-center justify-between mb-2">
-        <button onClick={openPicker} className="flex items-center gap-1.5" aria-label={t.calendarChooseDate}>
-          <span className="font-bold text-sm" style={{ color: INK }}>{titleLabel}</span>
-          <ChevronDown size={14} style={{ color: INK_SOFT }} />
-        </button>
+      {/* 標題列：年份／月份選擇按鈕已移除，改由頂部標題列（Header）的標題文字觸發同一個
+          面板（見上方 useImperativeHandle）；這裡只剩收合鈕，連同左側「收合／展開」灰色
+          小字一起靠右對齊。文字本身純粹是說明目前按下去會發生什麼事，不能點——真正可點的
+          只有右邊那顆圓形按鈕，避免兩塊點擊區域疊在一起互相干擾。 */}
+      <div className="flex items-center justify-end gap-1.5 mb-2">
+        <span className="text-xs" style={{ color: INK_SOFT }}>
+          {collapsed ? t.calendarExpandLabel : t.calendarCollapseLabel}
+        </span>
         <button
           onClick={() => setCollapsed(v => !v)}
           aria-label={t.calendarToggleCollapse}
@@ -6717,8 +6827,6 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, se
       </div>
 
       <div
-        onTouchStart={viewMode !== 'month' ? handleCalendarTouchStart : undefined}
-        onTouchEnd={viewMode !== 'month' ? handleCalendarTouchEnd : undefined}
         style={{
           maxHeight: collapsed ? 0 : 480,
           opacity: collapsed ? 0 : 1,
@@ -6768,62 +6876,74 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, se
             </div>
           </>
         ) : viewMode === 'week' ? (
-          // 週檢視：跟月檢視同一排星期標籤，格子改成這一週實際的 7 天（可能橫跨兩個月，
-          // 所以每格顯示「日」的數字，取自該天真正的 Date，不是固定在同一個月份底下）。
-          <div className="grid grid-cols-7 gap-y-1 text-center">
-            {weekdayLabels.map((w, i) => (
-              <span key={i} className="text-[10px] font-bold" style={{ color: INK_SOFT }}>{w}</span>
-            ))}
-            {weekDates.map((d, i) => {
-              const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-              const dayEvents = weekEventsByDateKey[key] || [];
-              const selected = selectedWeekDate && selectedWeekDate.getTime() === d.getTime();
-              return (
-                <button
-                  key={i}
-                  onClick={() => setSelectedWeekDate(prev => (prev && prev.getTime() === d.getTime() ? null : d))}
-                  className="flex flex-col items-center justify-center py-1"
-                >
-                  <span
-                    className="flex items-center justify-center rounded-full text-xs font-bold"
-                    style={{
-                      width: 26,
-                      height: 26,
-                      background: selected ? ACCENT : (isTodayDate(d) ? 'var(--card-border)' : 'transparent'),
-                      color: selected ? '#fff' : INK,
-                    }}
-                  >
-                    {d.getDate()}
-                  </span>
-                  <span className="flex items-center justify-center gap-0.5 mt-0.5" style={{ height: 4 }}>
-                    {dayEvents.slice(0, 3).map((ev, di) => (
-                      <span key={di} className="rounded-full" style={{ width: 4, height: 4, background: colorHex(ev.colorId) }} />
-                    ))}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          // 週檢視：跟月檢視同一套三面板跟手拖曳滑動（見需求二），星期標籤固定不參與滑動，
+          // 下面才是「上一週／目前／下一週」三個並排面板，格子改成該週實際的 7 天（可能橫跨
+          // 兩個月，每格顯示「日」的數字取自該天真正的 Date，不是固定在同一個月份底下）。
+          <>
+            <div className="grid grid-cols-7 text-center">
+              {weekdayLabels.map((w, i) => (
+                <span key={i} className="text-[10px] font-bold" style={{ color: INK_SOFT }}>{w}</span>
+              ))}
+            </div>
+            <div
+              ref={weekCarousel.containerRef}
+              onTouchStart={weekCarousel.onTouchStart}
+              onTouchMove={weekCarousel.onTouchMove}
+              onTouchEnd={weekCarousel.onTouchEnd}
+              style={{ overflow: 'hidden', touchAction: 'pan-y' }}
+            >
+              <div
+                onTransitionEnd={weekCarousel.handleTransitionEnd}
+                style={{
+                  display: 'flex',
+                  width: '300%',
+                  transform: `translateX(calc(-100%/3 + ${weekCarousel.dragX}px))`,
+                  transition: weekCarousel.transitionOn ? 'transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1)' : 'none',
+                  willChange: 'transform',
+                }}
+              >
+                <div style={{ width: '33.3333%', flexShrink: 0 }}>
+                  {renderWeekGridPanel(prevWeekDates, weekPanelEventsByDateKey.prev, false)}
+                </div>
+                <div style={{ width: '33.3333%', flexShrink: 0 }}>
+                  {renderWeekGridPanel(weekDates, weekEventsByDateKey, true)}
+                </div>
+                <div style={{ width: '33.3333%', flexShrink: 0 }}>
+                  {renderWeekGridPanel(nextWeekDates, weekPanelEventsByDateKey.next, false)}
+                </div>
+              </div>
+            </div>
+          </>
         ) : (
-          // 年檢視：12 個月排成 3x4 格子取代日格子，只標示「這個月有沒有事件」，
-          // 點一個月直接切回月檢視並定位到那個月（跟選擇面板裡點月份宮格是同一個函式 pickMonth）。
-          <div className="grid grid-cols-3 gap-2">
-            {monthLabels.map((label, m) => {
-              const isCurrentMonth = m === now.getMonth() && year === now.getFullYear();
-              return (
-                <button
-                  key={m}
-                  onClick={() => { setMonth(m); setViewMode('month'); setSelectedDay(null); }}
-                  className="flex flex-col items-center justify-center py-3 rounded-xl"
-                  style={{ background: isCurrentMonth ? 'var(--card-border)' : 'transparent' }}
-                >
-                  <span className="text-sm font-bold" style={{ color: INK }}>{label}</span>
-                  <span className="flex items-center justify-center mt-1" style={{ height: 4 }}>
-                    {monthsHaveEvents[m] && <span className="rounded-full" style={{ width: 4, height: 4, background: ACCENT }} />}
-                  </span>
-                </button>
-              );
-            })}
+          // 年檢視：跟月檢視同一套三面板跟手拖曳滑動（見需求二），12 個月排成 3x4 格子取代
+          // 日格子，只標示「這個月有沒有事件」，點一個月直接切回月檢視並定位到那個月。
+          <div
+            ref={yearCarousel.containerRef}
+            onTouchStart={yearCarousel.onTouchStart}
+            onTouchMove={yearCarousel.onTouchMove}
+            onTouchEnd={yearCarousel.onTouchEnd}
+            style={{ overflow: 'hidden', touchAction: 'pan-y' }}
+          >
+            <div
+              onTransitionEnd={yearCarousel.handleTransitionEnd}
+              style={{
+                display: 'flex',
+                width: '300%',
+                transform: `translateX(calc(-100%/3 + ${yearCarousel.dragX}px))`,
+                transition: yearCarousel.transitionOn ? 'transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1)' : 'none',
+                willChange: 'transform',
+              }}
+            >
+              <div style={{ width: '33.3333%', flexShrink: 0 }}>
+                {renderYearGridPanel(year - 1, monthsHaveEventsPanel.prev, false)}
+              </div>
+              <div style={{ width: '33.3333%', flexShrink: 0 }}>
+                {renderYearGridPanel(year, monthsHaveEvents, true)}
+              </div>
+              <div style={{ width: '33.3333%', flexShrink: 0 }}>
+                {renderYearGridPanel(year + 1, monthsHaveEventsPanel.next, false)}
+              </div>
+            </div>
           </div>
         )}
 
@@ -6969,7 +7089,7 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, se
       )}
     </div>
   );
-}
+});
 
 /* ==================================================================================
    相冊（獨立一級功能）
@@ -8508,6 +8628,10 @@ export default function App() {
   // 屬性，這樣頂部標題列和日曆之間新增的年／月／週滑塊（見下方 JSX）才能直接切換它，
   // 不用透過日曆元件內部才能改。
   const [scheduleViewMode, setScheduleViewMode] = useState('month');
+  // 日曆左上角原本的「選擇年份／月份」按鈕已移除，改由頂部標題列（Header）的標題文字
+  // 觸發同一個年份／月份選擇面板（見需求一）；面板本身的狀態仍留在 AnniversaryCalendar
+  // 內部，這裡只需要一個 ref 就能呼叫它的 openPicker()，不用整個搬上來。
+  const scheduleCalendarRef = useRef(null);
   // 「展示全部事件」開關，預設關閉——預設只看日曆目前選的月份（本月），跟日曆同步；
   // 開啟後改成不分月份、列出全部事件（見下方 TimelineSection 的 showAll 用法）。
   const [scheduleShowAll, setScheduleShowAll] = useState(false);
@@ -9094,24 +9218,35 @@ export default function App() {
                 <h1 className="text-2xl font-black tracking-tight" style={{ color: INK }}>{t[greeting.key]} {greeting.emoji}</h1>
                 <p className="text-xs font-medium mt-1" style={{ color: INK_SOFT }}>{t.todayIs(todayStr)}</p>
               </>
+            ) : activeTab === 'schedule' ? (
+              // 日程分頁的標題改顯示日曆目前檢視的年份／月份（或週範圍），不再固定顯示
+              // 「日程」兩個字（見需求四）：mode 分別對應 AnniversaryCalendar 回報的
+              // 'year' / 'month' / 'week'。原本日曆左上角那顆「選擇年份／月份」按鈕已經移除，
+              // 改由這裡的標題文字直接觸發同一個選擇面板（見需求一），透過 scheduleCalendarRef
+              // 呼叫 AnniversaryCalendar 用 useImperativeHandle 開放出來的 openPicker()。
+              <button
+                onClick={() => scheduleCalendarRef.current && scheduleCalendarRef.current.openPicker()}
+                className="flex items-center gap-1.5"
+                aria-label={t.calendarChooseDate}
+              >
+                <h1 className="text-2xl font-black tracking-tight" style={{ color: INK }}>
+                  {(() => {
+                    if (!scheduleRange) return t.navSchedule;
+                    if (scheduleRange.mode === 'year') {
+                      return new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric' }).format(new Date(scheduleRange.year, 0, 1));
+                    }
+                    if (scheduleRange.mode === 'week' && scheduleRange.weekStart && scheduleRange.weekEnd) {
+                      const fmt = new Intl.DateTimeFormat(LOCALE_MAP[lang], { month: 'short', day: 'numeric' });
+                      return `${fmt.format(scheduleRange.weekStart)} – ${fmt.format(scheduleRange.weekEnd)}`;
+                    }
+                    return new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric', month: 'long' }).format(new Date(scheduleRange.year, scheduleRange.month || 0, 1));
+                  })()}
+                </h1>
+                <ChevronDown size={18} style={{ color: INK_SOFT }} />
+              </button>
             ) : (
               <h1 className="text-2xl font-black tracking-tight" style={{ color: INK }}>
-                {activeTab === 'schedule'
-                  ? (() => {
-                      // 日程分頁的標題改顯示日曆目前檢視的年份／月份（或週範圍），不再固定顯示
-                      // 「日程」兩個字（見需求四）：mode 分別對應 AnniversaryCalendar 回報的
-                      // 'year' / 'month' / 'week'，跟日曆標題列裡的 titleLabel 用同一套格式化邏輯。
-                      if (!scheduleRange) return t.navSchedule;
-                      if (scheduleRange.mode === 'year') {
-                        return new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric' }).format(new Date(scheduleRange.year, 0, 1));
-                      }
-                      if (scheduleRange.mode === 'week' && scheduleRange.weekStart && scheduleRange.weekEnd) {
-                        const fmt = new Intl.DateTimeFormat(LOCALE_MAP[lang], { month: 'short', day: 'numeric' });
-                        return `${fmt.format(scheduleRange.weekStart)} – ${fmt.format(scheduleRange.weekEnd)}`;
-                      }
-                      return new Intl.DateTimeFormat(LOCALE_MAP[lang], { year: 'numeric', month: 'long' }).format(new Date(scheduleRange.year, scheduleRange.month || 0, 1));
-                    })()
-                  : { clock: t.worldClock, gallery: t.navGallery, profile: t.navProfile }[activeTab] || ''}
+                {{ clock: t.worldClock, gallery: t.navGallery, profile: t.navProfile }[activeTab] || ''}
               </h1>
             )}
           </div>
@@ -9336,7 +9471,7 @@ export default function App() {
                     ))}
                   </div>
 
-                  <AnniversaryCalendar events={events} lang={lang} t={t} now={now} onRangeChange={setScheduleRange} viewMode={scheduleViewMode} setViewMode={setScheduleViewMode} />
+                  <AnniversaryCalendar ref={scheduleCalendarRef} events={events} lang={lang} t={t} now={now} onRangeChange={setScheduleRange} viewMode={scheduleViewMode} setViewMode={setScheduleViewMode} />
 
                   {/* 這一整行本身不套毛玻璃背景，只有純文字提示＋真正的按鈕模組並排。
                       左邊「只展示未來待辦事件」是不可點擊的純文字說明，不需要背景卡片；
