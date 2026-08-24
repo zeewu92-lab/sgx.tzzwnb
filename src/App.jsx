@@ -1393,16 +1393,44 @@ function getEffectiveDate(ev, now) {
 // 好幾次，那個不受這個 bug 影響（西曆逐月比較是精確的日期比大小，不需要「找不到就退而
 // 求其次」這種容易誤判的區塊掃描），繼續維持原本逐月重算即可。
 function getYearlyOccurrenceInYear(ev, targetYear) {
-  // 這裡原本用「目標年份的前一年 12 月 1 號」當基準，後來發現這個基準點對「12 月」的西曆年
-  // 重複事件是錯的：比較演算法會直接在「前一年的 12 月」就找到符合的日期而停下來（因為
-  // 12 月 1 號已經在那個 12 月裡面），根本沒有機會推進到目標年份，導致 12 月的生日／紀念日
-  // 在瀏覽目標年份時完全消失不見（這正是後來回報的「事件莫名消失」）。
-  // 改成用「目標年份的 1 月 1 號」當基準：這是目標年份裡最早的一天，不管事件實際落在目標
-  // 年份的哪個月（1 月到 12 月都一樣），都保證基準點在它之前，演算法才會正確跳過前一年的
-  // 那一次、往前找到目標年份自己的那一次。經過大量西曆／農曆邊界案例（1 月初、12 月底、
-  // 跨年農曆月份等）實測驗證，這個基準點下每個事件在目標年份都能正確算出恰好一次。
-  const safeRef = new Date(targetYear, 0, 1);
-  return getEffectiveDate(ev, safeRef);
+  // 這裡原本用固定的「某個月 1 號」（先是前一年 12 月 1 號，後來改成目標年份 1 月 1 號）
+  // 當基準，兩種寫法都建立在一個錯誤假設上：以為「1 月 1 號」一定落在任何農曆月份區塊
+  // 之外。事實不是這樣——農曆冬月（11 月）幾乎每年都橫跨西曆跨年那一刻（冬月本身就是以
+  // 冬至為準去定位，天生就貼著年底），例如 2025 年的農曆冬月是西曆 12/20～隔年 1/18，
+  // 完整跨過 1 月 1 號。如果事件的農曆生日剛好落在冬月初三（西曆 12/22），拿「目標年份
+  // 1 月 1 號」當基準往未來掃描，會發現自己已經身處在冬月這個區塊「中途」（今年的初三
+  // 已經在 1 月 1 號之前就過了），找不到「今天以後」還吻合的那一天，於是誤判成「這個月
+  // 沒有這個日期」、退而返回區塊最後一天頂替——初三就這樣被錯改成三十（這正是使用者
+  // 實測回報的「冬月初三自動變冬月三十」）。臘月（12 月）也有同樣的風險。
+  // 換句話說：任何「隨便選一個月初／年初」當基準的做法，都可能剛好卡在某個事件自己的
+  // 農曆月份區塊中途，這不是換一個固定基準點就能徹底避開的（因為到底哪個基準點安全，
+  // 取決於「這個事件」的農曆月份幾號落在哪裡，不同事件答案不同）。
+  // 真正安全的基準點只有一種：一定精準吻合過的那一天本身——也就是事件的原始日期 orig，
+  // 或是「上一次已經確認精準吻合」的發生日。所以西曆固定重複維持原本「目標年份 1 月 1 號」
+  // 當基準就好（addYears 逐年比較是精確的日期大小比較，不會有「区块搜尋」這種誤判可能）；
+  // 農曆／伊斯蘭曆／希伯來曆等需要「往未來逐日掃描找符合區塊」的曆法，改成從 orig 本身
+  // 出發，每次找到下一次吻合的日期後，用「這一次日期 + 300 天」當下一次搜尋的起點繼續找
+  // ——同一個農曆月份／日期兩次之間至少間隔約 353 天，+300 天保證還沒追上下一次，但已經
+  // 遠遠離開了這一次所在的區塊，起點永遠落在區塊之外，不會再有「卡在中途」的問題。
+  // 為了不用真的從幾十年前的原始日期逐年搜尋到目標年份（那樣要跑太多次），先用簡單的
+  // 日期加法（不呼叫任何曆法轉換，純數字運算很快）粗略跳到目標年份前兩年附近，只是抓
+  // 大概位置；就算粗跳的落點剛好卡進某個區塊中途也沒關係——那一輪找到的日期只是用來
+  // 算下一個安全起點（+300 天），不會被當成最終答案，迴圈會在真正落進目標年份時才停止、
+  // 回傳當下那一次算出來的日期。
+  const orig = combineDateTime(ev.date, ev.time);
+  if (!ev.repeat) return orig;
+  if (!ev.calendar || ev.calendar === 'gregory') {
+    return getEffectiveDate(ev, new Date(targetYear, 0, 1));
+  }
+  const roughYears = targetYear - orig.getFullYear();
+  let cursor = roughYears > 2 ? addDays(orig, Math.round((roughYears - 2) * 365.25)) : orig;
+  let found = orig;
+  for (let i = 0; i < 8; i++) {
+    found = getEffectiveDate(ev, cursor);
+    if (found.getFullYear() >= targetYear) break;
+    cursor = addDays(found, 300);
+  }
+  return found;
 }
 // 給「週檢視」用的通用版本：找出一批事件裡，有哪些的發生日落在 [rangeStart, rangeEnd]
 // 這個西曆日期區間內（含頭尾兩端，忽略時分秒）。週檢視最多橫跨兩個西曆月份／兩個西曆年份
@@ -1444,6 +1472,109 @@ function getEventOccurrencesInRange(events, rangeStart, rangeEnd) {
     }
   });
   return results;
+}
+// 日曆左右滑動輪播（見需求：改成拖曳跟手、放開自動定位到新月份，不要一放手就瞬間跳過去）
+// 用到的純函式：不依賴任何 hook／元件狀態，只吃「年、月」算出那個月的日期格子，讓 AnniversaryCalendar
+// 可以同時幫「上一個／目前／下一個」三個月份各自算一次，用來鋪成三個並排的滑動面板。
+function buildMonthCells(year, month) {
+  const firstOfMonth = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startWeekday = firstOfMonth.getDay();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < startWeekday; i++) cells.push({ day: daysInPrevMonth - startWeekday + 1 + i, inMonth: false });
+  for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, inMonth: true });
+  let trailing = 1;
+  while (cells.length % 7 !== 0) cells.push({ day: trailing++, inMonth: false });
+  return cells;
+}
+// 同一個月份格子搭配的事件對照表，邏輯跟原本 AnniversaryCalendar 內部的 eventsByDay 一樣，
+// 抽成純函式才能對「上一個／下一個」月份也各自算一次（原本只有目前這個月會算）。
+function computeEventsByDayForMonth(events, year, month) {
+  const map = {};
+  const firstOfMonth = new Date(year, month, 1);
+  events.forEach(ev => {
+    const occ = ev.repeat && ev.repeatUnit === 'month'
+      ? getEffectiveDate(ev, firstOfMonth)
+      : getYearlyOccurrenceInYear(ev, year);
+    if (occ.getFullYear() === year && occ.getMonth() === month) {
+      const d = occ.getDate();
+      (map[d] = map[d] || []).push(ev);
+    }
+  });
+  return map;
+}
+// 上一個／下一個月份的（年,月）：跨年份時要正確進位／借位，抽出來給月檢視跟月份格子共用。
+function shiftMonth(year, month, delta) {
+  let m = month + delta;
+  let y = year;
+  while (m < 0) { m += 12; y -= 1; }
+  while (m > 11) { m -= 12; y += 1; }
+  return { y, m };
+}
+// 拖曳滑動的共用邏輯：不分月／週／年檢視都是同一套「跟手拖曳、放開判斷要不要換頁、換頁後
+// 用 onTransitionEnd 在動畫結束的瞬間把資料换成新的一頁、同時把位移瞬間歸零」，抽成一個
+// 共用的 hook，三種檢視各自只要提供「換到上一頁／下一頁」時要做的事（onCommit）。
+function useSwipeCarousel(onCommit) {
+  const containerRef = useRef(null);
+  const [dragX, setDragX] = useState(0);
+  const [transitionOn, setTransitionOn] = useState(false);
+  const startRef = useRef(null);
+  const axisRef = useRef(null);
+  const widthRef = useRef(320);
+  const pendingRef = useRef(null);
+  const dragXRef = useRef(0);
+  function onTouchStart(e) {
+    const touch = e.touches[0];
+    startRef.current = { x: touch.clientX, y: touch.clientY };
+    axisRef.current = null;
+    widthRef.current = (containerRef.current && containerRef.current.offsetWidth) || 320;
+    setTransitionOn(false);
+  }
+  function onTouchMove(e) {
+    if (!startRef.current) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - startRef.current.x;
+    const dy = touch.clientY - startRef.current.y;
+    if (axisRef.current == null) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; // 移動還太小，先不判斷方向
+      axisRef.current = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+    }
+    if (axisRef.current !== 'x') return; // 判斷成上下捲動，這次手勢整段都不介入橫向位移
+    const w = widthRef.current;
+    const clamped = Math.max(-w, Math.min(w, dx));
+    dragXRef.current = clamped;
+    setDragX(clamped);
+  }
+  function onTouchEnd() {
+    if (!startRef.current) return;
+    startRef.current = null;
+    if (axisRef.current !== 'x') { axisRef.current = null; return; }
+    axisRef.current = null;
+    const w = widthRef.current;
+    const threshold = Math.max(48, w * 0.22);
+    setTransitionOn(true);
+    if (dragXRef.current <= -threshold) {
+      pendingRef.current = 'next';
+      setDragX(-w);
+    } else if (dragXRef.current >= threshold) {
+      pendingRef.current = 'prev';
+      setDragX(w);
+    } else {
+      pendingRef.current = null;
+      setDragX(0);
+    }
+  }
+  function handleTransitionEnd(e) {
+    if (e.target !== e.currentTarget) return; // 只認外層那個真正在位移的容器觸發的事件
+    const dir = pendingRef.current;
+    pendingRef.current = null;
+    setTransitionOn(false);
+    dragXRef.current = 0;
+    setDragX(0);
+    if (dir) onCommit(dir);
+  }
+  return { containerRef, dragX, transitionOn, onTouchStart, onTouchMove, onTouchEnd, handleTransitionEnd };
 }
 const SELECT_STYLE = { border: CARD_BORDER, background: INPUT_BG, color: INK };
 const SELECT_CLASS = 'px-2 py-2 rounded-lg text-sm outline-none flex-1 min-w-0';
@@ -6350,9 +6481,6 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, se
   }
 
   const firstOfMonth = new Date(year, month, 1);
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const startWeekday = firstOfMonth.getDay();
-  const daysInPrevMonth = new Date(year, month, 0).getDate();
 
   // 週檢視的範圍：週日～週六（跟月曆格子的星期排列一致），用 weekAnchor（這一週裡任一天）算出來。
   const weekStart = useMemo(() => {
@@ -6486,11 +6614,24 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, se
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, year, month, weekStart, weekEnd]);
 
-  const cells = [];
-  for (let i = 0; i < startWeekday; i++) cells.push({ day: daysInPrevMonth - startWeekday + 1 + i, inMonth: false });
-  for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, inMonth: true });
-  let trailing = 1;
-  while (cells.length % 7 !== 0) cells.push({ day: trailing++, inMonth: false });
+  const cells = buildMonthCells(year, month);
+  // 月檢視左右滑動輪播：上一個／目前／下一個月份的日期格子＋各自的事件對照表都各算一次，
+  // 鋪成三個並排的滑動面板（見 useSwipeCarousel、buildMonthCells、computeEventsByDayForMonth
+  // 開頭註解）。放開手勢判斷要不要換頁時直接呼叫既有的 goPrev／goNext，跟原本點按鈕是
+  // 同一套換月邏輯，只是觸發方式從按鈕點擊改成滑動手勢判定完成。
+  const prevMonthYM = shiftMonth(year, month, -1);
+  const nextMonthYM = shiftMonth(year, month, 1);
+  const monthPanelCells = useMemo(() => ({
+    prev: buildMonthCells(prevMonthYM.y, prevMonthYM.m),
+    next: buildMonthCells(nextMonthYM.y, nextMonthYM.m),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [year, month]);
+  const monthPanelEventsByDay = useMemo(() => ({
+    prev: computeEventsByDayForMonth(events, prevMonthYM.y, prevMonthYM.m),
+    next: computeEventsByDayForMonth(events, nextMonthYM.y, nextMonthYM.m),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [events, year, month]);
+  const monthCarousel = useSwipeCarousel((dir) => { if (dir === 'next') goNext(); else goPrev(); });
 
   const isToday = (d) => d === now.getDate() && month === now.getMonth() && year === now.getFullYear();
   const selectedEvents = selectedDay != null ? (eventsByDay[selectedDay] || []) : [];
@@ -6498,6 +6639,47 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, se
   const selectedWeekEvents = selectedWeekDate
     ? (weekEventsByDateKey[`${selectedWeekDate.getFullYear()}-${selectedWeekDate.getMonth()}-${selectedWeekDate.getDate()}`] || [])
     : [];
+
+  // 月檢視滑動輪播裡，「上一個／目前／下一個」三個面板共用同一份格子渲染邏輯，只有中間
+  // （isCurrentPanel）那一格會回應點擊、顯示選中狀態；兩側面板單純只是滑動時的視覺預覽，
+  // pointerEvents:none 避免手指划到一半、還沒放開就不小心點到旁邊面板的日期。
+  function renderMonthGridPanel(panelCells, panelEventsByDay, panelYear, panelMonth, isCurrentPanel) {
+    return (
+      <div className="grid grid-cols-7 gap-y-1 text-center" style={{ pointerEvents: isCurrentPanel ? 'auto' : 'none' }}>
+        {panelCells.map((c, i) => {
+          const dayEvents = c.inMonth ? (panelEventsByDay[c.day] || []) : [];
+          const selected = isCurrentPanel && c.inMonth && selectedDay === c.day;
+          const today = c.inMonth && c.day === now.getDate() && panelMonth === now.getMonth() && panelYear === now.getFullYear();
+          return (
+            <button
+              key={i}
+              disabled={!c.inMonth}
+              onClick={() => setSelectedDay(prev => (prev === c.day ? null : c.day))}
+              className="flex flex-col items-center justify-center py-1"
+              style={{ opacity: c.inMonth ? 1 : 0.25 }}
+            >
+              <span
+                className="flex items-center justify-center rounded-full text-xs font-bold"
+                style={{
+                  width: 26,
+                  height: 26,
+                  background: selected ? ACCENT : (today ? 'var(--card-border)' : 'transparent'),
+                  color: selected ? '#fff' : INK,
+                }}
+              >
+                {c.day}
+              </span>
+              <span className="flex items-center justify-center gap-0.5 mt-0.5" style={{ height: 4 }}>
+                {dayEvents.slice(0, 3).map((ev, di) => (
+                  <span key={di} className="rounded-full" style={{ width: 4, height: 4, background: colorHex(ev.colorId) }} />
+                ))}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   const weekRangeFmt = new Intl.DateTimeFormat(LOCALE_MAP[lang], { month: 'short', day: 'numeric' });
   const titleLabel = viewMode === 'year'
@@ -6535,8 +6717,8 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, se
       </div>
 
       <div
-        onTouchStart={handleCalendarTouchStart}
-        onTouchEnd={handleCalendarTouchEnd}
+        onTouchStart={viewMode !== 'month' ? handleCalendarTouchStart : undefined}
+        onTouchEnd={viewMode !== 'month' ? handleCalendarTouchEnd : undefined}
         style={{
           maxHeight: collapsed ? 0 : 480,
           opacity: collapsed ? 0 : 1,
@@ -6545,41 +6727,46 @@ function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, se
         }}
       >
         {viewMode === 'month' ? (
-          <div className="grid grid-cols-7 gap-y-1 text-center">
-            {weekdayLabels.map((w, i) => (
-              <span key={i} className="text-[10px] font-bold" style={{ color: INK_SOFT }}>{w}</span>
-            ))}
-            {cells.map((c, i) => {
-              const dayEvents = c.inMonth ? (eventsByDay[c.day] || []) : [];
-              const selected = c.inMonth && selectedDay === c.day;
-              return (
-                <button
-                  key={i}
-                  disabled={!c.inMonth}
-                  onClick={() => setSelectedDay(prev => (prev === c.day ? null : c.day))}
-                  className="flex flex-col items-center justify-center py-1"
-                  style={{ opacity: c.inMonth ? 1 : 0.25 }}
-                >
-                  <span
-                    className="flex items-center justify-center rounded-full text-xs font-bold"
-                    style={{
-                      width: 26,
-                      height: 26,
-                      background: selected ? ACCENT : (isToday(c.day) && c.inMonth ? 'var(--card-border)' : 'transparent'),
-                      color: selected ? '#fff' : INK,
-                    }}
-                  >
-                    {c.day}
-                  </span>
-                  <span className="flex items-center justify-center gap-0.5 mt-0.5" style={{ height: 4 }}>
-                    {dayEvents.slice(0, 3).map((ev, di) => (
-                      <span key={di} className="rounded-full" style={{ width: 4, height: 4, background: colorHex(ev.colorId) }} />
-                    ))}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          // 月檢視：星期標籤固定在最上面不參與滑動，下面才是「上一個／目前／下一個」三個月份
+          // 並排的滑動面板（見 useSwipeCarousel 開頭註解）——手指拖曳時三個面板跟著手指一起
+          // 橫向移動，日曆本身（這個外層容器）的位置完全不動，放開後才決定要停在哪一頁、
+          // 用 onTransitionEnd 在動畫剛好結束的那一刻換上新月份的資料、瞬間歸零位移，
+          // 銜接起來看不出破綻，不會卡頓、跳動或日期對錯位。
+          <>
+            <div className="grid grid-cols-7 text-center">
+              {weekdayLabels.map((w, i) => (
+                <span key={i} className="text-[10px] font-bold" style={{ color: INK_SOFT }}>{w}</span>
+              ))}
+            </div>
+            <div
+              ref={monthCarousel.containerRef}
+              onTouchStart={monthCarousel.onTouchStart}
+              onTouchMove={monthCarousel.onTouchMove}
+              onTouchEnd={monthCarousel.onTouchEnd}
+              style={{ overflow: 'hidden', touchAction: 'pan-y' }}
+            >
+              <div
+                onTransitionEnd={monthCarousel.handleTransitionEnd}
+                style={{
+                  display: 'flex',
+                  width: '300%',
+                  transform: `translateX(calc(-100%/3 + ${monthCarousel.dragX}px))`,
+                  transition: monthCarousel.transitionOn ? 'transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1)' : 'none',
+                  willChange: 'transform',
+                }}
+              >
+                <div style={{ width: '33.3333%', flexShrink: 0 }}>
+                  {renderMonthGridPanel(monthPanelCells.prev, monthPanelEventsByDay.prev, prevMonthYM.y, prevMonthYM.m, false)}
+                </div>
+                <div style={{ width: '33.3333%', flexShrink: 0 }}>
+                  {renderMonthGridPanel(cells, eventsByDay, year, month, true)}
+                </div>
+                <div style={{ width: '33.3333%', flexShrink: 0 }}>
+                  {renderMonthGridPanel(monthPanelCells.next, monthPanelEventsByDay.next, nextMonthYM.y, nextMonthYM.m, false)}
+                </div>
+              </div>
+            </div>
+          </>
         ) : viewMode === 'week' ? (
           // 週檢視：跟月檢視同一排星期標籤，格子改成這一週實際的 7 天（可能橫跨兩個月，
           // 所以每格顯示「日」的數字，取自該天真正的 Date，不是固定在同一個月份底下）。
