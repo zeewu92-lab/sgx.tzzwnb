@@ -489,7 +489,7 @@ const STRINGS = {
     syncMinutesAgo: n => `${n} 分鐘`, syncHoursAgo: n => `${n} 小時`, syncDaysAgo: n => `${n} 天`,
     syncLoginHint: '登入帳戶即可啟用同步，資料將安全保存在雲端。',
     prefGroupLabel: '偏好', appearanceLabel: '外觀', notifyPrefLabel: '通知', languageLabel: '語言',
-    calendarPrefLabel: '日曆', calendarPrefHint: '曆法（西曆、農曆等）可以在新增或編輯地標時個別設定。',
+    calendarPrefLabel: '日曆', calendarPrefHint: '勾選要在「日程」頁日曆點選日期後，於底部同時顯示對應日期的曆法（可複選）。地標本身要用哪種曆法計算日期，仍在新增或編輯地標時個別設定。',
     otherGroupLabel: '其他', aboutLabel: '關於時光線', privacyLabel: '隱私權政策', termsLabel: '使用條款',
     aboutBody: '時光線是一款用來記錄生活中重要時刻與紀念日的應用程式，陪你留住值得回味的時光。',
     legalPlaceholder: '完整內容準備中，稍後將於此提供。',
@@ -613,7 +613,7 @@ const STRINGS = {
     syncMinutesAgo: n => `${n} min`, syncHoursAgo: n => `${n} hr`, syncDaysAgo: n => `${n} d`,
     syncLoginHint: 'Sign in to enable sync and keep your data safe in the cloud.',
     prefGroupLabel: 'Preferences', appearanceLabel: 'Appearance', notifyPrefLabel: 'Notifications', languageLabel: 'Language',
-    calendarPrefLabel: 'Calendar', calendarPrefHint: 'The calendar system (Gregorian, lunar, etc.) can be set individually when adding or editing a landmark.',
+    calendarPrefLabel: 'Calendar', calendarPrefHint: 'Pick the calendar systems to show below the selected date on the Schedule tab (multiple allowed). Which calendar a landmark itself uses is still set individually when adding or editing it.',
     otherGroupLabel: 'More', aboutLabel: 'About Timeline', privacyLabel: 'Privacy Policy', termsLabel: 'Terms of Use',
     aboutBody: 'Timeline is an app for keeping track of the moments and anniversaries that matter, helping you hold on to time worth remembering.',
     legalPlaceholder: 'Full content coming soon.',
@@ -737,7 +737,7 @@ const STRINGS = {
     syncMinutesAgo: n => `${n}分`, syncHoursAgo: n => `${n}時間`, syncDaysAgo: n => `${n}日`,
     syncLoginHint: 'サインインすると同期が有効になり、データが安全にクラウドへ保存されます。',
     prefGroupLabel: '設定', appearanceLabel: '外観', notifyPrefLabel: '通知', languageLabel: '言語',
-    calendarPrefLabel: 'カレンダー', calendarPrefHint: '暦法（西暦・旧暦など）は地標の追加・編集時に個別に設定できます。',
+    calendarPrefLabel: 'カレンダー', calendarPrefHint: '「スケジュール」タブで日付を選んだときに、下部に併記する暦法を選んでください（複数選択可）。ランドマーク自体の暦法は、追加・編集時に個別に設定します。',
     otherGroupLabel: 'その他', aboutLabel: 'アプリについて', privacyLabel: 'プライバシーポリシー', termsLabel: '利用規約',
     aboutBody: 'タイムラインは、人生の大切な瞬間や記念日を記録するためのアプリです。心に残る時間をともに残していきます。',
     legalPlaceholder: '詳細な内容は準備中です。近日中に掲載予定です。',
@@ -861,7 +861,7 @@ const STRINGS = {
     syncMinutesAgo: n => `${n}분`, syncHoursAgo: n => `${n}시간`, syncDaysAgo: n => `${n}일`,
     syncLoginHint: '로그인하면 동기화가 활성화되어 데이터가 클라우드에 안전하게 저장됩니다.',
     prefGroupLabel: '환경설정', appearanceLabel: '외관', notifyPrefLabel: '알림', languageLabel: '언어',
-    calendarPrefLabel: '캘린더', calendarPrefHint: '달력 체계(양력, 음력 등)는 랜드마크를 추가하거나 편집할 때 개별적으로 설정할 수 있습니다.',
+    calendarPrefLabel: '캘린더', calendarPrefHint: '"일정" 탭에서 날짜를 선택했을 때 하단에 함께 표시할 달력 체계를 선택하세요(복수 선택 가능). 랜드마크 자체에 사용할 달력은 추가·편집 시 개별적으로 설정합니다.',
     otherGroupLabel: '기타', aboutLabel: '앱 정보', privacyLabel: '개인정보 처리방침', termsLabel: '이용약관',
     aboutBody: '타임라인은 삶의 중요한 순간과 기념일을 기록하는 앱으로, 소중한 시간을 함께 간직합니다.',
     legalPlaceholder: '전체 내용은 준비 중이며 곧 제공될 예정입니다.',
@@ -6462,7 +6462,7 @@ function BottomNavigation({ activeTab, setActiveTab, t }) {
 // 更新一次「現在時間」就會讓這個元件重新渲染、重新整個算一次，即使使用者什麼都沒點，
 // 這正是先前「開啟日程頁卡頓、操作反應慢」的主因之一，改成只有 events／year／month／
 // viewMode 真的變動時才重算。
-const AnniversaryCalendar = forwardRef(function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, setViewMode }, ref) {
+const AnniversaryCalendar = forwardRef(function AnniversaryCalendar({ events, lang, t, now, onRangeChange, viewMode, setViewMode, enabledAltCalendars }, ref) {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth()); // 0-11，viewMode==='year'／'week' 時不使用
   // viewMode（'month'＝月曆格子；'year'＝12 個月的年曆格子；'week'＝一週 7 天）改由外層 App
@@ -6685,6 +6685,9 @@ const AnniversaryCalendar = forwardRef(function AnniversaryCalendar({ events, la
 
   const isToday = (d) => d === now.getDate() && month === now.getMonth() && year === now.getFullYear();
   const selectedEvents = selectedDay != null ? (eventsByDay[selectedDay] || []) : [];
+  // 月檢視選中的「日」只存數字（見上面 selectedDay 的宣告註解），要換算成其他曆法對應日期
+  // 得先湊回完整的 Date；週檢視的 selectedWeekDate 本來就是完整 Date，不用另外處理。
+  const selectedDayDate = selectedDay != null ? new Date(year, month, selectedDay) : null;
   const isTodayDate = (d) => d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
   const selectedWeekEvents = selectedWeekDate
     ? (weekEventsByDateKey[`${selectedWeekDate.getFullYear()}-${selectedWeekDate.getMonth()}-${selectedWeekDate.getDate()}`] || [])
@@ -6959,6 +6962,16 @@ const AnniversaryCalendar = forwardRef(function AnniversaryCalendar({ events, la
                 </div>
               ))
             )}
+            {/* 「我的」→「日曆」裡勾選的曆法（可複選），選中日期底下各自換算顯示一行；
+                跟事件列表用同一塊面板，用細分隔線隔開，沒勾任何曆法就完全不出現這一段。 */}
+            {enabledAltCalendars.length > 0 && selectedDayDate && (
+              <div className="flex flex-col gap-1 pt-2 mt-1" style={{ borderTop: CARD_BORDER }}>
+                {enabledAltCalendars.map(calId => {
+                  const text = formatAltCalendar(selectedDayDate, calId, lang, t);
+                  return text ? <p key={calId} className="text-xs" style={{ color: INK_SOFT }}>{text}</p> : null;
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -6973,6 +6986,14 @@ const AnniversaryCalendar = forwardRef(function AnniversaryCalendar({ events, la
                   <span className="text-sm font-bold flex-1 truncate" style={{ color: INK }}>{ev.title}</span>
                 </div>
               ))
+            )}
+            {enabledAltCalendars.length > 0 && (
+              <div className="flex flex-col gap-1 pt-2 mt-1" style={{ borderTop: CARD_BORDER }}>
+                {enabledAltCalendars.map(calId => {
+                  const text = formatAltCalendar(selectedWeekDate, calId, lang, t);
+                  return text ? <p key={calId} className="text-xs" style={{ color: INK_SOFT }}>{text}</p> : null;
+                })}
+              </div>
             )}
           </div>
         )}
@@ -7944,6 +7965,36 @@ function LanguageChoiceContent({ lang, setLang, onClose }) {
   );
 }
 
+// 「日曆」視窗內容：跟其餘三個偏好視窗不同，這個是複選（見需求：選好的曆法會套用到「日程」
+// 頁點選日期後底部顯示的對應日期，可以同時勾多種曆法），所以點下去只是切換勾選狀態、
+// 不會像單選那三個一樣選了就自動關窗，讓使用者可以連續勾好幾個曆法再自己關閉視窗。
+// 選項本身直接複用新增／編輯地標時同一份 CAL_OPTIONS（排除西曆——西曆是預設基準、不需要
+// 額外「轉換顯示」，所以清單裡不出現）。
+function CalendarPrefChoiceContent({ enabledAltCalendars, setEnabledAltCalendars, lang, t }) {
+  function toggle(id) {
+    setEnabledAltCalendars(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
+  }
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="text-xs leading-relaxed mb-1" style={{ color: INK_SOFT }}>{t.calendarPrefHint}</p>
+      {CAL_OPTIONS.filter(c => c.id !== 'gregory').map(c => {
+        const active = enabledAltCalendars.includes(c.id);
+        return (
+          <button
+            key={c.id}
+            onClick={() => toggle(c.id)}
+            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold text-left"
+            style={{ color: active ? ACCENT : INK, background: active ? accentAlpha('14') : 'transparent' }}
+          >
+            {c.label[lang]}
+            {active && <Check size={15} />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // 「通知」視窗內容：跟原本 NotifySettingsButton 下拉面板裡的欄位完全一致（啟用開關＋提前幾天提醒），
 // 只是換成置中視窗的呈現方式，排程／通知邏輯完全不動，仍然由 App 那一層負責。
 function NotifyChoiceContent({ enabled, onToggle, daysBefore, setDaysBefore, permission, t }) {
@@ -8290,6 +8341,7 @@ function ProfilePage({
   notifyEnabled, onToggleNotify, notifyDaysBefore, setNotifyDaysBefore, notifyPermission,
   onOpenFeedback, isDark, themeMode, setThemeMode, lang, setLang,
   events, albums, clocks, customIcons, onImportBackup, lastSyncedAt, appVersion,
+  enabledAltCalendars, setEnabledAltCalendars,
 }) {
   const [subpage, setSubpage] = useState(null);
   const [mounted, shown] = useOverlayTransition(subpage !== null, 200);
@@ -8435,7 +8487,9 @@ function ProfilePage({
             <NotifyChoiceContent enabled={notifyEnabled} onToggle={onToggleNotify} daysBefore={notifyDaysBefore} setDaysBefore={setNotifyDaysBefore} permission={notifyPermission} t={t} />
           )}
           {choiceModal === 'language' && <LanguageChoiceContent lang={lang} setLang={setLang} onClose={() => setChoiceModal(null)} />}
-          {choiceModal === 'calendar' && <p className="text-sm leading-relaxed" style={{ color: INK }}>{t.calendarPrefHint}</p>}
+          {choiceModal === 'calendar' && (
+            <CalendarPrefChoiceContent enabledAltCalendars={enabledAltCalendars} setEnabledAltCalendars={setEnabledAltCalendars} lang={lang} t={t} />
+          )}
         </SettingsChoiceModal>
       )}
     </div>
@@ -8449,6 +8503,9 @@ export default function App() {
   const [clocks, setClocks] = useState([]);
   const [events, setEvents] = useState([]);
   const [isDark, setIsDark] = useState(false);
+  // 「我的」→「日曆」裡勾選的曆法清單（西曆以外，可複選）：「日程」頁的日曆點選日期後，
+  // 底部要一併顯示這些曆法對應的日期，兩邊共用同一份狀態。
+  const [enabledAltCalendars, setEnabledAltCalendars] = useState([]);
   // 「外觀」設定的三段選項：'system'（跟隨系統）｜'light'｜'dark'。isDark 仍然是全 App 實際拿來
   // 判斷深色／淺色的唯一布林值，themeMode 只負責「決定 isDark 應該是什麼」，兩者用下面這個
   // effect 接起來——system 模式下跟著 prefers-color-scheme 走，並監聽系統切換即時更新；
@@ -9471,7 +9528,7 @@ export default function App() {
                     ))}
                   </div>
 
-                  <AnniversaryCalendar ref={scheduleCalendarRef} events={events} lang={lang} t={t} now={now} onRangeChange={setScheduleRange} viewMode={scheduleViewMode} setViewMode={setScheduleViewMode} />
+                  <AnniversaryCalendar ref={scheduleCalendarRef} events={events} lang={lang} t={t} now={now} onRangeChange={setScheduleRange} viewMode={scheduleViewMode} setViewMode={setScheduleViewMode} enabledAltCalendars={enabledAltCalendars} />
 
                   {/* 這一整行本身不套毛玻璃背景，只有純文字提示＋真正的按鈕模組並排。
                       左邊「只展示未來待辦事件」是不可點擊的純文字說明，不需要背景卡片；
@@ -9574,6 +9631,8 @@ export default function App() {
                   customIcons={customIcons}
                   onImportBackup={applyCloudData}
                   lastSyncedAt={lastSyncedAt}
+                  enabledAltCalendars={enabledAltCalendars}
+                  setEnabledAltCalendars={setEnabledAltCalendars}
                   appVersion={appVersion}
                 />
               )}
