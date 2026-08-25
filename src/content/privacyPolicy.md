@@ -342,3 +342,36 @@ AI 所產生之內容僅供娛樂、參考及一般資訊用途，不構成醫�
 **最後更新日期：中華民國115年8月26日**
 
 **時光線團隊**
+
+---
+
+## 附錄一　第三方服務隱私權政策
+
+為便利使用者瞭解本服務所使用之第三方服務對於資料之處理方式，提供下列第三方服務之官方隱私權政策及相關說明供使用者查閱：
+
+1. [Google Privacy Policy](https://policies.google.com/privacy)
+2. [Firebase Privacy and Security](https://firebase.google.com/support/privacy/)
+3. [Anthropic Privacy Center](https://privacy.anthropic.com/en/)
+4. [Telegram Privacy Policy](https://telegram.org/privacy)
+5. [Apple Privacy](https://www.apple.com/legal/privacy/)
+
+前項第三方服務之實際使用範圍，依本服務當時所提供之功能及服務內容為準。
+
+第三方服務之隱私權政策、服務條款及資料處理方式如有變更，應以各該第三方服務提供者所公布之最新內容為準。
+
+---
+
+## 附錄二　版本異動紀錄
+
+| 版本 | 日期 | 異動內容 |
+|---|---|---|
+| 1.0.0 | 中華民國115年8月26日 | 初版發布。 |
+| 1.1.0 | 中華民國115年8月26日 | 補充個人資料利用期間、利用地區、利用對象及利用方式；增加第三方服務及相關隱私權政策連結；補充 Cookie、Local Storage 及其他本機儲存技術之說明；補充帳號刪除及個人資料權利之行使方式；強化未成年人個人資料保護事項；補充跨境傳輸及聯絡資訊；增加本版本異動紀錄。 |
+
+---
+
+**本政策最後更新日期：中華民國115年8月26日**
+
+**版本：1.1.0**
+
+**時光線團隊**
