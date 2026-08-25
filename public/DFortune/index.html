@@ -3,39 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>日籤 · 每日求籤</title>
+<title>時光線 · 每日求籤</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg-deep:#4A1119;
-    --bg-deep-2:#5C1A22;
-    --bg-deep-3:#331014;
-    --gold:#C9A44C;
-    --gold-light:#E4C879;
-    --paper:#F5ECD8;
-    --paper-2:#EFE2C4;
-    --ink:#2A211A;
-    --ink-soft:#6B5A47;
-    --cinnabar:#B3282D;
-    --cinnabar-dark:#8C1E22;
-    --jade:#4F6F52;
+    /* 中性介面色（呼應時光線 token 命名） */
+    --page-bg:#FFFFFF;
+    --page-bg-2:#FAF9F7;
+    --ink:#232733;
+    --ink-soft:rgba(35,39,51,0.55);
+    --card-bg:#F7F8FA;
+    --card-border:#ECEDF1;
+    --header-bg:rgba(255,255,255,0.82);
+    --input-bg:#FFFFFF;
+    /* 硃砂紅，只用在抽籤結果／選中狀態／主要操作 */
+    --accent:#C23B34;
+    --accent-soft:rgba(194,59,52,0.10);
+    --accent-soft-2:rgba(194,59,52,0.18);
     --serif:'Noto Serif TC', serif;
-    --sans:'Noto Sans TC', sans-serif;
+    --sans:'Inter', 'Noto Sans TC', sans-serif;
   }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  *{box-sizing:border-box;}
   html,body{margin:0; padding:0; height:100%;}
   body{
     font-family:var(--sans);
-    background:
-      radial-gradient(circle at 20% 0%, rgba(201,164,76,0.12), transparent 45%),
-      radial-gradient(circle at 90% 100%, rgba(179,40,45,0.18), transparent 40%),
-      linear-gradient(160deg, var(--bg-deep-3), var(--bg-deep) 45%, var(--bg-deep-2) 100%);
-    color:var(--paper);
+    background:linear-gradient(180deg, var(--page-bg-2) 0%, var(--page-bg) 55%);
+    color:var(--ink);
     min-height:100%;
     display:flex;
     justify-content:center;
   }
+  button, [role="button"], input, textarea{
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+    font-family:var(--sans);
+  }
+  button, [role="button"]{ transition:transform 96ms linear; }
+  button:active, [role="button"]:active{ transform:scale(0.96); }
+
   #app{
     width:100%;
     max-width:480px;
@@ -43,37 +49,35 @@
     display:flex;
     flex-direction:column;
     position:relative;
-    background:
-      repeating-linear-gradient(115deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px, transparent 2px, transparent 6px);
+    background:transparent;
   }
 
   /* ---------- topbar ---------- */
   .topbar{
-    padding:22px 20px 14px;
+    padding:30px 20px 16px;
     text-align:center;
     position:relative;
   }
   .topbar::after{
     content:"";
     display:block;
-    width:64px; height:2px;
-    margin:12px auto 0;
-    background:linear-gradient(90deg, transparent, var(--gold), transparent);
+    width:36px; height:1px;
+    margin:14px auto 0;
+    background:var(--card-border);
   }
   .topbar h1{
     font-family:var(--serif);
-    font-weight:900;
-    font-size:26px;
-    letter-spacing:6px;
+    font-weight:700;
+    font-size:23px;
+    letter-spacing:5px;
     margin:0;
-    color:var(--gold-light);
-    text-shadow:0 1px 0 rgba(0,0,0,0.3);
+    color:var(--ink);
   }
   .topbar p{
-    margin:6px 0 0;
+    margin:7px 0 0;
     font-size:11px;
-    letter-spacing:3px;
-    color:rgba(245,236,216,0.55);
+    letter-spacing:2.5px;
+    color:var(--ink-soft);
   }
 
   main{flex:1; padding:4px 18px 100px;}
@@ -83,37 +87,36 @@
 
   /* ---------- section headings ---------- */
   .eyebrow{
-    font-size:11px; letter-spacing:3px; color:var(--gold);
-    text-transform:uppercase; margin:22px 0 8px;
+    font-size:11px; letter-spacing:2.5px; color:var(--ink-soft);
+    text-transform:uppercase; margin:24px 0 10px;
     display:flex; align-items:center; gap:8px;
   }
-  .eyebrow::before, .eyebrow::after{content:""; flex:1; height:1px; background:rgba(201,164,76,0.35);}
+  .eyebrow::before, .eyebrow::after{content:""; flex:1; height:1px; background:var(--card-border);}
 
   /* ---------- chips ---------- */
   .chip-row{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:14px 0 6px;}
   .chip{
     font-family:var(--sans);
     font-size:13px;
-    padding:7px 14px;
+    padding:7px 15px;
     border-radius:999px;
-    border:1px solid rgba(201,164,76,0.4);
-    background:rgba(0,0,0,0.15);
-    color:rgba(245,236,216,0.8);
+    border:1px solid var(--card-border);
+    background:var(--card-bg);
+    color:var(--ink-soft);
     cursor:pointer;
-    transition:.2s;
+    transition:background .2s, color .2s, border-color .2s;
   }
   .chip.active{
-    background:linear-gradient(135deg, var(--gold), #a9812f);
-    color:#2a1c0c;
+    background:var(--accent-soft);
+    color:var(--accent);
     font-weight:700;
-    border-color:var(--gold-light);
-    box-shadow:0 2px 8px rgba(201,164,76,0.35);
+    border-color:transparent;
   }
 
-  /* ---------- qian tube (signature element) ---------- */
+  /* ---------- qian tube (signature element, simplified & glassy) ---------- */
   .tube-stage{
     display:flex; flex-direction:column; align-items:center;
-    padding:18px 0 10px;
+    padding:20px 0 10px;
   }
   .tube-wrap{
     position:relative;
@@ -121,68 +124,63 @@
     cursor:pointer;
     user-select:none;
   }
-  .sticks{position:absolute; bottom:56px; left:0; right:0; height:120px;}
+  .sticks{position:absolute; bottom:60px; left:0; right:0; height:112px;}
   .stick{
     position:absolute;
     bottom:0;
-    width:7px;
-    height:110px;
+    width:5px;
+    height:96px;
     left:50%;
-    background:linear-gradient(180deg, #E8D9B0, #C7A85F);
+    background:linear-gradient(180deg, #F1EEE7, #DCD5C6);
     border-radius:3px 3px 0 0;
-    box-shadow:inset -2px 0 3px rgba(0,0,0,0.15);
   }
   .stick::after{
     content:"";
-    position:absolute; top:0; left:0; right:0; height:10px;
-    background:var(--cinnabar);
+    position:absolute; top:0; left:0; right:0; height:7px;
+    background:var(--accent);
+    opacity:.82;
     border-radius:3px 3px 0 0;
   }
   .tube{
     position:absolute; bottom:0; left:50%; transform:translateX(-50%);
-    width:118px; height:96px;
-    background:linear-gradient(180deg, #7A2A2C, #5A1518 70%, #430F12);
-    border:2px solid var(--gold);
-    border-radius:14px 14px 20px 20px;
-    box-shadow:0 10px 24px rgba(0,0,0,0.45), inset 0 3px 6px rgba(255,255,255,0.08);
+    width:118px; height:92px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(247,248,250,0.75));
+    border:1px solid var(--card-border);
+    border-radius:20px 20px 26px 26px;
+    box-shadow:0 14px 28px rgba(35,39,51,0.10), inset 0 1px 0 rgba(255,255,255,0.7);
+    backdrop-filter:blur(6px);
   }
-  .tube::before{
-    content:"";
-    position:absolute; top:8px; left:8px; right:8px; height:6px;
-    background:rgba(0,0,0,0.25);
-    border-radius:6px;
-  }
-  .tube-label{
-    position:absolute; bottom:14px; left:0; right:0; text-align:center;
-    font-family:var(--serif); font-weight:700; color:var(--gold-light);
-    font-size:13px; letter-spacing:2px;
+  .tube-accent{
+    position:absolute; top:-4px; left:50%; transform:translateX(-50%);
+    width:9px; height:9px; border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 0 4px var(--accent-soft);
   }
   .tube-hint{
-    margin-top:14px; font-size:13px; color:rgba(245,236,216,0.7); text-align:center;
+    margin-top:16px; font-size:13px; color:var(--ink-soft); text-align:center;
   }
-  .tube-hint b{color:var(--gold-light); font-weight:700;}
+  .tube-hint b{color:var(--accent); font-weight:700;}
 
   .btn{
     font-family:var(--sans); font-weight:700; font-size:15px;
-    border:none; border-radius:10px; padding:13px 20px;
-    cursor:pointer; letter-spacing:1px;
-    transition:transform .15s, box-shadow .15s;
+    border:none; border-radius:16px; padding:14px 20px;
+    cursor:pointer; letter-spacing:.5px;
+    transition:transform 96ms linear, box-shadow .15s, background .15s;
   }
-  .btn:active{transform:scale(0.97);}
   .btn-primary{
-    background:linear-gradient(135deg, var(--cinnabar), var(--cinnabar-dark));
-    color:#fff5e8;
-    box-shadow:0 6px 16px rgba(179,40,45,0.4);
+    background:var(--accent);
+    color:#fff;
+    box-shadow:0 8px 18px rgba(194,59,52,0.28);
     width:100%;
   }
   .btn-gold{
-    background:linear-gradient(135deg, var(--gold-light), var(--gold));
-    color:#2a1c0c;
-    box-shadow:0 6px 16px rgba(201,164,76,0.35);
+    background:var(--accent-soft);
+    color:var(--accent);
+    box-shadow:none;
   }
   .btn-ghost{
-    background:transparent; color:var(--gold-light);
-    border:1px solid rgba(201,164,76,0.5);
+    background:var(--card-bg); color:var(--ink-soft);
+    border:1px solid var(--card-border);
   }
   .btn-block{width:100%; margin-top:10px;}
   .btn-row{display:flex; gap:10px; margin-top:14px;}
@@ -191,51 +189,43 @@
 
   /* ---------- already-drawn banner ---------- */
   .done-banner{
-    text-align:center; font-size:12px; color:rgba(245,236,216,0.6);
+    text-align:center; font-size:12px; color:var(--ink-soft);
     margin-top:10px; letter-spacing:1px;
   }
 
   /* ---------- result card ---------- */
   .paper-card{
-    background:linear-gradient(180deg, var(--paper), var(--paper-2));
+    background:var(--card-bg);
     color:var(--ink);
-    border-radius:10px;
-    padding:20px 18px;
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:22px 20px;
     margin-top:16px;
     position:relative;
-    box-shadow:0 12px 28px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(201,164,76,0.5);
-  }
-  .paper-card::before{
-    content:"";
-    position:absolute; inset:6px;
-    border:1px solid rgba(179,40,45,0.35);
-    border-radius:6px;
-    pointer-events:none;
+    box-shadow:0 2px 10px rgba(35,39,51,0.05);
   }
   .qian-head{
     display:flex; justify-content:space-between; align-items:flex-start;
     margin-bottom:10px;
   }
   .qian-no{
-    font-family:var(--serif); font-weight:900; font-size:20px; color:var(--ink);
+    font-family:var(--serif); font-weight:700; font-size:19px; color:var(--ink);
   }
   .qian-no span{display:block; font-size:11px; font-weight:500; color:var(--ink-soft); letter-spacing:2px; margin-top:2px;}
   .level-badge{
-    font-family:var(--serif); font-weight:900; font-size:14px;
-    padding:6px 14px; border-radius:4px;
-    color:#fff5e8; white-space:nowrap;
+    font-family:var(--sans); font-weight:700; font-size:12.5px;
+    padding:6px 14px; border-radius:999px; border:1px solid transparent;
+    white-space:nowrap;
   }
-  .lv-上上籤{background:linear-gradient(135deg,#C9A44C,#8C6A1E);}
-  .lv-上籤{background:linear-gradient(135deg,#4F6F52,#33482F);}
-  .lv-中籤{background:linear-gradient(135deg,#7C8AA0,#4E5A6E);}
-  .lv-下籤{background:linear-gradient(135deg,#A9642F,#7A4520);}
-  .lv-下下籤{background:linear-gradient(135deg,#8C1E22,#5A1215);}
+  .tier-good{background:var(--accent-soft); color:var(--accent); border-color:rgba(194,59,52,0.22);}
+  .tier-mid{background:var(--card-bg); color:var(--ink-soft); border-color:var(--card-border);}
+  .tier-bad{background:rgba(35,39,51,0.06); color:var(--ink); border-color:rgba(35,39,51,0.12);}
 
   .poem-box{
     display:flex; flex-direction:row-reverse; justify-content:center; gap:14px;
-    padding:18px 6px; margin:8px 0 14px;
-    border-top:1px dashed rgba(179,40,45,0.4);
-    border-bottom:1px dashed rgba(179,40,45,0.4);
+    padding:20px 6px; margin:10px 0 16px;
+    background:var(--accent-soft);
+    border-radius:14px;
   }
   .poem-line{
     writing-mode:vertical-rl;
@@ -248,126 +238,133 @@
   }
   .qian-section{margin-bottom:12px;}
   .qian-section h4{
-    margin:0 0 4px; font-size:12px; letter-spacing:2px; color:var(--cinnabar-dark);
+    margin:0 0 4px; font-size:11.5px; letter-spacing:1.5px; color:var(--accent);
     font-weight:700;
   }
   .qian-section p{margin:0; font-size:14.5px; line-height:1.65; color:var(--ink);}
 
   /* ---------- stars / fortune ---------- */
-  .overall-stars{text-align:center; margin:6px 0 4px;}
+  .overall-stars{text-align:center; margin:18px 0 4px;}
   .overall-stars .stars{font-size:26px; letter-spacing:3px;}
-  .stars .on{color:var(--gold-light); text-shadow:0 0 6px rgba(201,164,76,0.6);}
-  .stars .off{color:rgba(245,236,216,0.25);}
-  .overall-label{font-size:12px; letter-spacing:2px; color:rgba(245,236,216,0.65); margin-top:2px;}
+  .stars .on{color:var(--accent);}
+  .stars .off{color:rgba(35,39,51,0.15);}
+  .overall-label{font-size:12px; letter-spacing:2px; color:var(--ink-soft); margin-top:4px;}
 
   .cat-list{margin-top:14px; display:flex; flex-direction:column; gap:8px;}
   .cat-row{
     display:flex; align-items:center; justify-content:space-between;
-    background:rgba(0,0,0,0.18);
-    border:1px solid rgba(201,164,76,0.25);
-    border-radius:8px; padding:9px 12px;
+    background:var(--card-bg);
+    border:1px solid var(--card-border);
+    border-radius:14px; padding:10px 14px;
   }
   .cat-row.focused{
-    border-color:var(--gold-light);
-    background:rgba(201,164,76,0.14);
+    border-color:var(--accent);
+    background:var(--accent-soft);
   }
-  .cat-name{font-size:13.5px; font-weight:700; color:var(--paper); display:flex; align-items:center; gap:6px;}
-  .cat-name .tag{font-size:10px; color:var(--gold-light); border:1px solid var(--gold-light); border-radius:4px; padding:1px 5px;}
+  .cat-name{font-size:13.5px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:6px;}
+  .cat-name .tag{font-size:10px; color:var(--accent); border:1px solid var(--accent); border-radius:6px; padding:1px 6px;}
   .cat-stars{font-size:15px;}
-  .cat-advice{font-size:12.5px; color:rgba(245,236,216,0.7); margin-top:4px; line-height:1.5;}
+  .cat-advice{font-size:12.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5;}
 
   .quote-card{
-    margin-top:22px; padding:16px 18px; border-radius:10px;
-    background:rgba(0,0,0,0.18); border:1px solid rgba(201,164,76,0.25);
+    margin-top:24px; padding:18px 20px; border-radius:16px;
+    background:var(--card-bg); border:1px solid var(--card-border);
     text-align:center;
   }
-  .quote-card p{font-family:var(--serif); font-size:15px; line-height:1.6; margin:0; color:var(--gold-light);}
-  .quote-card span{display:block; margin-top:6px; font-size:11px; letter-spacing:2px; color:rgba(245,236,216,0.5);}
+  .quote-card p{font-family:var(--serif); font-size:14.5px; line-height:1.6; margin:0; color:var(--ink); font-style:italic;}
+  .quote-card span{display:block; margin-top:8px; font-size:11px; letter-spacing:2px; color:var(--ink-soft);}
 
   /* ---------- book (history) ---------- */
   .book-item{
     display:flex; align-items:center; justify-content:space-between;
-    padding:13px 14px; margin-bottom:10px;
-    background:rgba(0,0,0,0.18); border:1px solid rgba(201,164,76,0.25);
-    border-radius:10px; cursor:pointer;
+    padding:14px 16px; margin-bottom:10px;
+    background:var(--card-bg); border:1px solid var(--card-border);
+    border-radius:14px; cursor:pointer;
   }
-  .book-item:active{background:rgba(201,164,76,0.12);}
+  .book-item:active{background:var(--accent-soft);}
   .book-left{display:flex; flex-direction:column; gap:3px;}
-  .book-date{font-size:11px; color:rgba(245,236,216,0.55); letter-spacing:1px;}
-  .book-title{font-family:var(--serif); font-weight:700; font-size:15px; color:var(--paper);}
+  .book-date{font-size:11px; color:var(--ink-soft); letter-spacing:1px;}
+  .book-title{font-family:var(--serif); font-weight:700; font-size:15px; color:var(--ink);}
   .empty-state{
-    text-align:center; padding:60px 20px; color:rgba(245,236,216,0.55);
+    text-align:center; padding:60px 20px; color:var(--ink-soft);
   }
-  .empty-state .glyph{font-size:34px; display:block; margin-bottom:10px;}
+  .empty-state .glyph{font-size:34px; display:block; margin-bottom:10px; opacity:.5;}
 
   /* ---------- more / tools ---------- */
   .tool-card{
-    background:rgba(0,0,0,0.18); border:1px solid rgba(201,164,76,0.25);
-    border-radius:12px; padding:16px; margin-bottom:14px;
+    background:var(--card-bg); border:1px solid var(--card-border);
+    border-radius:18px; padding:18px; margin-bottom:14px;
   }
-  .tool-card h3{margin:0 0 6px; font-family:var(--serif); font-size:16px; color:var(--gold-light);}
-  .tool-card p{margin:0 0 10px; font-size:13px; color:rgba(245,236,216,0.7); line-height:1.6;}
+  .tool-card h3{margin:0 0 6px; font-family:var(--serif); font-size:16px; font-weight:700; color:var(--ink);}
+  .tool-card p{margin:0 0 12px; font-size:13px; color:var(--ink-soft); line-height:1.6;}
   input[type=text]{
-    width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(201,164,76,0.4);
-    background:rgba(0,0,0,0.2); color:var(--paper); font-family:var(--sans); font-size:14px; margin-bottom:8px;
+    width:100%; padding:11px 13px; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--input-bg); color:var(--ink); font-family:var(--sans); font-size:14px; margin-bottom:8px;
+    transition:border-color .15s;
   }
-  input[type=text]::placeholder{color:rgba(245,236,216,0.35);}
+  input[type=text]:focus{outline:none; border-color:var(--accent);}
+  input[type=text]::placeholder{color:var(--ink-soft);}
 
   /* ---------- tabbar ---------- */
   .tabbar{
     position:fixed; bottom:0; left:50%; transform:translateX(-50%);
     width:100%; max-width:480px;
     display:flex;
-    background:rgba(20,7,9,0.92);
-    backdrop-filter:blur(6px);
-    border-top:1px solid rgba(201,164,76,0.3);
-    padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+    background:var(--header-bg);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-top:1px solid var(--card-border);
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom));
   }
   .tab-btn{
-    flex:1; background:none; border:none; color:rgba(245,236,216,0.55);
-    font-family:var(--sans); font-size:11.5px; padding:6px 0 2px;
-    display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer;
+    flex:1; background:none; border:none; color:var(--ink-soft);
+    font-family:var(--sans); font-size:11px; padding:7px 0 3px;
+    display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer;
   }
-  .tab-btn .ic{font-size:19px;}
-  .tab-btn.active{color:var(--gold-light);}
+  .tab-btn .ic{display:flex;}
+  .tab-btn .ic svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transition:stroke .15s;}
+  .tab-btn.active{color:var(--accent); font-weight:700;}
 
   /* ---------- overlays / modals ---------- */
   .overlay, .modal{
     position:fixed; inset:0; z-index:50;
     display:flex; align-items:center; justify-content:center;
-    background:rgba(10,3,4,0.75);
+    background:rgba(35,39,51,0.4);
+    backdrop-filter:blur(3px);
   }
   .overlay.hidden, .modal.hidden{display:none;}
   .modal-panel{
     width:92%; max-width:420px; max-height:84vh; overflow-y:auto;
-    background:linear-gradient(180deg, var(--bg-deep-2), var(--bg-deep-3));
-    border:1px solid rgba(201,164,76,0.4);
-    border-radius:14px; padding:18px;
+    background:var(--page-bg);
+    border:1px solid var(--card-border);
+    border-radius:20px; padding:20px;
     position:relative;
+    box-shadow:0 24px 60px rgba(35,39,51,0.2);
   }
   .modal-close{
-    position:absolute; top:10px; right:12px; background:none; border:none;
-    color:var(--gold-light); font-size:20px; cursor:pointer;
+    position:absolute; top:12px; right:14px; background:none; border:none;
+    color:var(--ink-soft); font-size:18px; cursor:pointer;
   }
 
-  /* draw ritual */
+  /* draw ritual (same glass language as the home canister) */
   .draw-stage{
     position:relative; width:220px; height:280px;
     display:flex; align-items:center; justify-content:center;
   }
   .rite-tube{
-    position:absolute; bottom:20px; width:130px; height:104px;
-    background:linear-gradient(180deg, #7A2A2C, #5A1518 70%, #430F12);
-    border:2px solid var(--gold); border-radius:16px 16px 22px 22px;
-    box-shadow:0 14px 30px rgba(0,0,0,0.5);
+    position:absolute; bottom:20px; width:130px; height:100px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(247,248,250,0.75));
+    border:1px solid var(--card-border); border-radius:22px 22px 30px 30px;
+    box-shadow:0 18px 34px rgba(35,39,51,0.14), inset 0 1px 0 rgba(255,255,255,0.7);
+    backdrop-filter:blur(6px);
   }
-  .rite-sticks{position:absolute; bottom:78px; left:0; right:0; height:130px; width:130px; margin:0 auto;}
+  .rite-sticks{position:absolute; bottom:82px; left:0; right:0; height:120px; width:130px; margin:0 auto;}
   .rite-stick{
-    position:absolute; bottom:0; left:50%; width:8px; height:120px;
-    background:linear-gradient(180deg, #E8D9B0, #C7A85F);
+    position:absolute; bottom:0; left:50%; width:6px; height:110px;
+    background:linear-gradient(180deg, #F1EEE7, #DCD5C6);
     border-radius:4px 4px 0 0;
   }
-  .rite-stick::after{content:""; position:absolute; top:0; left:0; right:0; height:12px; background:var(--cinnabar); border-radius:4px 4px 0 0;}
+  .rite-stick::after{content:""; position:absolute; top:0; left:0; right:0; height:9px; background:var(--accent); opacity:.82; border-radius:4px 4px 0 0;}
   .shaking .rite-tube{animation:shakeTube .5s ease-in-out infinite;}
   .shaking .rite-stick{animation:jitterStick .28s ease-in-out infinite;}
   @keyframes shakeTube{
@@ -380,7 +377,7 @@
     50%{transform:translateX(-50%) rotate(calc(var(--r,0deg) * -1));}
   }
   .flying-stick{
-    position:absolute; width:64px; height:180px; left:50%; top:60%;
+    position:absolute; width:62px; height:170px; left:50%; top:60%;
     transform:translate(-50%,-50%) scale(0.3);
     opacity:0;
     transform-style:preserve-3d;
@@ -395,54 +392,56 @@
   }
   .fs-face{
     position:absolute; inset:0; backface-visibility:hidden;
-    border-radius:6px; display:flex; align-items:center; justify-content:center;
+    border-radius:14px; display:flex; align-items:center; justify-content:center;
     flex-direction:column;
+    border:1px solid var(--card-border);
   }
   .fs-front{
-    background:linear-gradient(180deg, #E8D9B0, #C7A85F);
-    box-shadow:0 8px 20px rgba(0,0,0,0.4);
+    background:linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,248,250,0.8));
+    box-shadow:0 10px 24px rgba(35,39,51,0.16);
   }
-  .fs-front::before{content:""; position:absolute; top:0; left:0; right:0; height:20px; background:var(--cinnabar); border-radius:6px 6px 0 0;}
+  .fs-front::before{content:""; position:absolute; top:0; left:0; right:0; height:14px; background:var(--accent); opacity:.85; border-radius:14px 14px 0 0;}
   .fs-back{
-    background:linear-gradient(180deg, var(--paper), var(--paper-2));
+    background:var(--page-bg);
     transform:rotateY(180deg);
-    box-shadow:0 8px 20px rgba(0,0,0,0.4);
+    box-shadow:0 10px 24px rgba(35,39,51,0.16);
     padding:8px;
     text-align:center;
   }
-  .fs-back .n{font-family:var(--serif); font-weight:900; font-size:22px; color:var(--cinnabar-dark);}
-  .fs-back .l{font-family:var(--serif); font-weight:700; font-size:13px; color:var(--ink-soft); margin-top:4px;}
+  .fs-back .n{font-family:var(--serif); font-weight:700; font-size:21px; color:var(--accent);}
+  .fs-back .l{font-family:var(--sans); font-weight:700; font-size:12.5px; color:var(--ink-soft); margin-top:4px;}
   .draw-caption{
     position:absolute; bottom:-6px; text-align:center; width:100%;
-    font-size:13px; color:rgba(245,236,216,0.65); letter-spacing:2px;
+    font-size:13px; color:var(--ink-soft); letter-spacing:2px;
   }
   .skip-btn{
     position:absolute; top:18px; right:18px; background:none; border:none;
-    color:rgba(245,236,216,0.5); font-size:12px; cursor:pointer; text-decoration:underline;
+    color:var(--ink-soft); font-size:12px; cursor:pointer; text-decoration:underline;
   }
 
   /* share card */
-  #shareCanvas{width:100%; max-width:320px; border-radius:10px; box-shadow:0 10px 26px rgba(0,0,0,0.5); display:block; margin:0 auto;}
+  #shareCanvas{width:100%; max-width:320px; border-radius:14px; box-shadow:0 16px 36px rgba(35,39,51,0.18); display:block; margin:0 auto;}
 
   .ab-result{
-    margin-top:14px; text-align:center; padding:18px; border-radius:10px;
-    background:rgba(201,164,76,0.12); border:1px solid rgba(201,164,76,0.4);
+    margin-top:14px; text-align:center; padding:18px; border-radius:16px;
+    background:var(--accent-soft); border:1px solid rgba(194,59,52,0.22);
   }
-  .ab-result .pick{font-family:var(--serif); font-weight:900; font-size:22px; color:var(--gold-light);}
-  .ab-result .why{font-size:13px; color:rgba(245,236,216,0.7); margin-top:6px;}
+  .ab-result .pick{font-family:var(--serif); font-weight:700; font-size:21px; color:var(--accent);}
+  .ab-result .why{font-size:13px; color:var(--ink-soft); margin-top:6px;}
 
-  .ai-q{min-height:60px; resize:none; width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(201,164,76,0.4); background:rgba(0,0,0,0.2); color:var(--paper); font-family:var(--sans); font-size:14px;}
-  .ai-answer{margin-top:12px; padding:14px; border-radius:8px; background:rgba(0,0,0,0.2); font-size:13.5px; line-height:1.7; color:rgba(245,236,216,0.9); white-space:pre-wrap;}
+  .ai-q{min-height:60px; resize:none; width:100%; padding:11px 13px; border-radius:12px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--ink); font-family:var(--sans); font-size:14px;}
+  .ai-q:focus{outline:none; border-color:var(--accent);}
+  .ai-answer{margin-top:12px; padding:14px; border-radius:12px; background:var(--card-bg); border:1px solid var(--card-border); font-size:13.5px; line-height:1.7; color:var(--ink); white-space:pre-wrap;}
   .loading-dots::after{content:'·'; animation:dots 1.2s steps(4) infinite;}
   @keyframes dots{0%{content:'·';}25%{content:'··';}50%{content:'···';}75%{content:'····';}}
-  .small-muted{font-size:11.5px; color:rgba(245,236,216,0.45); text-align:center; margin-top:16px;}
+  .small-muted{font-size:11.5px; color:var(--ink-soft); text-align:center; margin-top:16px;}
 </style>
 </head>
 <body>
 <div id="app">
 
   <div class="topbar">
-    <h1>日 籤</h1>
+    <h1>日 籤 · 時 光 線</h1>
     <p>一 籤 一 念 · 心 安 一 日</p>
   </div>
 
@@ -458,9 +457,18 @@
   </main>
 
   <nav class="tabbar">
-    <button class="tab-btn active" data-tab="today"><span class="ic">⛩</span>今日</button>
-    <button class="tab-btn" data-tab="book"><span class="ic">📜</span>籤冊</button>
-    <button class="tab-btn" data-tab="more"><span class="ic">✦</span>玩法</button>
+    <button class="tab-btn active" data-tab="today">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+      今日
+    </button>
+    <button class="tab-btn" data-tab="book">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M6 3h11a1 1 0 0 1 1 1v17l-6.5-3.5L5 21V4a1 1 0 0 1 1-1z"/></svg></span>
+      籤冊
+    </button>
+    <button class="tab-btn" data-tab="more">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg></span>
+      玩法
+    </button>
   </nav>
 
   <!-- draw ritual overlay -->
@@ -504,7 +512,7 @@
   <div id="abModal" class="modal hidden">
     <div class="modal-panel">
       <button class="modal-close" data-close="abModal">✕</button>
-      <h3 style="font-family:var(--serif); color:var(--gold-light); margin-top:0;">A / B 選擇求籤</h3>
+      <h3 style="font-family:var(--serif); color:var(--ink); margin-top:0;">A / B 選擇求籤</h3>
       <p style="font-size:13px; color:rgba(245,236,216,0.7); margin-top:-6px;">拿不定主意時，讓籤來給你一個方向。</p>
       <input type="text" id="abA" placeholder="選項 A（例如：留下）">
       <input type="text" id="abB" placeholder="選項 B（例如：離開）">
@@ -517,7 +525,7 @@
   <div id="aiModal" class="modal hidden">
     <div class="modal-panel">
       <button class="modal-close" data-close="aiModal">✕</button>
-      <h3 style="font-family:var(--serif); color:var(--gold-light); margin-top:0;">AI 解籤</h3>
+      <h3 style="font-family:var(--serif); color:var(--ink); margin-top:0;">AI 解籤</h3>
       <p style="font-size:13px; color:rgba(245,236,216,0.7); margin-top:-6px;" id="aiIntro">針對今日的籤，說說你心裡真正想問的事，讓解籤更貼近你的處境。</p>
       <textarea class="ai-q" id="aiQuestion" placeholder="例如：我正在猶豫要不要換工作，這支籤是什麼意思？"></textarea>
       <button class="btn btn-primary btn-block" id="aiAsk">請 籤 師 解 籤</button>
@@ -532,8 +540,697 @@
 "use strict";
 
 /* ============================================================
+   CONFIG
+   AI_ENDPOINT：AI 解籤呼叫的後端路徑。正式部署時請換成你自己架設、
+   會安全代呼叫 Anthropic API 的後端（Vercel Function／Cloudflare
+   Worker 等皆可），不要讓瀏覽器直接帶金鑰打 Anthropic API。
+   範例後端實作請見附帶的 api-example/aiDFortune.js。
+============================================================ */
+const AI_ENDPOINT = '/api/aiDFortune';
+
+/* ============================================================
    DATA — 40 支籤（原創籤文）
 ============================================================ */
 const QIAN = [
 {id:1,tier:'good',poem:['春風送喜來','百花齊盛開','貴人扶上馬','一舉登金階'],explain:'象徵時機成熟、貴人相助，努力終將見到成果。',advice:'把握眼前機會，勇敢邁出第一步。'},
-{id:2,tier:'good',poem:['旭日照長空','祥雲
+{id:2,tier:'good',poem:['旭日照長空','祥雲繞碧峰','心誠事必遂','萬里任西東'],explain:'心思純正、方向明確時，做什麼都能順利推進。',advice:'相信自己的判斷，放手去做。'},
+{id:3,tier:'good',poem:['龍門一躍過','魚化便成龍','十年寒窗苦','今朝笑春風'],explain:'長期的努力即將開花結果，苦盡甘來。',advice:'別在最後關頭鬆懈，堅持到底。'},
+{id:4,tier:'good',poem:['喜鵲枝頭鬧','佳音自遠來','家和萬事順','福祿滿庭階'],explain:'人際與家庭關係和睦，好消息將至。',advice:'多與親近的人分享喜悅，福氣會更綿長。'},
+{id:5,tier:'good',poem:['金榜題名時','眾人齊仰之','莫忘來時路','謙遜福自滋'],explain:'成就雖高，仍需謙遜待人，福氣才能長久。',advice:'成功之際更要低調感恩。'},
+{id:6,tier:'good',poem:['順風行大船','一路少艱難','但求心中定','自有渡頭安'],explain:'大環境對你有利，只要方向不亂，終能順利抵達目標。',advice:'穩住方向，不必事事憂心。'},
+{id:7,tier:'good',poem:['花開滿樹紅','蜂蝶自然逢','但存真心在','何愁事不成'],explain:'只要用心經營，機會與貴人自然會出現。',advice:'專注把眼前的事做好，其餘水到渠成。'},
+{id:8,tier:'good',poem:['豐年稻穗垂','倉廩自然肥','一分耕耘去','十分收穫歸'],explain:'過去的付出將有豐厚回報，收成在即。',advice:'好好清點與規劃這波成果，勿浪費。'},
+{id:9,tier:'good',poem:['春筍破土出','節節向天青','初時雖弱小','終見凌雲形'],explain:'剛起步時力量尚小，但方向正確，潛力可期。',advice:'打好基礎，不急於一時之功。'},
+{id:10,tier:'good',poem:['輕舟已過灘','前路漸平寬','莫因舊時難','誤了眼前歡'],explain:'難關已經度過，接下來的路會比想像中順利。',advice:'放下過去的顧慮，輕裝上路。'},
+{id:11,tier:'good',poem:['苗壯待秋收','且耐日中憂','天時人事合','自有滿園秋'],explain:'條件都已具備，只需耐心等待時機成熟。',advice:'別因一時焦躁而提早收手。'},
+{id:12,tier:'good',poem:['石中泉自湧','涓涓滴不休','積少終成海','何須一日求'],explain:'累積雖慢卻穩定，持之以恆終能成大器。',advice:'建立小習慣，比追求速成更長久有效。'},
+{id:13,tier:'good',poem:['鴻雁南飛去','銜書報遠音','佳訊藏路上','靜待喜訊臨'],explain:'消息或結果即將傳來，結果偏向正面。',advice:'該做的都已做，靜心等候即可。'},
+{id:14,tier:'good',poem:['曙光破曉來','暗夜漸退開','前程雖未定','已見一線白'],explain:'情勢正在好轉，雖然還沒完全明朗，但方向對了。',advice:'保持信心，再撐一段就會看到成果。'},
+{id:15,tier:'good',poem:['老樹又逢春','枯枝再吐新','莫嫌時運晚','花自有時分'],explain:'遲來的機會依然有效，不必因起步較晚而氣餒。',advice:'現在開始也不算晚，踏實去做。'},
+{id:16,tier:'good',poem:['清泉繞石流','曲折未曾休','終歸滄海去','一路景幽幽'],explain:'過程或許曲折，但方向與結果是好的，沿途也有風景可看。',advice:'別只盯著終點，過程中的收穫同樣珍貴。'},
+{id:17,tier:'mid',poem:['浮雲遮半月','明暗兩相隨','且看風向轉','自有雲開時'],explain:'目前局勢好壞參半，尚未明朗，需要多觀察。',advice:'先觀望，別急著下重大決定。'},
+{id:18,tier:'mid',poem:['山路轉又轉','望峰不見巔','心急徒生亂','穩步自登山'],explain:'過程比想像中曲折，容易心浮氣躁，但方向沒有錯。',advice:'放慢腳步，一步步來，反而更快到達。'},
+{id:19,tier:'mid',poem:['棋局正中盤','勝負未可言','一著存謹慎','局勢自能安'],explain:'事情正處於關鍵階段，任何決定都有影響，宜謹慎行事。',advice:'這段時間做決定前多想一步。'},
+{id:20,tier:'mid',poem:['潮來又潮去','得失不由人','順時當進取','逆時且守成'],explain:'運勢有起有落是常態，重點在於順逆時的應對態度。',advice:'好的時候別自滿，差的時候別自亂。'},
+{id:21,tier:'mid',poem:['半山聞鐘聲','未知寺遠近','且行且探路','心定路自明'],explain:'目標還不夠清晰，需要邊走邊調整方向。',advice:'不必急著看清全局，先走好眼前一步。'},
+{id:22,tier:'mid',poem:['霧鎖前山影','依稀辨不清','且待日高起','自見萬里青'],explain:'現階段資訊不足或看不清全貌，建議再等等看。',advice:'資訊不明時，先不要貿然行動。'},
+{id:23,tier:'mid',poem:['舊雨又新知','人事總相依','誠心多結善','助力自然齊'],explain:'人際關係將有變化，新舊人脈都可能帶來幫助。',advice:'對人多一分真誠，機會常藏在人脈裡。'},
+{id:24,tier:'mid',poem:['井水深難測','汲取需徐徐','過急恐失手','緩緩自盈餘'],explain:'資源或能力還需要累積，操之過急反而容易出錯。',advice:'這階段適合累積實力，不宜躁進。'},
+{id:25,tier:'mid',poem:['風向未定時','且莫掛帆早','靜觀天色變','一發自能好'],explain:'時機尚未成熟，過早行動可能事倍功半。',advice:'再多準備一下，等一個更好的時間點。'},
+{id:26,tier:'mid',poem:['兩岐路口立','東西各有陰','隨心擇一路','走定莫回頭'],explain:'面臨選擇時，兩條路各有優劣，決定後應堅定前行。',advice:'選擇沒有絕對的對錯，選定了就別再回頭猶豫。'},
+{id:27,tier:'bad',poem:['秋風掃落葉','滿地盡蕭條','且收今日事','來日再重描'],explain:'近期可能較不順遂，一些事情需要重新規劃。',advice:'先放慢腳步，把混亂的事情理清楚再說。'},
+{id:28,tier:'bad',poem:['逆水行舟去','篙折浪更高','此時當退守','蓄力待明朝'],explain:'目前阻力較大，硬闖恐怕徒增消耗。',advice:'適時退一步不是放棄，是為了走得更遠。'},
+{id:29,tier:'bad',poem:['荊棘蔽前路','寸步亦艱難','勿因小刺痛','便棄此中山'],explain:'過程會遇到不少小麻煩，但不代表整體方向錯誤。',advice:'遇到挫折時先處理情緒，再處理問題。'},
+{id:30,tier:'bad',poem:['寒鴉宿枯枝','夜長夢亦稀','且忍今宵冷','明朝日自曦'],explain:'眼下處境較孤單或艱難，但這只是暫時的階段。',advice:'辛苦的時候，允許自己休息一下再前進。'},
+{id:31,tier:'bad',poem:['舊橋朽且斷','強渡恐傾危','不如尋新路','繞行也無妨'],explain:'舊有的方法或路徑可能已經行不通，該考慮換個方式。',advice:'別執著於一條路，換個方法可能更順。'},
+{id:32,tier:'bad',poem:['風雨驟然至','行人迷了途','暫停勿強走','待晴再定圖'],explain:'突發狀況打亂原本計畫，建議先穩住，別急著做重大決定。',advice:'混亂中先求穩，別急著補救反而出錯。'},
+{id:33,tier:'bad',poem:['病葉隨風落','枝頭漸見疏','若能勤灌溉','春至又扶蘇'],explain:'目前狀態有些消耗過度，需要好好休養、補充能量。',advice:'該休息就休息，身體和心力都需要充電。'},
+{id:34,tier:'bad',poem:['迷霧鎖歸途','步步費思量','莫急尋捷徑','穩行自有方'],explain:'想抄捷徑反而容易走錯路，按部就班比較保險。',advice:'別想一步到位，按部就班才是真正的快。'},
+{id:35,tier:'worst',poem:['枯木立寒岡','無葉亦無芳','此時當靜養','莫再向外張'],explain:'目前狀態不宜大動作，勉強推進恐更耗損元氣。',advice:'這段時間先照顧好自己，別把力氣花在外求。'},
+{id:36,tier:'worst',poem:['暗夜行無月','前途費摸索','且緩今時舉','待旦再出發'],explain:'現階段方向不明、變數較多，不建議倉促行動。',advice:'先停下來，等情況明朗一些再做決定。'},
+{id:37,tier:'worst',poem:['崎嶇山徑險','一步一心驚','若非必行處','且緩此行程'],explain:'目前面臨的處境風險較高，若非必要，建議先觀望。',advice:'沒有把握的事，這段時間先別勉強推進。'},
+{id:38,tier:'worst',poem:['池水漸乾涸','魚兒困淺灘','及早尋活水','莫待日中乾'],explain:'目前資源或耐性正在消耗，需要及早尋求支援或改變。',advice:'別硬撐，及早向外求助或另尋出路。'},
+{id:39,tier:'worst',poem:['疾風折嫩枝','花落滿地泥','傷處雖然痛','根固自能起'],explain:'近期可能遭遇挫折或損失，但根基未傷，仍有復原的機會。',advice:'允許自己難過一陣子，但別懷疑自己的根本能力。'},
+{id:40,tier:'worst',poem:['危牆不可依','久立恐傾摧','及早抽身退','平地自安居'],explain:'目前所處的處境或關係存在較大風險，不宜繼續勉強維持。',advice:'該放手時就放手，保護自己是第一優先。'}
+];
+
+const LEVEL_BY_TIER = {good:null, mid:'中籤', bad:'下籤', worst:'下下籤'}; // good split below
+function levelOf(q){
+  if(q.tier==='good') return q.id<=8 ? '上上籤' : '上籤';
+  if(q.tier==='mid') return '中籤';
+  if(q.tier==='bad') return '下籤';
+  return '下下籤';
+}
+function baseStars(q){
+  const lv = levelOf(q);
+  return {'上上籤':5,'上籤':4,'中籤':3,'下籤':2,'下下籤':1}[lv];
+}
+function starTier(q){
+  const lv = levelOf(q);
+  if(lv==='上上籤'||lv==='上籤') return 'good';
+  if(lv==='中籤') return 'mid';
+  return 'bad';
+}
+
+const CATS = [
+  {key:'study', label:'學業'},
+  {key:'career', label:'事業'},
+  {key:'love', label:'感情'},
+  {key:'wealth', label:'財運'},
+  {key:'health', label:'健康'}
+];
+const FOCUS_CATS = [{key:'overall', label:'綜合'}].concat(CATS);
+
+const CAT_ADVICE = {
+  study:{
+    good:['讀書效率高，適合衝刺重要考試或報告。','學習吸收力佳，新知識容易上手，適合多挑戰一點。'],
+    mid:['基礎穩固，但仍需更多練習才能突破瓶頸。','進度平穩，按表操課即可，不必躁進。'],
+    bad:['專注力容易渙散，建議減少讀書時間但提高品質。','此時不宜熬夜衝刺，規律作息比多讀更重要。']
+  },
+  career:{
+    good:['工作上容易被看見，適合主動爭取表現機會。','合作與溝通都順暢，適合推進重要專案。'],
+    mid:['工作進度穩定，重大決策宜多聽取他人意見。','按部就班處理手上的事，先別急著求突破。'],
+    bad:['職場上容易遇到摩擦，溝通時多留一點餘地。','不適合此時做重大職涯決定，先觀察情勢。']
+  },
+  love:{
+    good:['感情運旺，單身者有機會遇見合拍的對象。','與伴侶的溝通格外順暢，適合談心或規劃未來。'],
+    mid:['感情關係平穩，但需要多一點耐心經營。','不必期待戲劇性的進展，細水長流最實在。'],
+    bad:['容易因小事起爭執，說話前先緩一口氣。','此時不適合做感情上的重大決定，先冷靜觀察。']
+  },
+  wealth:{
+    good:['財運亨通，適合處理重要的財務規劃。','正財偏財皆有機會，但仍應量力而為。'],
+    mid:['財務狀況平穩，收支記得多留意細節。','不宜有大筆投資或借貸，穩健為上。'],
+    bad:['破財小心，非必要的花費盡量延後。','此時不適合投資或借貸，先守住現有的。']
+  },
+  health:{
+    good:['精神氣色俱佳，適合安排運動或健康檢查。','體力狀況良好，是調整作息、養成好習慣的好時機。'],
+    mid:['健康狀況平穩，維持規律作息即可。','小毛病別輕忽，該休息時就休息。'],
+    bad:['近期容易感到疲憊，注意休息與睡眠品質。','身體發出的訊號別忽視，必要時尋求專業協助。']
+  }
+};
+
+const QUOTES = [
+  '心安，便是最好的風水。',
+  '不必事事如意，只求事事盡心。',
+  '慢一點沒關係，方向對了就好。',
+  '該來的總會來，該去的留不住。',
+  '把日子過好，就是最好的修行。',
+  '今天的煩惱，明天不一定還記得。',
+  '你已經很努力了，值得被自己肯定。',
+  '不求萬事順，但求問心無愧。',
+  '順境時感恩，逆境時沉住氣。',
+  '種善因，得善果，急不得。',
+  '休息不是浪費時間，是為了走更遠。',
+  '心定了，路自然就看清楚了。',
+  '別和過去糾纏，往前看就好。',
+  '一步一腳印，比什麼都踏實。',
+  '好事多磨，磨的是耐心。',
+  '你值得一份不慌不忙的人生。',
+  '把握當下，未來自有安排。',
+  '善待自己，是一切好運的起點。',
+  '風雨之後，總會有一片晴天。',
+  '該放手時放手，也是一種智慧。',
+  '每一次低潮，都是蓄力的時候。',
+  '相信時間，也相信自己。',
+  '簡單過日子，就是一種福氣。',
+  '心裡有光，走到哪裡都不怕黑。'
+];
+
+/* ============================================================
+   STATE & STORAGE
+============================================================ */
+let history = [];
+let focusCategory = 'overall';
+let currentDetailEntry = null;
+
+function todayStr(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+function todayDisplay(){
+  const d = new Date();
+  return (d.getMonth()+1)+'月'+d.getDate()+'日';
+}
+function hashStr(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) | 0; }
+  return Math.abs(h);
+}
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+function computeStats(q){
+  const base = baseStars(q);
+  const stats = {overall: base};
+  CATS.forEach(c=>{
+    const off = (hashStr(q.id + c.key) % 3) - 1; // -1,0,1
+    stats[c.key] = clamp(base + off, 1, 5);
+  });
+  return stats;
+}
+function catAdviceFor(q, catKey){
+  const bank = CAT_ADVICE[catKey][starTier(q)];
+  const idx = hashStr(q.id + catKey + 'adv') % bank.length;
+  return bank[idx];
+}
+function todayQuote(){
+  const start = new Date(new Date().getFullYear(),0,0);
+  const diff = new Date() - start;
+  const dayOfYear = Math.floor(diff / 86400000);
+  return QUOTES[dayOfYear % QUOTES.length];
+}
+
+// 儲存改用瀏覽器原生 localStorage（純前端部署，不依賴任何後端／第三方儲存服務）。
+// 保留 async 寫法只是方便呼叫端沿用 await，localStorage 本身是同步 API。
+const STORAGE_KEY = 'DFortune-history';
+async function loadHistory(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    history = raw ? JSON.parse(raw) : [];
+  }catch(e){
+    history = [];
+  }
+}
+async function saveHistory(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  }catch(e){ /* 例如無痕模式擋掉 localStorage，就靜默略過，不中斷使用 */ }
+}
+function todayEntry(){
+  return history.find(h => h.date === todayStr());
+}
+
+/* ============================================================
+   RENDER — TODAY VIEW
+============================================================ */
+function starsHTML(n, size){
+  let out = '<span class="stars" style="' + (size?('font-size:'+size+'px'):'') + '">';
+  for(let i=1;i<=5;i++){ out += '<span class="'+(i<=n?'on':'off')+'">★</span>'; }
+  out += '</span>';
+  return out;
+}
+
+function renderResultBody(entry){
+  const q = QIAN.find(x=>x.id===entry.qianId);
+  const stats = entry.stats;
+  const focus = entry.focus || 'overall';
+  const lv = levelOf(q);
+
+  let catRows = '';
+  CATS.forEach(c=>{
+    const isFocus = focus === c.key;
+    catRows += '<div class="cat-row'+(isFocus?' focused':'')+'">'
+      + '<div class="cat-name">'+c.label+(isFocus?'<span class="tag">今日焦點</span>':'')+'</div>'
+      + '<div class="cat-stars">'+starsHTML(stats[c.key],15)+'</div>'
+      + '</div>';
+  });
+
+  const focusAdviceLine = focus !== 'overall'
+    ? '<div class="qian-section"><h4>今日建議 · 針對'+FOCUS_CATS.find(f=>f.key===focus).label+'</h4><p>'+catAdviceFor(q, focus)+'</p></div>'
+    : '';
+
+  return ''
+    + '<div class="paper-card">'
+      + '<div class="qian-head">'
+        + '<div class="qian-no">第 '+String(q.id).padStart(2,'0')+' 籤<span>NO. '+q.id+' OF 40</span></div>'
+        + '<div class="level-badge tier-'+starTier(q)+'">'+lv+'</div>'
+      + '</div>'
+      + '<div class="poem-box">'
+        + q.poem.map(line=>'<div class="poem-line">'+line+'</div>').join('')
+      + '</div>'
+      + '<div class="qian-section"><h4>白話解釋</h4><p>'+q.explain+'</p></div>'
+      + '<div class="qian-section"><h4>今日建議</h4><p>'+q.advice+'</p></div>'
+    + '</div>'
+    + '<div class="overall-stars">'+starsHTML(stats.overall,26)+'<div class="overall-label">綜合運勢</div></div>'
+    + '<div class="cat-list">'+catRows+'</div>'
+    + focusAdviceLine;
+}
+
+function renderToday(){
+  const el = document.getElementById('view-today');
+  const entry = todayEntry();
+
+  if(!entry){
+    el.innerHTML = ''
+      + '<div class="eyebrow">'+todayDisplay()+' · 尚未抽籤</div>'
+      + '<div class="chip-row" id="focusChips"></div>'
+      + '<div class="tube-stage">'
+        + '<div class="tube-wrap" id="tubeTap">'
+          + '<div class="sticks">'
+            + [-20,-8,4,16].map(r=>'<div class="stick" style="transform:translateX(-50%) rotate('+r+'deg)"></div>').join('')
+          + '</div>'
+          + '<div class="tube"></div>'
+          + '<div class="tube-accent"></div>'
+        + '</div>'
+        + '<p class="tube-hint">誠心默想想問的事，輕點<b>籤筒</b>抽出今日籤</p>'
+        + '<button class="btn btn-primary" id="drawBtn" style="max-width:220px; margin-top:6px;">點 我 抽 籤</button>'
+      + '</div>'
+      + '<div class="quote-card"><p>「'+todayQuote()+'」</p><span>每 日 一 句</span></div>';
+
+    renderFocusChips();
+    document.getElementById('tubeTap').onclick = beginDraw;
+    document.getElementById('drawBtn').onclick = beginDraw;
+  } else {
+    el.innerHTML = ''
+      + '<div class="eyebrow">'+todayDisplay()+' · 今日籤文</div>'
+      + renderResultBody(entry)
+      + '<div class="btn-row">'
+        + '<button class="btn btn-gold" id="shareBtn">生成分享卡</button>'
+        + '<button class="btn btn-ghost" id="aiBtnToday">AI 解籤</button>'
+      + '</div>'
+      + '<div class="done-banner">今日已抽過籤，明日再來求一籤</div>'
+      + '<div class="quote-card"><p>「'+todayQuote()+'」</p><span>每 日 一 句</span></div>';
+
+    document.getElementById('shareBtn').onclick = () => openShare(entry);
+    document.getElementById('aiBtnToday').onclick = () => openAI(entry);
+  }
+}
+
+function renderFocusChips(){
+  const wrap = document.getElementById('focusChips');
+  if(!wrap) return;
+  wrap.innerHTML = FOCUS_CATS.map(f =>
+    '<button class="chip'+(focusCategory===f.key?' active':'')+'" data-focus="'+f.key+'">'+f.label+'</button>'
+  ).join('');
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    btn.onclick = () => { focusCategory = btn.dataset.focus; renderFocusChips(); };
+  });
+}
+
+/* ============================================================
+   DRAW RITUAL
+============================================================ */
+let drawTimers = [];
+function clearDrawTimers(){ drawTimers.forEach(t=>clearTimeout(t)); drawTimers = []; }
+
+function beginDraw(){
+  if(todayEntry()) return;
+  const overlay = document.getElementById('drawOverlay');
+  const stage = document.getElementById('drawStage');
+  const sticksWrap = document.getElementById('riteSticks');
+  const flying = document.getElementById('flyingStick');
+  const caption = document.getElementById('drawCaption');
+
+  // build rite sticks
+  sticksWrap.innerHTML = [-24,-8,8,24].map(r=>
+    '<div class="rite-stick" style="--r:'+r+'deg; left:calc(50% + '+(r*1.1)+'px)"></div>'
+  ).join('');
+
+  flying.className = 'flying-stick';
+  flying.style.transition = 'none';
+  overlay.classList.remove('hidden');
+  stage.classList.add('shaking');
+  caption.textContent = '搖籤中…';
+
+  const q = QIAN[Math.floor(Math.random()*QIAN.length)];
+  const lv = levelOf(q);
+  document.getElementById('fsNo').textContent = '第 '+q.id+' 籤';
+  document.getElementById('fsLevel').textContent = lv;
+
+  function finishNow(){
+    clearDrawTimers();
+    completeDraw(q);
+  }
+  document.getElementById('skipDraw').onclick = finishNow;
+
+  drawTimers.push(setTimeout(()=>{
+    stage.classList.remove('shaking');
+    caption.textContent = '一籤躍出…';
+    requestAnimationFrame(()=>{
+      flying.style.transition = '';
+      flying.classList.add('rise');
+    });
+  }, 1200));
+
+  drawTimers.push(setTimeout(()=>{
+    caption.textContent = '緣分已定';
+    flying.classList.add('flip');
+  }, 1900));
+
+  drawTimers.push(setTimeout(()=>{
+    completeDraw(q);
+  }, 2600));
+}
+
+function completeDraw(q){
+  const overlay = document.getElementById('drawOverlay');
+  overlay.classList.add('hidden');
+  const entry = {
+    date: todayStr(),
+    qianId: q.id,
+    focus: focusCategory,
+    stats: computeStats(q),
+    ts: Date.now()
+  };
+  history.unshift(entry);
+  saveHistory();
+  renderToday();
+}
+
+/* ============================================================
+   RENDER — BOOK VIEW
+============================================================ */
+function renderBook(){
+  const el = document.getElementById('view-book');
+  if(history.length === 0){
+    el.innerHTML = '<div class="empty-state"><span class="glyph">📜</span>還沒有抽過籤<br>到「今日」抽第一支籤吧</div>';
+    return;
+  }
+  const rows = history.map((h,idx) => {
+    const q = QIAN.find(x=>x.id===h.qianId);
+    const lv = levelOf(q);
+    return '<div class="book-item" data-idx="'+idx+'">'
+      + '<div class="book-left"><div class="book-date">'+h.date+'</div><div class="book-title">第 '+q.id+' 籤 · '+q.poem[0]+'</div></div>'
+      + '<div class="level-badge tier-'+starTier(q)+'" style="font-size:12px; padding:5px 10px;">'+lv+'</div>'
+      + '</div>';
+  }).join('');
+  el.innerHTML = '<div class="eyebrow">籤 冊 · 共 '+history.length+' 筆紀錄</div>' + rows
+    + '<div style="text-align:center; margin-top:20px;"><button class="btn btn-ghost" id="clearHistBtn" style="font-size:12px; padding:8px 16px;">清除全部紀錄</button></div>';
+
+  el.querySelectorAll('.book-item').forEach(item=>{
+    item.onclick = () => openDetail(history[parseInt(item.dataset.idx,10)]);
+  });
+  document.getElementById('clearHistBtn').onclick = async () => {
+    if(confirm('確定要清除全部抽籤紀錄嗎？此動作無法復原。')){
+      history = [];
+      await saveHistory();
+      renderBook();
+      renderToday();
+    }
+  };
+}
+
+function openDetail(entry){
+  currentDetailEntry = entry;
+  const content = document.getElementById('detailContent');
+  content.innerHTML = '<div class="eyebrow" style="margin-top:2px;">'+entry.date+'</div>'
+    + renderResultBody(entry)
+    + '<div class="btn-row">'
+      + '<button class="btn btn-gold" id="detailShareBtn">生成分享卡</button>'
+      + '<button class="btn btn-ghost" id="detailAiBtn">AI 解籤</button>'
+    + '</div>';
+  document.getElementById('detailModal').classList.remove('hidden');
+  document.getElementById('detailShareBtn').onclick = () => openShare(entry);
+  document.getElementById('detailAiBtn').onclick = () => openAI(entry);
+}
+
+/* ============================================================
+   RENDER — MORE VIEW
+============================================================ */
+function renderMore(){
+  const el = document.getElementById('view-more');
+  el.innerHTML = ''
+    + '<div class="eyebrow">更 多 玩 法</div>'
+    + '<div class="tool-card">'
+      + '<h3>A / B 選擇求籤</h3>'
+      + '<p>拿不定主意時，寫下兩個選項，讓籤幫你做一次決定（不限次數）。</p>'
+      + '<button class="btn btn-primary btn-block" id="openAB">開始求籤</button>'
+    + '</div>'
+    + '<div class="tool-card">'
+      + '<h3>AI 解籤</h3>'
+      + '<p>已經抽過今日籤了嗎？把你真正想問的問題告訴籤師，取得更貼近處境的解讀。</p>'
+      + '<button class="btn btn-gold btn-block" id="openAIfree">開始請教</button>'
+    + '</div>'
+    + '<div class="tool-card">'
+      + '<h3>關於日籤</h3>'
+      + '<p>日籤是一款輕量的每日抽籤小工具，籤文為原創創作，內容僅供參考與抒發心情，不作為任何重大決定的依據。願每天都有一份心安。</p>'
+    + '</div>';
+
+  document.getElementById('openAB').onclick = openAB;
+  document.getElementById('openAIfree').onclick = () => openAI(todayEntry());
+}
+
+/* ============================================================
+   A/B 求籤
+============================================================ */
+function openAB(){
+  document.getElementById('abA').value = '';
+  document.getElementById('abB').value = '';
+  document.getElementById('abResultBox').innerHTML = '';
+  document.getElementById('abModal').classList.remove('hidden');
+}
+const AB_REASONS = [
+  '你的直覺其實早有答案，這一籤只是幫你確認。',
+  '有時候選擇本身沒有標準答案，選定了就全力以赴。',
+  '這個結果呼應了你內心比較安穩的那個選擇。',
+  '不論結果如何，重要的是選定後別再回頭猶豫。',
+  '這一籤提醒你，勇敢跨出這一步或許正是時候。'
+];
+document.getElementById('abDraw').onclick = () => {
+  const a = document.getElementById('abA').value.trim() || '選項 A';
+  const b = document.getElementById('abB').value.trim() || '選項 B';
+  const box = document.getElementById('abResultBox');
+  box.innerHTML = '<div class="ab-result"><div class="pick loading-dots">搖籤中</div></div>';
+  setTimeout(()=>{
+    const pick = Math.random() < 0.5 ? a : b;
+    const reason = AB_REASONS[Math.floor(Math.random()*AB_REASONS.length)];
+    box.innerHTML = '<div class="ab-result"><div class="pick">「 '+pick+' 」</div><div class="why">'+reason+'</div></div>';
+  }, 900);
+};
+
+/* ============================================================
+   AI 解籤（Claude API）
+============================================================ */
+function openAI(entry){
+  const intro = document.getElementById('aiIntro');
+  document.getElementById('aiAnswerBox').innerHTML = '';
+  document.getElementById('aiQuestion').value = '';
+  if(entry){
+    const q = QIAN.find(x=>x.id===entry.qianId);
+    intro.textContent = '今日抽到「第 '+q.id+' 籤 · '+levelOf(q)+'」，說說你真正想問的事，讓解籤更貼近你的處境。';
+  } else {
+    intro.textContent = '今天還沒抽籤，籤師會根據一般籤理給你回應，建議先到「今日」抽一支籤。';
+  }
+  document.getElementById('aiModal').dataset.entryId = entry ? entry.qianId : '';
+  document.getElementById('aiModal').dataset.entryDate = entry ? entry.date : '';
+  document.getElementById('aiModal').classList.remove('hidden');
+}
+
+document.getElementById('aiAsk').onclick = async () => {
+  const modal = document.getElementById('aiModal');
+  const qid = modal.dataset.entryId;
+  const question = document.getElementById('aiQuestion').value.trim();
+  const box = document.getElementById('aiAnswerBox');
+
+  if(!question){
+    box.innerHTML = '<div class="ai-answer">請先簡單說說你想問的事，籤師才能給出貼近你處境的解讀喔。</div>';
+    return;
+  }
+
+  box.innerHTML = '<div class="ai-answer"><span class="loading-dots">籤師正在解籤</span></div>';
+
+  let poemInfo = '（使用者今日尚未抽籤，請以一般籤理與生活智慧回應。）';
+  if(qid){
+    const q = QIAN.find(x=>x.id===parseInt(qid,10));
+    if(q){
+      poemInfo = '籤號：第'+q.id+'籤，籤級：'+levelOf(q)+'\n籤詩：'+q.poem.join('，')+'\n白話解釋：'+q.explain+'\n今日建議：'+q.advice;
+    }
+  }
+
+  const sys = '你是一位溫暖、有智慧、講話溫和不誇張的解籤師。使用者抽到了一支籤，請根據籤詩內容與使用者的提問，給出貼近生活、務實、溫暖的解讀與建議。避免使用「絕對」「保證」等武斷字眼，避免醫療、法律、投資等專業斷言，語氣像一位親切的長輩朋友。回覆請用繁體中文，控制在150字以內，分成「解讀」與「建議」兩小段。';
+  const userMsg = '籤文資訊：\n'+poemInfo+'\n\n使用者的問題：'+question;
+
+  // 注意：瀏覽器不能直接帶 API Key 呼叫 Anthropic API（無法安全藏金鑰，也常遇到 CORS）。
+  // 這裡改成呼叫「你自己架設的後端端點」AI_ENDPOINT，由後端代為呼叫 Anthropic、
+  // 金鑰只放在後端環境變數。請求／回應格式約定如下，換掉 AI_ENDPOINT 或自行調整
+  // 後端實作即可，前端這段完全不用再改：
+  //   POST AI_ENDPOINT  body: { system, message }
+  //   回應 JSON: { text: "籤師的回覆文字" }
+  // 範例後端（Vercel Serverless Function）另附在 api-example/aiDFortune.js，
+  // 部署到你的網站專案後把 AI_ENDPOINT 指到那支 function 的路徑即可。
+  try{
+    const response = await fetch(AI_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ system: sys, message: userMsg })
+    });
+    if(!response.ok) throw new Error('endpoint not ready');
+    const data = await response.json();
+    const text = (data && data.text) ? data.text.trim() : '';
+    box.innerHTML = '<div class="ai-answer">'+(text || '籤師暫時沒有回應，稍後再試試看。')+'</div>';
+  }catch(e){
+    box.innerHTML = '<div class="ai-answer">解籤功能還沒設定好後端服務，暫時無法使用，稍後再試試看。</div>';
+  }
+};
+
+/* ============================================================
+   SHARE CARD (canvas)
+============================================================ */
+function openShare(entry){
+  document.getElementById('shareModal').classList.remove('hidden');
+  document.fonts.ready.then(()=> drawShareCanvas(entry));
+}
+function wrapText(ctx, text, maxWidth){
+  const lines = [];
+  let line = '';
+  for(const ch of text){
+    const test = line + ch;
+    if(ctx.measureText(test).width > maxWidth && line){
+      lines.push(line);
+      line = ch;
+    } else {
+      line = test;
+    }
+  }
+  if(line) lines.push(line);
+  return lines;
+}
+function drawShareCanvas(entry){
+  const q = QIAN.find(x=>x.id===entry.qianId);
+  const lv = levelOf(q);
+  const canvas = document.getElementById('shareCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  const ACCENT = '#C23B34';
+  const INK = '#232733';
+  const INK_SOFT = 'rgba(35,39,51,0.55)';
+  const CARD_BG = '#F7F8FA';
+  const CARD_BORDER = '#ECEDF1';
+
+  // background — neutral, near-white
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#FAF9F7');
+  grad.addColorStop(1,'#FFFFFF');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+
+  // hairline border
+  ctx.strokeStyle = CARD_BORDER;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(14.5,14.5,W-29,H-29);
+
+  // title
+  ctx.fillStyle = INK;
+  ctx.font = '700 20px "Noto Serif TC"';
+  ctx.textAlign = 'center';
+  ctx.fillText('日 籤', W/2, 52);
+  ctx.font = '400 11px "Noto Sans TC"';
+  ctx.fillStyle = INK_SOFT;
+  ctx.fillText(entry.date + ' · 今日籤運', W/2, 70);
+
+  // level badge — soft accent-tinted pill
+  const badgeW = 108, badgeH = 30, badgeX = W/2 - badgeW/2, badgeY = 86;
+  ctx.fillStyle = 'rgba(194,59,52,0.10)';
+  roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 15);
+  ctx.fill();
+  ctx.fillStyle = ACCENT;
+  ctx.font = '700 14px "Noto Serif TC"';
+  ctx.fillText('第 '+q.id+' 籤 · '+lv, W/2, badgeY + 20);
+
+  // card block for poem
+  ctx.fillStyle = CARD_BG;
+  roundRect(ctx, 40, 138, W-80, 150, 14);
+  ctx.fill();
+  ctx.strokeStyle = CARD_BORDER;
+  ctx.lineWidth = 1;
+  roundRect(ctx, 40, 138, W-80, 150, 14);
+  ctx.stroke();
+
+  ctx.fillStyle = INK;
+  ctx.font = '700 19px "Noto Serif TC"';
+  const colW = (W-100)/4;
+  q.poem.forEach((line, i) => {
+    const x = 40 + 20 + colW*(3-i) + colW/2;
+    let y = 168;
+    for(const ch of line){
+      ctx.fillText(ch, x, y);
+      y += 24;
+    }
+  });
+
+  // explain
+  ctx.fillStyle = INK;
+  ctx.font = '400 13px "Noto Sans TC"';
+  ctx.textAlign = 'left';
+  const explainLines = wrapText(ctx, q.explain, W-80);
+  let ey = 318;
+  explainLines.forEach(l => { ctx.fillText(l, 40, ey); ey += 20; });
+
+  ctx.fillStyle = ACCENT;
+  ctx.font = '700 12px "Noto Sans TC"';
+  ctx.fillText('今日建議', 40, ey+10);
+  ctx.fillStyle = INK;
+  ctx.font = '400 13px "Noto Sans TC"';
+  const adviceLines = wrapText(ctx, q.advice, W-80);
+  let ay = ey+32;
+  adviceLines.forEach(l => { ctx.fillText(l, 40, ay); ay += 20; });
+
+  // stars
+  ctx.textAlign = 'center';
+  ctx.font = '400 20px sans-serif';
+  const stars = entry.stats.overall;
+  let starStr = '';
+  for(let i=1;i<=5;i++) starStr += (i<=stars?'★':'☆');
+  ctx.fillStyle = ACCENT;
+  ctx.fillText(starStr, W/2, H-46);
+  ctx.font = '400 10px "Noto Sans TC"';
+  ctx.fillStyle = INK_SOFT;
+  ctx.fillText('綜合運勢 · 日籤 DFortune', W/2, H-24);
+}
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+document.getElementById('downloadShare').onclick = () => {
+  const canvas = document.getElementById('shareCanvas');
+  const link = document.createElement('a');
+  link.download = '今日籤運-'+todayStr()+'.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+};
+
+/* ============================================================
+   NAV / MODAL WIRING
+============================================================ */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.onclick = () => {
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'book') renderBook();
+    if(btn.dataset.tab === 'more') renderMore();
+  };
+});
+document.querySelectorAll('[data-close]').forEach(btn=>{
+  btn.onclick = () => document.getElementById(btn.dataset.close).classList.add('hidden');
+});
+
+/* ============================================================
+   INIT
+============================================================ */
+(async function init(){
+  await loadHistory();
+  renderToday();
+})();
+
+})();
+</script>
+</body>
+</html>
