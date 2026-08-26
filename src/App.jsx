@@ -491,8 +491,7 @@ const STRINGS = {
     prefGroupLabel: '偏好', appearanceLabel: '外觀', notifyPrefLabel: '通知', languageLabel: '語言',
     calendarPrefLabel: '日曆', calendarPrefHint: '勾選要在「日程」頁日曆點選日期後，於底部同時顯示對應日期的曆法（可複選）。地標本身要用哪種曆法計算日期，仍在新增或編輯地標時個別設定。',
     otherGroupLabel: '其他', aboutLabel: '關於時光線', privacyLabel: '隱私權政策', termsLabel: '使用條款',
-    aboutBody: `# 關於時光線
-## 時光線
+    aboutBody: `## 時光線
 時光線是一款專注於時間、日程與生活記憶管理的應用程式。
 我們希望透過簡潔、直覺的設計，協助您記錄重要日期、管理日程、查看世界各地時間，並將值得紀念的時刻妥善保存。
 讓時間不只是被計算，也值得被記住。
@@ -628,9 +627,9 @@ const STRINGS = {
     exportLabel: 'Export as image', exportFormatCard: 'Card', exportFormatStory: 'Story (9:16)',
     exportShareButton: 'Export & Share', exportPreparing: 'Preparing image…', exportError: 'Export failed — please try again.',
     accountManageLabel: 'Account Management', accountSecurityLabel: 'Account Security',
-    myTimeLabel: 'My Moments', myTimeCaption: 'What you have kept in Timeline',
+    myTimeLabel: 'My Moments', myTimeCaption: 'What you have kept in 時光線',
     myTimeStats: (e, a, p) => `${e} events · ${a} albums · ${p} photos`,
-    myTimeOverviewTitle: 'Overview', myTimeOverviewDesc: 'A quick summary of what you currently keep in Timeline — no details shown here.',
+    myTimeOverviewTitle: 'Overview', myTimeOverviewDesc: 'A quick summary of what you currently keep in 時光線 — no details shown here.',
     myTimeOverviewEvents: 'Events', myTimeOverviewAlbums: 'Albums', myTimeOverviewPhotos: 'Photos',
     dataGroupLabel: 'Data', importExportLabel: 'Import & Export', syncDataLabel: 'Sync & Data',
     notSyncedStatus: 'Not synced', syncErrorStatus: 'Sync issue',
@@ -639,8 +638,32 @@ const STRINGS = {
     syncLoginHint: 'Sign in to enable sync and keep your data safe in the cloud.',
     prefGroupLabel: 'Preferences', appearanceLabel: 'Appearance', notifyPrefLabel: 'Notifications', languageLabel: 'Language',
     calendarPrefLabel: 'Calendar', calendarPrefHint: 'Pick the calendar systems to show below the selected date on the Schedule tab (multiple allowed). Which calendar a landmark itself uses is still set individually when adding or editing it.',
-    otherGroupLabel: 'More', aboutLabel: 'About Timeline', privacyLabel: 'Privacy Policy', termsLabel: 'Terms of Use',
-    aboutBody: 'Timeline is an app for keeping track of the moments and anniversaries that matter, helping you hold on to time worth remembering.',
+    otherGroupLabel: 'More', aboutLabel: 'About 時光線', privacyLabel: 'Privacy Policy', termsLabel: 'Terms of Use',
+    aboutBody: `## 時光線
+時光線 is an app focused on managing your time, schedule, and life's memories.
+Through a simple, intuitive design, we hope to help you record important dates, manage your schedule, check time zones around the world, and safely keep the moments worth remembering.
+Time deserves to be remembered, not just counted.
+---
+## Service Information
+**App Name:** 時光線
+**Current Version:** 1.1.0
+**Official Website:** timezzw.top
+**Contact Email:** support@timezzw.top
+---
+## Development & Operations
+This service is developed and operated by an independent developer.
+"Zhao Ziwu Studio" is the studio name and brand identity used for this service.
+---
+## Related Documents
+- [Terms of Use](https://timezzw.top/help/ToS)
+- [Privacy Policy](https://timezzw.top/help/privacypolicy)
+---
+## Feedback
+If you run into any issues while using 時光線, or have suggestions about its features, interface, or service, feel free to reach out through the feedback feature or by email.
+**Email:** support@timezzw.top
+We read every piece of feedback carefully and keep improving 時光線.
+---
+© 2026 時光線`,
     legalPlaceholder: 'Full content coming soon.',
     loginPromptTitle: 'Sign in to sync your moments',
     appearanceModeSystem: 'System', appearanceModeLight: 'Light', appearanceModeDark: 'Dark',
@@ -752,9 +775,9 @@ const STRINGS = {
     exportLabel: '画像として書き出す', exportFormatCard: 'カード', exportFormatStory: 'ストーリー (9:16)',
     exportShareButton: '書き出して共有', exportPreparing: '画像を作成中…', exportError: '書き出しに失敗しました。もう一度お試しください。',
     accountManageLabel: 'アカウント管理', accountSecurityLabel: 'アカウントセキュリティ',
-    myTimeLabel: '私の時間', myTimeCaption: 'タイムラインに残してきた時間',
+    myTimeLabel: '私の時間', myTimeCaption: '時光線に残してきた時間',
     myTimeStats: (e, a, p) => `${e} 件のイベント　${a} 件のアルバム　${p} 枚の写真`,
-    myTimeOverviewTitle: 'データ概要', myTimeOverviewDesc: '現在タイムラインに保存している内容の概要です。詳細は表示されません。',
+    myTimeOverviewTitle: 'データ概要', myTimeOverviewDesc: '現在時光線に保存している内容の概要です。詳細は表示されません。',
     myTimeOverviewEvents: 'イベント', myTimeOverviewAlbums: 'アルバム', myTimeOverviewPhotos: '写真',
     dataGroupLabel: 'データ', importExportLabel: 'インポートとエクスポート', syncDataLabel: '同期とデータ',
     notSyncedStatus: '未同期', syncErrorStatus: '同期に問題があります',
@@ -764,7 +787,31 @@ const STRINGS = {
     prefGroupLabel: '設定', appearanceLabel: '外観', notifyPrefLabel: '通知', languageLabel: '言語',
     calendarPrefLabel: 'カレンダー', calendarPrefHint: '「スケジュール」タブで日付を選んだときに、下部に併記する暦法を選んでください（複数選択可）。ランドマーク自体の暦法は、追加・編集時に個別に設定します。',
     otherGroupLabel: 'その他', aboutLabel: 'アプリについて', privacyLabel: 'プライバシーポリシー', termsLabel: '利用規約',
-    aboutBody: 'タイムラインは、人生の大切な瞬間や記念日を記録するためのアプリです。心に残る時間をともに残していきます。',
+    aboutBody: `## 時光線
+時光線は、時間・スケジュール・生活の記憶を管理することに特化したアプリです。
+シンプルで直感的なデザインを通じて、大切な日付の記録、スケジュール管理、世界各地の時刻の確認、そして記念すべき瞬間をしっかり残すお手伝いをしたいと考えています。
+時間はただ計測されるだけでなく、記憶に残る価値があるものだと考えています。
+---
+## サービス情報
+**アプリ名：** 時光線
+**現在のバージョン：** 1.1.0
+**公式サイト：** timezzw.top
+**お問い合わせメール：** support@timezzw.top
+---
+## 開発・運営
+本サービスは個人開発者が開発・運営を行っています。
+「趙子吳工作室（Zhao Ziwu Studio）」は本サービスで使用しているスタジオ名およびブランド名です。
+---
+## 関連文書
+- [利用規約](https://timezzw.top/help/ToS)
+- [プライバシーポリシー](https://timezzw.top/help/privacypolicy)
+---
+## フィードバック
+時光線をご利用の際に問題が発生した場合、または機能・インターフェース・サービスについてご意見がございましたら、フィードバック機能またはメールにてお気軽にご連絡ください。
+**メール：** support@timezzw.top
+いただいたフィードバックは一つひとつ丁寧に確認し、時光線の改善に役立てていきます。
+---
+© 2026 時光線`,
     legalPlaceholder: '詳細な内容は準備中です。近日中に掲載予定です。',
     loginPromptTitle: 'サインインして時間を同期',
     appearanceModeSystem: 'システムに従う', appearanceModeLight: 'ライト', appearanceModeDark: 'ダーク',
@@ -876,9 +923,9 @@ const STRINGS = {
     exportLabel: '이미지로 내보내기', exportFormatCard: '카드', exportFormatStory: '스토리 (9:16)',
     exportShareButton: '내보내기 및 공유', exportPreparing: '이미지 생성 중…', exportError: '내보내기에 실패했습니다. 다시 시도해 주세요.',
     accountManageLabel: '계정 관리', accountSecurityLabel: '계정 보안',
-    myTimeLabel: '나의 시간', myTimeCaption: '타임라인에 남긴 시간',
+    myTimeLabel: '나의 시간', myTimeCaption: '時光線에 남긴 시간',
     myTimeStats: (e, a, p) => `이벤트 ${e}개　앨범 ${a}개　사진 ${p}장`,
-    myTimeOverviewTitle: '데이터 개요', myTimeOverviewDesc: '현재 타임라인에 보관 중인 내용을 간단히 보여줍니다. 세부 내용은 표시되지 않습니다.',
+    myTimeOverviewTitle: '데이터 개요', myTimeOverviewDesc: '현재 時光線에 보관 중인 내용을 간단히 보여줍니다. 세부 내용은 표시되지 않습니다.',
     myTimeOverviewEvents: '이벤트', myTimeOverviewAlbums: '앨범', myTimeOverviewPhotos: '사진',
     dataGroupLabel: '데이터', importExportLabel: '가져오기 및 내보내기', syncDataLabel: '동기화 및 데이터',
     notSyncedStatus: '동기화 안 됨', syncErrorStatus: '동기화 문제 발생',
@@ -888,7 +935,31 @@ const STRINGS = {
     prefGroupLabel: '환경설정', appearanceLabel: '외관', notifyPrefLabel: '알림', languageLabel: '언어',
     calendarPrefLabel: '캘린더', calendarPrefHint: '"일정" 탭에서 날짜를 선택했을 때 하단에 함께 표시할 달력 체계를 선택하세요(복수 선택 가능). 랜드마크 자체에 사용할 달력은 추가·편집 시 개별적으로 설정합니다.',
     otherGroupLabel: '기타', aboutLabel: '앱 정보', privacyLabel: '개인정보 처리방침', termsLabel: '이용약관',
-    aboutBody: '타임라인은 삶의 중요한 순간과 기념일을 기록하는 앱으로, 소중한 시간을 함께 간직합니다.',
+    aboutBody: `## 時光線
+時光線은 시간, 일정, 삶의 기록을 관리하는 데 특화된 애플리케이션입니다.
+간결하고 직관적인 디자인을 통해 중요한 날짜를 기록하고, 일정을 관리하고, 전 세계 시간을 확인하며, 기억할 만한 순간을 소중히 보관할 수 있도록 돕고자 합니다.
+시간은 단순히 계산되는 것이 아니라, 기억될 가치가 있습니다.
+---
+## 서비스 정보
+**앱 이름:** 時光線
+**현재 버전:** 1.1.0
+**공식 웹사이트:** timezzw.top
+**문의 이메일:** support@timezzw.top
+---
+## 개발 및 운영
+본 서비스는 개인 개발자가 개발 및 운영을 담당하고 있습니다.
+'자오쯔우 스튜디오(趙子吳工作室)'는 본 서비스에서 사용하는 스튜디오 이름 및 브랜드입니다.
+---
+## 관련 문서
+- [이용약관](https://timezzw.top/help/ToS)
+- [개인정보 처리방침](https://timezzw.top/help/privacypolicy)
+---
+## 의견 보내기
+時光線을 이용하시다가 문제가 발생하거나 기능, 인터페이스, 서비스에 대한 의견이 있으시면 피드백 기능이나 이메일로 언제든 연락해 주세요.
+**이메일:** support@timezzw.top
+보내주신 모든 의견을 소중히 읽고 지속적으로 時光線을 개선해 나가겠습니다.
+---
+© 2026 時光線`,
     legalPlaceholder: '전체 내용은 준비 중이며 곧 제공될 예정입니다.',
     loginPromptTitle: '로그인하여 시간을 동기화하세요',
     appearanceModeSystem: '시스템 설정 따르기', appearanceModeLight: '라이트', appearanceModeDark: '다크',
