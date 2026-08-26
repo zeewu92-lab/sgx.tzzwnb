@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>時光線 · 每日求籤</title>
+<title>時光籤 · 日籤 × 時光線</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -73,10 +73,17 @@
     margin:0;
     color:var(--ink);
   }
-  .topbar p{
-    margin:7px 0 0;
+  .topbar .topbar-sub{
+    margin:8px 0 0;
     font-size:11px;
     letter-spacing:2.5px;
+    color:var(--accent);
+    font-weight:700;
+  }
+  .topbar .topbar-tag{
+    margin:4px 0 0;
+    font-size:11px;
+    letter-spacing:2px;
     color:var(--ink-soft);
   }
 
@@ -92,6 +99,97 @@
     display:flex; align-items:center; gap:8px;
   }
   .eyebrow::before, .eyebrow::after{content:""; flex:1; height:1px; background:var(--card-border);}
+
+  /* ---------- 時光線 widget：籤紙卡片 + 細線時間軸 ----------
+     這裡刻意用暖紙色（籤紙感），與 App 其餘中性介面區隔開來，
+     #C23B34 只用在「已經走過的時間、今日節點、百分比」三處。 */
+  .timeline-widget{
+    --tl-paper:#F8F3EA;
+    --tl-track-bg:#D9D2C8;
+    --tl-ink:#292522;
+    --tl-ink-soft:#817A72;
+    position:relative;
+    margin-top:18px;
+    padding:20px 20px 18px;
+    background:var(--tl-paper);
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 2px 12px rgba(41,37,34,0.08);
+  }
+  .timeline-widget::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:var(--accent);
+    opacity:.85;
+  }
+  .tl-top{
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  .tl-year{
+    font-family:var(--serif); font-weight:700; font-size:15px;
+    color:var(--tl-ink); letter-spacing:1px;
+  }
+  .tl-caption{
+    font-size:10px; letter-spacing:2.5px; color:var(--tl-ink-soft);
+  }
+  .tl-percent{
+    text-align:center; margin:8px 0 18px;
+    font-family:var(--serif); font-weight:700; font-size:32px;
+    color:var(--accent); letter-spacing:.5px;
+  }
+  .tl-track-area{
+    position:relative; padding:0 2px 38px;
+  }
+  .tl-track{
+    position:relative; height:3px; border-radius:999px;
+    background:var(--tl-track-bg);
+  }
+  .tl-track-fill{
+    position:absolute; top:0; left:0; height:100%; border-radius:999px;
+    background:var(--accent);
+    transition:width .4s ease;
+  }
+  .tl-dot{
+    position:absolute; top:50%; width:10px; height:10px; border-radius:50%;
+    background:var(--accent);
+    border:2px solid var(--tl-paper);
+    box-shadow:0 1px 4px rgba(41,37,34,0.35);
+    transform:translate(-50%,-50%);
+    transition:left .4s ease;
+  }
+  .tl-months{
+    position:relative; height:12px; margin-top:12px;
+  }
+  .tl-month-mark{
+    position:absolute; top:0; white-space:nowrap;
+    font-size:9.5px; letter-spacing:1px; font-weight:600;
+    color:var(--tl-ink-soft);
+    transform:translateX(-50%);
+  }
+  .tl-month-mark::before{
+    content:"";
+    position:absolute; left:50%; top:-9px; width:1px; height:6px;
+    background:var(--tl-track-bg);
+    transform:translateX(-50%);
+  }
+  .tl-today{
+    position:absolute; top:34px; display:flex; flex-direction:column;
+    align-items:center; gap:1px; transform:translateX(-50%);
+    transition:left .4s ease;
+  }
+  .tl-today .caret{font-size:9px; line-height:1; color:var(--accent);}
+  .tl-today .label{font-size:9px; letter-spacing:2px; font-weight:700; color:var(--accent);}
+  .tl-stats{
+    display:flex; justify-content:center; align-items:baseline; gap:8px;
+    font-size:11.5px; color:var(--tl-ink-soft);
+  }
+  .tl-stats b{color:var(--tl-ink); font-weight:700;}
+  .tl-stats .tl-sep{color:var(--tl-track-bg);}
+  .timeline-caption{
+    margin-top:12px; text-align:center;
+    font-family:var(--serif); font-size:12.5px; font-style:italic;
+    color:var(--tl-ink-soft);
+  }
 
   /* ---------- chips ---------- */
   .chip-row{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:14px 0 6px;}
@@ -441,8 +539,9 @@
 <div id="app">
 
   <div class="topbar">
-    <h1>日 籤 · 時 光 線</h1>
-    <p>一 籤 一 念 · 心 安 一 日</p>
+    <h1>時 光 籤</h1>
+    <p class="topbar-sub">日籤 × 時光線</p>
+    <p class="topbar-tag">一籤一念 · 不負此刻時光</p>
   </div>
 
   <main>
@@ -650,30 +749,30 @@ const CAT_ADVICE = {
 };
 
 const QUOTES = [
-  '心安，便是最好的風水。',
-  '不必事事如意，只求事事盡心。',
-  '慢一點沒關係，方向對了就好。',
-  '該來的總會來，該去的留不住。',
-  '把日子過好，就是最好的修行。',
-  '今天的煩惱，明天不一定還記得。',
-  '你已經很努力了，值得被自己肯定。',
-  '不求萬事順，但求問心無愧。',
-  '順境時感恩，逆境時沉住氣。',
-  '種善因，得善果，急不得。',
-  '休息不是浪費時間，是為了走更遠。',
-  '心定了，路自然就看清楚了。',
-  '別和過去糾纏，往前看就好。',
-  '一步一腳印，比什麼都踏實。',
-  '好事多磨，磨的是耐心。',
-  '你值得一份不慌不忙的人生。',
-  '把握當下，未來自有安排。',
-  '善待自己，是一切好運的起點。',
-  '風雨之後，總會有一片晴天。',
-  '該放手時放手，也是一種智慧。',
-  '每一次低潮，都是蓄力的時候。',
-  '相信時間，也相信自己。',
-  '簡單過日子，就是一種福氣。',
-  '心裡有光，走到哪裡都不怕黑。'
+  '今天用掉了，就再也換不回來了。',
+  '時間不會等你準備好，只會等你開始。',
+  '你不是沒有時間，只是還沒決定把時間給誰。',
+  '珍惜今天，因為它是餘生裡最年輕的一天。',
+  '光陰從不為誰停留，但你可以為它停下來看一眼。',
+  '別把今天，活成了昨天的複製品。',
+  '時間最公平，也最沉默，它只做，不說。',
+  '好好過今天，明天自然會有答案。',
+  '一寸光陰一寸金，別讓今天悄悄溜走。',
+  '你今天的選擇，會成為將來回憶裡的一格。',
+  '時間不會因為你焦慮而走得慢一點。',
+  '與其擔心明天，不如認真過好眼前這一刻。',
+  '歲月不催人老，是我們自己忘了珍惜。',
+  '今天的太陽，不會再升起第二次。',
+  '別用等待，去交換本該擁有的現在。',
+  '時間從不虧待，認真生活的人。',
+  '走過的路，比想走的路更值得回望。',
+  '你把時間花在哪裡，時間就把你帶到哪裡。',
+  '今天，是你這一生中最特別的一天。',
+  '別讓「以後再說」，偷走你的今天。',
+  '時間是最好的禮物，也是最容易被浪費的禮物。',
+  '好好告別昨天，好好迎接今天。',
+  '每一個平凡的今天，都是回不去的曾經。',
+  '時間不語，卻回答了所有問題。'
 ];
 
 /* ============================================================
@@ -718,6 +817,72 @@ function todayQuote(){
   const diff = new Date() - start;
   const dayOfYear = Math.floor(diff / 86400000);
   return QUOTES[dayOfYear % QUOTES.length];
+}
+
+/* ============================================================
+   時光線 — 把「今天在整年裡的位置」視覺化成一條時光線，
+   是「日籤 × 時光線」品牌融合的核心元件。
+   設計：籤紙卡片（暖紙色）+ 細線時間軸，#C23B34 只用在
+   「已走過的時間、今日節點、百分比」三處，其餘維持低彩度。
+============================================================ */
+function yearProgress(){
+  const now = new Date();
+  const year = now.getFullYear();
+  const start = new Date(year,0,1);
+  const startNext = new Date(year+1,0,1);
+  const totalDays = Math.round((startNext-start)/86400000);
+  const dayOfYear = Math.floor((now-start)/86400000)+1;
+  const percentRaw = Math.max(0.3, Math.min(100, (dayOfYear/totalDays)*100));
+  const percent = percentRaw.toFixed(1);
+  const remaining = Math.max(0, totalDays - dayOfYear);
+  return {year, dayOfYear, totalDays, percent, percentRaw, remaining};
+}
+// 六個月份標記在時間軸上的精確位置（依實際月曆天數換算百分比，
+// 而非平均切分），讓軸線本身具備「精準時間刻度」的說服力。
+function monthMarks(year){
+  const start = new Date(year,0,1);
+  const startNext = new Date(year+1,0,1);
+  const totalDays = Math.round((startNext-start)/86400000);
+  const months = [
+    {label:'JAN', m:0}, {label:'MAR', m:2}, {label:'MAY', m:4},
+    {label:'JUL', m:6}, {label:'SEP', m:8}, {label:'DEC', m:11}
+  ];
+  return months.map(mm => {
+    const monthStart = new Date(year, mm.m, 1);
+    const offset = Math.round((monthStart-start)/86400000);
+    return {label:mm.label, percent: (offset/totalDays)*100};
+  });
+}
+function timelineWidgetHTML(){
+  const info = yearProgress();
+  const marks = monthMarks(info.year);
+
+  const monthsHTML = marks.map(m=>{
+    let transform = 'translateX(-50%)';
+    if(m.percent < 3) transform = 'translateX(0%)';
+    else if(m.percent > 97) transform = 'translateX(-100%)';
+    return '<span class="tl-month-mark" style="left:'+m.percent+'%; transform:'+transform+'">'+m.label+'</span>';
+  }).join('');
+
+  let todayTransform = 'translateX(-50%)';
+  if(info.percentRaw < 4) todayTransform = 'translateX(0%)';
+  else if(info.percentRaw > 96) todayTransform = 'translateX(-100%)';
+
+  return ''
+    + '<div class="timeline-widget">'
+      + '<div class="tl-top"><span class="tl-year">'+info.year+'</span><span class="tl-caption">年 度 進 度</span></div>'
+      + '<div class="tl-percent">'+info.percent+'%</div>'
+      + '<div class="tl-track-area">'
+        + '<div class="tl-track">'
+          + '<div class="tl-track-fill" style="width:'+info.percentRaw+'%"></div>'
+          + '<div class="tl-dot" style="left:'+info.percentRaw+'%"></div>'
+        + '</div>'
+        + '<div class="tl-months">'+monthsHTML+'</div>'
+        + '<div class="tl-today" style="left:'+info.percentRaw+'%; transform:'+todayTransform+'"><span class="caret">▲</span><span class="label">TODAY</span></div>'
+      + '</div>'
+      + '<div class="tl-stats"><span>已行 <b>'+info.dayOfYear+'</b> 日</span><span class="tl-sep">·</span><span>尚餘 <b>'+info.remaining+'</b> 日</span></div>'
+      + '<div class="timeline-caption">今天，是你 '+info.year+' 年裡獨一無二、不會重來的一天。</div>'
+    + '</div>';
 }
 
 // 儲存改用瀏覽器原生 localStorage（純前端部署，不依賴任何後端／第三方儲存服務）。
@@ -793,6 +958,7 @@ function renderToday(){
   if(!entry){
     el.innerHTML = ''
       + '<div class="eyebrow">'+todayDisplay()+' · 尚未抽籤</div>'
+      + timelineWidgetHTML()
       + '<div class="chip-row" id="focusChips"></div>'
       + '<div class="tube-stage">'
         + '<div class="tube-wrap" id="tubeTap">'
@@ -802,10 +968,10 @@ function renderToday(){
           + '<div class="tube"></div>'
           + '<div class="tube-accent"></div>'
         + '</div>'
-        + '<p class="tube-hint">誠心默想想問的事，輕點<b>籤筒</b>抽出今日籤</p>'
-        + '<button class="btn btn-primary" id="drawBtn" style="max-width:220px; margin-top:6px;">點 我 抽 籤</button>'
+        + '<p class="tube-hint">誠心默想想問的事，把握<b>今天</b>，輕點籤筒求一支籤</p>'
+        + '<button class="btn btn-primary" id="drawBtn" style="max-width:220px; margin-top:6px;">求 今 日 一 籤</button>'
       + '</div>'
-      + '<div class="quote-card"><p>「'+todayQuote()+'」</p><span>每 日 一 句</span></div>';
+      + '<div class="quote-card"><p>「'+todayQuote()+'」</p><span>時 光 一 句</span></div>';
 
     renderFocusChips();
     document.getElementById('tubeTap').onclick = beginDraw;
@@ -813,13 +979,14 @@ function renderToday(){
   } else {
     el.innerHTML = ''
       + '<div class="eyebrow">'+todayDisplay()+' · 今日籤文</div>'
+      + timelineWidgetHTML()
       + renderResultBody(entry)
       + '<div class="btn-row">'
         + '<button class="btn btn-gold" id="shareBtn">生成分享卡</button>'
         + '<button class="btn btn-ghost" id="aiBtnToday">AI 解籤</button>'
       + '</div>'
-      + '<div class="done-banner">今日已抽過籤，明日再來求一籤</div>'
-      + '<div class="quote-card"><p>「'+todayQuote()+'」</p><span>每 日 一 句</span></div>';
+      + '<div class="done-banner">今日的時光只有一次，這支籤也是——明日再來求一籤</div>'
+      + '<div class="quote-card"><p>「'+todayQuote()+'」</p><span>時 光 一 句</span></div>';
 
     document.getElementById('shareBtn').onclick = () => openShare(entry);
     document.getElementById('aiBtnToday').onclick = () => openAI(entry);
@@ -972,8 +1139,8 @@ function renderMore(){
       + '<button class="btn btn-gold btn-block" id="openAIfree">開始請教</button>'
     + '</div>'
     + '<div class="tool-card">'
-      + '<h3>關於日籤</h3>'
-      + '<p>日籤是一款輕量的每日抽籤小工具，籤文為原創創作，內容僅供參考與抒發心情，不作為任何重大決定的依據。願每天都有一份心安。</p>'
+      + '<h3>關於時光籤</h3>'
+      + '<p>時光籤，是「日籤」與「時光線」的品牌融合——時光線提醒你時間正在流逝，日籤則提醒你今天值得被認真對待。每天求一支籤，不只是問一個結果，更是在你的時光線上，留下今天曾經好好活過的印記。籤文為原創創作，內容僅供參考與抒發心情，不作為任何重大決定的依據。願你不負此刻時光。</p>'
     + '</div>';
 
   document.getElementById('openAB').onclick = openAB;
@@ -1047,7 +1214,7 @@ document.getElementById('aiAsk').onclick = async () => {
     }
   }
 
-  const sys = '你是一位溫暖、有智慧、講話溫和不誇張的解籤師。使用者抽到了一支籤，請根據籤詩內容與使用者的提問，給出貼近生活、務實、溫暖的解讀與建議。避免使用「絕對」「保證」等武斷字眼，避免醫療、法律、投資等專業斷言，語氣像一位親切的長輩朋友。回覆請用繁體中文，控制在150字以內，分成「解讀」與「建議」兩小段。';
+  const sys = '你是一位溫暖、有智慧、講話溫和不誇張的解籤師，服務於「時光籤」——一個提醒人們珍惜時間、把握當下的每日抽籤應用。使用者抽到了一支籤，請根據籤詩內容與使用者的提問，給出貼近生活、務實、溫暖的解讀與建議，適度呼應「今天很珍貴、值得好好把握」的態度，但不要說教。避免使用「絕對」「保證」等武斷字眼，避免醫療、法律、投資等專業斷言，語氣像一位親切的長輩朋友。回覆請用繁體中文，控制在150字以內，分成「解讀」與「建議」兩小段。';
   const userMsg = '籤文資訊：\n'+poemInfo+'\n\n使用者的問題：'+question;
 
   // 注意：瀏覽器不能直接帶 API Key 呼叫 Anthropic API（無法安全藏金鑰，也常遇到 CORS）。
@@ -1124,10 +1291,11 @@ function drawShareCanvas(entry){
   ctx.fillStyle = INK;
   ctx.font = '700 20px "Noto Serif TC"';
   ctx.textAlign = 'center';
-  ctx.fillText('日 籤', W/2, 52);
+  ctx.fillText('時 光 籤', W/2, 52);
   ctx.font = '400 11px "Noto Sans TC"';
   ctx.fillStyle = INK_SOFT;
-  ctx.fillText(entry.date + ' · 今日籤運', W/2, 70);
+  const yp = yearProgress();
+  ctx.fillText(entry.date + ' · ' + yp.year + ' 年第 ' + yp.dayOfYear + ' 天', W/2, 70);
 
   // level badge — soft accent-tinted pill
   const badgeW = 108, badgeH = 30, badgeX = W/2 - badgeW/2, badgeY = 86;
@@ -1186,7 +1354,7 @@ function drawShareCanvas(entry){
   ctx.fillText(starStr, W/2, H-46);
   ctx.font = '400 10px "Noto Sans TC"';
   ctx.fillStyle = INK_SOFT;
-  ctx.fillText('綜合運勢 · 日籤 DFortune', W/2, H-24);
+  ctx.fillText('綜合運勢 · 時光籤', W/2, H-24);
 }
 function roundRect(ctx, x, y, w, h, r){
   ctx.beginPath();
