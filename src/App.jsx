@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Trash2, ChevronDown, ChevronLeft, ChevronRight, X, MapPin, Check, Clock, Globe, Sun, Moon, Pencil, User, LogOut, Mail, Eye, EyeOff, Search, SlidersHorizontal, Share2, Bell, BellOff, Settings, Images, Move, Calendar, Shield, Info, FileText, Database, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronLeft, ChevronRight, X, MapPin, Check, Clock, Globe, Sun, Pencil, User, LogOut, Mail, Eye, EyeOff, Search, SlidersHorizontal, Share2, Bell, BellOff, Settings, Images, Move, Calendar, Shield, Info, FileText, Database, RefreshCw } from 'lucide-react';
 import {
   watchAuthState, signUpWithEmail, signInWithEmail, signInWithGoogle, signInWithApple,
   sendMagicLink, completeEmailLinkSignInIfNeeded, signOutUser,
@@ -385,7 +385,7 @@ const STRINGS = {
     repeatLabel: '重複', every: '每', unitYear: '年', unitMonth: '個月',
     modeSelectLabel: '模式選擇',
     modeBirthday: '生日', modeCompanion: '陪伴', modeCare: '關懷', modeAnniversary: '紀念日', modeRegular: '常規',
-    navSchedule: '日程', navGallery: '相冊', navProfile: '我的', myPageTitle: '我的', addSchedule: '添加日程',
+    navSchedule: '日程', navGallery: '相冊', navProfile: '我的', myPageTitle: '我的', addSchedule: '添加日程', dailyFortuneLabel: '每日一籤',
     calendarMonthView: '月', calendarYearView: '年', calendarChooseDate: '選擇年份與月份',
     calendarPrev: '上一個', calendarNext: '下一個', calendarConfirmYear: '確定', calendarViewWholeYear: '檢視整年', calendarToggleCollapse: '收合／展開日曆',
     calendarCollapseLabel: '收合', calendarExpandLabel: '展開',
@@ -509,7 +509,7 @@ const STRINGS = {
     repeatLabel: 'Repeat', every: 'Every', unitYear: 'year(s)', unitMonth: 'month(s)',
     modeSelectLabel: 'Mode',
     modeBirthday: 'Birthday', modeCompanion: 'Companion', modeCare: 'Care', modeAnniversary: 'Anniversary', modeRegular: 'Regular',
-    navSchedule: 'Schedule', navGallery: 'Albums', navProfile: 'Profile', myPageTitle: 'Profile', addSchedule: 'Add Schedule',
+    navSchedule: 'Schedule', navGallery: 'Albums', navProfile: 'Profile', myPageTitle: 'Profile', addSchedule: 'Add Schedule', dailyFortuneLabel: 'Daily Fortune',
     calendarMonthView: 'Month', calendarYearView: 'Year', calendarChooseDate: 'Choose year and month',
     calendarPrev: 'Previous', calendarNext: 'Next', calendarConfirmYear: 'Done', calendarViewWholeYear: 'View whole year', calendarToggleCollapse: 'Collapse/expand calendar',
     calendarCollapseLabel: 'Collapse', calendarExpandLabel: 'Expand',
@@ -633,7 +633,7 @@ const STRINGS = {
     repeatLabel: '繰り返し', every: '毎', unitYear: '年', unitMonth: 'ヶ月',
     modeSelectLabel: 'モード選択',
     modeBirthday: '誕生日', modeCompanion: '寄り添い', modeCare: '追悼', modeAnniversary: '記念日', modeRegular: '通常',
-    navSchedule: 'スケジュール', navGallery: 'アルバム', navProfile: 'マイページ', myPageTitle: 'マイページ', addSchedule: '予定を追加',
+    navSchedule: 'スケジュール', navGallery: 'アルバム', navProfile: 'マイページ', myPageTitle: 'マイページ', addSchedule: '予定を追加', dailyFortuneLabel: '今日のおみくじ',
     calendarMonthView: '月', calendarYearView: '年', calendarChooseDate: '年月を選択',
     calendarPrev: '前へ', calendarNext: '次へ', calendarConfirmYear: '決定', calendarViewWholeYear: '年間表示', calendarToggleCollapse: 'カレンダーを折りたたむ／展開',
     calendarCollapseLabel: '折りたたむ', calendarExpandLabel: '展開',
@@ -757,7 +757,7 @@ const STRINGS = {
     repeatLabel: '반복', every: '매', unitYear: '년', unitMonth: '개월',
     modeSelectLabel: '모드 선택',
     modeBirthday: '생일', modeCompanion: '동반', modeCare: '추모', modeAnniversary: '기념일', modeRegular: '일반',
-    navSchedule: '일정', navGallery: '앨범', navProfile: '마이페이지', myPageTitle: '마이페이지', addSchedule: '일정 추가',
+    navSchedule: '일정', navGallery: '앨범', navProfile: '마이페이지', myPageTitle: '마이페이지', addSchedule: '일정 추가', dailyFortuneLabel: '오늘의 운세',
     calendarMonthView: '월', calendarYearView: '년', calendarChooseDate: '연도와 월 선택',
     calendarPrev: '이전', calendarNext: '다음', calendarConfirmYear: '확인', calendarViewWholeYear: '연간 보기', calendarToggleCollapse: '캘린더 접기/펼치기',
     calendarCollapseLabel: '접기', calendarExpandLabel: '펼치기',
@@ -4739,6 +4739,18 @@ function TimelineSection({
           >
             <Search size={14} />
           </button>
+          {/* 「每日一籤」：只在日程分頁（cards 模式）出現，放在搜尋跟新增日程中間，點下去
+              直接跳轉到外部的每日一籤網頁。用 window.open 開新分頁而不是原地導頁，這樣使用者
+              看完籤詩回來時，日程頁原本的捲動位置、搜尋關鍵字都還在，不會被導頁清空。 */}
+          {isCardsLayout && (
+            <button
+              onClick={() => window.open('https://timezzw.top/DFortune', '_blank', 'noopener,noreferrer')}
+              className="flex items-center gap-1 text-sm px-3 py-1.5 rounded-lg font-medium flex-shrink-0"
+              style={{ background: '#C23B34', color: '#fff' }}
+            >
+              {t.dailyFortuneLabel}
+            </button>
+          )}
           <button 
             onClick={toggleForm}
             className="flex items-center gap-1 text-sm px-3 py-1.5 rounded-lg font-medium" 
@@ -6442,6 +6454,60 @@ function BottomNavigation({ activeTab, setActiveTab, t }) {
           );
         })}
       </div>
+    </nav>
+  );
+}
+
+// 大屏／桌面版的導覽列：跟 BottomNavigation 用同一份 BOTTOM_NAV_ITEMS、同一套選中狀態顏色
+// 邏輯，只是方向改成直排、放在畫面右側（見需求：大屏也要有導覽列，但放右邊，項目跟手機版
+// 相同），取代原本大屏 Header 上那排帳號／通知／回饋／深色模式／語言圖示——那些功能現在
+// 全部收在「我的」分頁裡（ProfilePage），跟手機版共用同一份頁面、同一套邏輯。
+function SideNavigation({ activeTab, setActiveTab, t }) {
+  return (
+    <nav
+      className="flex-shrink-0 flex flex-col items-center"
+      style={{
+        width: 84,
+        position: 'relative',
+        zIndex: 30,
+        background: 'var(--header-bg)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        borderLeft: CARD_BORDER,
+        paddingTop: '1.5rem',
+        paddingBottom: '1.5rem',
+        gap: 4,
+      }}
+    >
+      {BOTTOM_NAV_ITEMS.map(item => {
+        const active = activeTab === item.id;
+        const isCenter = item.id === 'home';
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-2xl"
+            style={{ width: 64, flexShrink: 0 }}
+          >
+            {isCenter ? (
+              <BottomNavLogo active={active} />
+            ) : (
+              <Icon size={20} style={{ color: active ? ACCENT : INK_SOFT, transition: 'color 150ms ease' }} strokeWidth={active ? 2.4 : 2} />
+            )}
+            <span
+              className="text-[10px] truncate"
+              style={{
+                color: active ? ACCENT : INK_SOFT,
+                fontWeight: active ? 700 : 500,
+                maxWidth: '100%',
+              }}
+            >
+              {isCenter ? '時光線' : t[item.labelKey]}
+            </span>
+          </button>
+        );
+      })}
     </nav>
   );
 }
@@ -8349,7 +8415,7 @@ function ProfilePage({
 
   // 「偏好」分組裡外觀／通知／語言／日曆這四項，點整列跳出的置中視窗——跟 subpage（獨立滑入頁面）
   // 是兩種不同層級的呈現，這裡另外用一個 state 管理，彼此互不影響。
-  const [choiceModal, setChoiceModal] = useState(null); // null | 'appearance' | 'notify' | 'language' | 'calendar'
+  const [choiceModal, setChoiceModal] = useState(null); // null | 'appearance' | 'notify' | 'language' | 'calendar' | 'about' | 'privacy' | 'terms'
 
   // 淡出動畫播放期間 subpage 已經變成 null，但畫面還在，這裡另外記一份「最後顯示過的子頁面」，
   // 讓子頁面內容跟著淡出、而不是在動畫播到一半時瞬間清空變成空白。
@@ -8375,7 +8441,7 @@ function ProfilePage({
 
   const subpageTitle = {
     account: t.accountManageLabel, backup: t.backupSectionTitle,
-    sync: t.syncDataLabel, about: t.aboutLabel, privacy: t.privacyLabel, terms: t.termsLabel,
+    sync: t.syncDataLabel,
   }[renderedSubpage] || '';
 
   let syncRightText = t.notSyncedStatus;
@@ -8387,7 +8453,13 @@ function ProfilePage({
 
   const appearanceValueText = { system: t.appearanceModeSystem, light: t.appearanceModeLight, dark: t.appearanceModeDark }[themeMode] || t.appearanceModeSystem;
   const notifyValueText = notifyEnabled ? t.darkModeOn : t.darkModeOff;
-  const choiceModalTitle = { appearance: t.appearanceLabel, notify: t.notifyPrefLabel, language: t.languageLabel, calendar: t.calendarPrefLabel }[choiceModal] || '';
+  // 「關於時光線／隱私權政策／使用條款」原本跟帳號管理等功能頁共用同一套「子頁面往右滑入」
+  // 的外殼（ProfileSubpageShell），這三個純粹是靜態說明文字，改成跟外觀／通知／語言／日曆
+  // 一樣，用置中彈窗（SettingsChoiceModal）呈現，跟 choiceModal 共用同一個 state。
+  const choiceModalTitle = {
+    appearance: t.appearanceLabel, notify: t.notifyPrefLabel, language: t.languageLabel, calendar: t.calendarPrefLabel,
+    about: t.aboutLabel, privacy: t.privacyLabel, terms: t.termsLabel,
+  }[choiceModal] || '';
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-5">
@@ -8461,9 +8533,9 @@ function ProfilePage({
       {/* 五、其他 */}
       <SettingsGroupCard title={t.otherGroupLabel}>
         <SettingsRow isFirst icon={<Mail size={18} />} label={t.feedbackLabel} onClick={onOpenFeedback} />
-        <SettingsRow icon={<Info size={18} />} label={t.aboutLabel} onClick={() => setSubpage('about')} />
-        <SettingsRow icon={<Shield size={18} />} label={t.privacyLabel} onClick={() => setSubpage('privacy')} />
-        <SettingsRow icon={<FileText size={18} />} label={t.termsLabel} onClick={() => setSubpage('terms')} />
+        <SettingsRow icon={<Info size={18} />} label={t.aboutLabel} onClick={() => setChoiceModal('about')} />
+        <SettingsRow icon={<Shield size={18} />} label={t.privacyLabel} onClick={() => setChoiceModal('privacy')} />
+        <SettingsRow icon={<FileText size={18} />} label={t.termsLabel} onClick={() => setChoiceModal('terms')} />
       </SettingsGroupCard>
 
       <div className="flex flex-col items-center gap-0.5 pt-2 pb-2">
@@ -8475,9 +8547,6 @@ function ProfilePage({
         {renderedSubpage === 'account' && <AccountManagementPage t={t} fbUser={fbUser} onClose={() => setSubpage(null)} />}
         {renderedSubpage === 'backup' && <BackupDataPage t={t} backupData={backupData} onImportBackup={onImportBackup} />}
         {renderedSubpage === 'sync' && <SyncDataPage t={t} fbUser={fbUser} syncStatus={syncStatus} lastSyncedAt={lastSyncedAt} onOpenAuth={onOpenAuth} />}
-        {renderedSubpage === 'about' && <p className="text-sm leading-relaxed" style={{ color: INK }}>{t.aboutBody}</p>}
-        {renderedSubpage === 'privacy' && <p className="text-sm leading-relaxed" style={{ color: INK_SOFT }}>{t.legalPlaceholder}</p>}
-        {renderedSubpage === 'terms' && <p className="text-sm leading-relaxed" style={{ color: INK_SOFT }}>{t.legalPlaceholder}</p>}
       </ProfileSubpageShell>
 
       {choiceModal && (
@@ -8489,6 +8558,19 @@ function ProfilePage({
           {choiceModal === 'language' && <LanguageChoiceContent lang={lang} setLang={setLang} onClose={() => setChoiceModal(null)} />}
           {choiceModal === 'calendar' && (
             <CalendarPrefChoiceContent enabledAltCalendars={enabledAltCalendars} setEnabledAltCalendars={setEnabledAltCalendars} lang={lang} t={t} />
+          )}
+          {/* 「關於時光線／隱私權政策／使用條款」：純文字說明，內容都還是暫定佔位文字（見
+              t.aboutBody／t.legalPlaceholder），之後正式文案定案後直接換這兩個翻譯字串內容
+              即可，不用再動這裡的結構。用 max-h+overflow-y-auto 包住，之後換上完整的隱私權
+              政策／使用條款全文時，視窗不會被長文字撐爆版面，會在視窗內部自己捲動。 */}
+          {choiceModal === 'about' && (
+            <p className="text-sm leading-relaxed max-h-[60vh] overflow-y-auto" style={{ color: INK }}>{t.aboutBody}</p>
+          )}
+          {choiceModal === 'privacy' && (
+            <p className="text-sm leading-relaxed max-h-[60vh] overflow-y-auto" style={{ color: INK_SOFT }}>{t.legalPlaceholder}</p>
+          )}
+          {choiceModal === 'terms' && (
+            <p className="text-sm leading-relaxed max-h-[60vh] overflow-y-auto" style={{ color: INK_SOFT }}>{t.legalPlaceholder}</p>
           )}
         </SettingsChoiceModal>
       )}
@@ -8574,17 +8656,16 @@ export default function App() {
   // eventId 可以是 null（不關聯任何事件），相片本體仍然各自存在 album-photos:{id} 這個 key。
   const [albums, setAlbums] = useState([]);
   // albumRoute 決定相冊功能目前顯示哪個畫面（home／create／detail），提升到這一層而不是放在
-  // AlbumsFeature 元件自己的 state 裡，是因為手機版切到「相冊」分頁時該元件才會掛載，如果狀態
+  // AlbumsFeature 元件自己的 state 裡，是因為切到「相冊」分頁時該元件才會掛載，如果狀態
   // 放在元件內部，每次切分頁都會被重置——而時間軸卡片上的「相冊」按鈕需要能直接指定「打開哪個
   // 相冊的詳細頁」或「進入建立流程並預先帶入這個事件」，這個狀態必須跨分頁切換也不遺失。
   const [albumRoute, setAlbumRoute] = useState({ screen: 'home', detailAlbumId: null, prefillEventId: null });
-  // 桌面／大螢幕版面沒有底部分頁列可以切到「相冊」，改用全螢幕覆蓋層顯示同一套相冊功能，
-  // 由時間軸卡片的「相冊」按鈕，或桌面頂端的相冊入口圖示觸發開啟。
-  const [albumsOverlayOpen, setAlbumsOverlayOpen] = useState(false);
 
   // 時間軸卡片上「相冊」按鈕的共用邏輯：這個事件目前有沒有已經關聯的相冊——
   // 完全沒有就直接進入「建立相冊」流程並預先帶入這個事件（使用者不用再選一次事件）；
   // 已經有（可能不只一個）就直接跳進最近建立的那一個相冊詳細頁，不用先回相冊首頁再手動找。
+  // 大螢幕原本另外有一套全螢幕覆蓋層可以不切分頁直接預覽，現在統一改成跟手機版一樣直接
+  // 切到「相冊」分頁，兩種螢幕尺寸只有一套進入相冊的路徑。
   function openAlbumsForEvent(eventId) {
     const linked = albums.filter(a => a.eventId === eventId);
     if (linked.length) {
@@ -8593,8 +8674,7 @@ export default function App() {
     } else {
       setAlbumRoute({ screen: 'create', detailAlbumId: null, prefillEventId: eventId });
     }
-    if (isLargeScreen) setAlbumsOverlayOpen(true);
-    else setActiveTab('gallery');
+    setActiveTab('gallery');
   }
 
   // File Handling API：使用者在作業系統裡直接用「開啟檔案」／雙擊 .tzzwnb 備份檔、
@@ -9270,7 +9350,7 @@ export default function App() {
           <div>
             {/* 問候語只在「時光線」分頁顯示（桌面版沒有分頁切換的概念，永遠視同時光線）；
                 其餘分頁改顯示對應的頁面標題，不再繼續顯示「下午好」這類首頁專屬文字。 */}
-            {isLargeScreen || activeTab === 'home' ? (
+            {activeTab === 'home' ? (
               <>
                 <h1 className="text-2xl font-black tracking-tight" style={{ color: INK }}>{t[greeting.key]} {greeting.emoji}</h1>
                 <p className="text-xs font-medium mt-1" style={{ color: INK_SOFT }}>{t.todayIs(todayStr)}</p>
@@ -9307,108 +9387,221 @@ export default function App() {
               </h1>
             )}
           </div>
-          {/* 帳號／提醒／意見回饋／深色模式／語言這排圖示，手機版已經整組搬進「我的」分頁
-              （見 ProfilePage），Header 精簡到只剩問候語；大屏（isLargeScreen）沒有底部導覽列，
-              維持原本的做法，這排圖示照舊留在 Header 上，不受這次重構影響。 */}
-          {isLargeScreen && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => { setAlbumRoute(prev => (prev.detailAlbumId || prev.screen !== 'home' ? prev : { screen: 'home', detailAlbumId: null, prefillEventId: null })); setAlbumsOverlayOpen(true); }}
-                className="flex items-center justify-center rounded-full flex-shrink-0"
-                style={{ ...glass(), width: '2.125rem', height: '2.125rem', color: INK }}
-                title={t.navGallery}
-                aria-label={t.navGallery}
-              >
-                <Images size={16} />
-              </button>
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="relative flex items-center justify-center rounded-full flex-shrink-0"
-                style={{ ...glass(), width: '2.125rem', height: '2.125rem', color: fbUser ? MINT : INK }}
-                title={
-                  localSaveError || syncStatus === 'error'
-                    ? t.syncErrorHint
-                    : (fbUser ? t.loggedInAs(fbUser.email || fbUser.displayName || '') : t.loginToSync)
-                }
-              >
-                <User size={16} />
-                {(localSaveError || syncStatus === 'error') && (
-                  <span
-                    className="absolute rounded-full"
-                    style={{ width: 9, height: 9, top: -1, right: -1, background: DANGER, border: '1.5px solid var(--card-bg)' }}
-                  />
-                )}
-              </button>
-              <NotifySettingsButton
-                enabled={notifyEnabled}
-                onToggle={handleToggleNotify}
-                daysBefore={notifyDaysBefore}
-                setDaysBefore={setNotifyDaysBefore}
-                permission={notifyPermission}
-                t={t}
-              />
-              <button
-                onClick={() => setShowFeedbackModal(true)}
-                className="flex items-center justify-center rounded-full flex-shrink-0"
-                style={{ ...glass(), width: '2.125rem', height: '2.125rem', color: INK }}
-                title="意見回饋"
-              >
-                <Mail size={16} />
-              </button>
-              <button
-                onClick={() => setThemeMode(isDark ? 'light' : 'dark')}
-                className="flex items-center justify-center rounded-full flex-shrink-0"
-                style={{ ...glass(), width: '2.125rem', height: '2.125rem', color: INK }}
-              >
-                {isDark ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
-              <LangSwitcher lang={lang} setLang={setLang} />
-            </div>
-          )}
+          {/* 帳號／提醒／意見回饋／深色模式／語言這排圖示已經整組移除：大屏現在跟手機版一樣
+              有「我的」分頁（見下面新增的 SideNavigation），這些功能全部在 ProfilePage 裡就找得到，
+              不需要再重複放一份在 Header 上；相冊入口也一併移除，改由 SideNavigation 的
+              「相冊」分頁直接進入，Header 精簡到只剩頁面標題。 */}
         </header>
 
-        {/* Main Content */}
+        {/* Main Content：手機版跟大屏／桌面版現在共用同一套「五分頁」結構（見需求：大屏也要有
+            跟手機版一樣的導覽列），差別只在：① 導覽列大屏放在右側直排（SideNavigation），
+            手機版在底部橫排（BottomNavigation）；② 「時光線」（home）分頁裡，大屏維持原本
+            左右分欄（世界時鐘固定左側、時間軸在右側獨立捲動），手機版維持原本上下堆疊＋
+            可拖曳收合世界時鐘的手勢。其餘四個分頁（世界時鐘／日程／圖片庫／我的）內容完全
+            共用同一份 JSX，不再各自维护一份。 */}
         {isLargeScreen ? (
-          /* 折叠屏展開／平板／桌面等大屏：左右分欄——世界時鐘固定在左側、時間軸在右側獨立捲動
-             （類似郵件 App 左右分欄），版面本身固定不變。點卡片開啟「地標詳情」或「目前位置時鐘詳情」
-             時不再切換版面，改成跟手機版一樣的置中彈窗（見 WorldClockSection／TimelineSection
-             內部各自的 createPortal），彈窗大小用 max-w-sm／max-h-[85vh] 這種相對單位自動適應螢幕，
-             點彈窗外部空白處即可關閉。 */
-          <main className="px-6 md:px-10 max-w-[1180px] mx-auto w-full flex-1 min-h-0 flex flex-row gap-6 pb-4">
-            <div id="world-clock-section-root" className="flex-shrink-0" style={{ width: 'clamp(300px, 34vw, 380px)' }}>
-              <WorldClockSection
-                clocks={clocks}
-                setClocks={setClocks}
-                lang={lang}
-                t={t}
-                onHomeTzChange={setHomeTz}
-                homeTzId={homeTzId}
-                setHomeTzId={setHomeTzId}
-                part2Ref={worldClockPart2Ref}
-                part2Height={worldClockPart2VisibleHeight}
-                isDraggingWorldClock={isDraggingWorldClock}
-                isLargeScreen
-                unlimitedHeight
-              />
-            </div>
+          <div className="flex-1 min-h-0 flex flex-row">
+            <main className="px-6 md:px-10 max-w-[1180px] mx-auto w-full flex-1 min-h-0 flex flex-col pb-4">
+              <div style={{ display: activeTab === 'home' ? 'contents' : 'none' }}>
+                {/* 折叠屏展開／平板／桌面等大屏：左右分欄——世界時鐘固定在左側、時間軸在右側獨立
+                    捲動（類似郵件 App 左右分欄），版面本身固定不變。點卡片開啟「地標詳情」或
+                    「目前位置時鐘詳情」時不再切換版面，改成跟手機版一樣的置中彈窗（見
+                    WorldClockSection／TimelineSection 內部各自的 createPortal），彈窗大小用
+                    max-w-sm／max-h-[85vh] 這種相對單位自動適應螢幕，點彈窗外部空白處即可關閉。 */}
+                <div className="flex-1 min-h-0 flex flex-row gap-6">
+                  <div id="world-clock-section-root" className="flex-shrink-0" style={{ width: 'clamp(300px, 34vw, 380px)' }}>
+                    <WorldClockSection
+                      clocks={clocks}
+                      setClocks={setClocks}
+                      lang={lang}
+                      t={t}
+                      onHomeTzChange={setHomeTz}
+                      homeTzId={homeTzId}
+                      setHomeTzId={setHomeTzId}
+                      part2Ref={worldClockPart2Ref}
+                      part2Height={worldClockPart2VisibleHeight}
+                      isDraggingWorldClock={isDraggingWorldClock}
+                      isLargeScreen
+                      unlimitedHeight
+                    />
+                  </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto">
-              <TimelineSection
-                events={events}
-                setEvents={setEvents}
-                lang={lang}
-                t={t}
-                now={now}
-                isDark={isDark}
-                customIcons={customIcons}
-                setCustomIcons={setCustomIcons}
-                isLargeScreen
-                viewingId={viewingId}
-                setViewingId={setViewingId}
-                onOpenAlbumForEvent={openAlbumsForEvent}
-              />
-            </div>
-          </main>
+                  <div className="flex-1 min-h-0 overflow-y-auto">
+                    <TimelineSection
+                      events={events}
+                      setEvents={setEvents}
+                      lang={lang}
+                      t={t}
+                      now={now}
+                      isDark={isDark}
+                      customIcons={customIcons}
+                      setCustomIcons={setCustomIcons}
+                      isLargeScreen
+                      viewingId={viewingId}
+                      setViewingId={setViewingId}
+                      onOpenAlbumForEvent={openAlbumsForEvent}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {activeTab === 'clock' && (
+                <div className="flex-1 min-h-0 overflow-y-auto">
+                  <WorldClockSection
+                    clocks={clocks}
+                    setClocks={setClocks}
+                    lang={lang}
+                    t={t}
+                    onHomeTzChange={setHomeTz}
+                    homeTzId={homeTzId}
+                    setHomeTzId={setHomeTzId}
+                    unlimitedHeight
+                  />
+                </div>
+              )}
+
+              <div className="flex-1 min-h-0 flex flex-col gap-2" style={{ display: activeTab === 'schedule' ? 'flex' : 'none' }}>
+                  <div ref={setScheduleControlsEl} className="flex-shrink-0 relative" style={{ zIndex: 31, marginTop: -34 }} />
+
+                  <div className="relative flex p-1 rounded-full flex-shrink-0" style={{ background: '#FFFFFF', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute', top: 4, bottom: 4, left: 4,
+                        width: 'calc((100% - 8px) / 3)', borderRadius: 999,
+                        background: ACCENT,
+                        boxShadow: '0 2px 8px rgba(108,123,224,0.35)',
+                        transform: `translateX(${SCHEDULE_VIEW_MODES.findIndex(m => m.id === scheduleViewMode) * 100}%)`,
+                        transition: 'transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1), background 220ms ease, box-shadow 220ms ease',
+                        willChange: 'transform',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    {SCHEDULE_VIEW_MODES.map(m => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setScheduleViewMode(m.id)}
+                        className="relative z-10 flex-1 min-w-0 rounded-full text-xs font-bold"
+                        style={{
+                          padding: '7px 3px',
+                          color: scheduleViewMode === m.id ? '#fff' : INK_SOFT,
+                          background: 'transparent',
+                          transition: 'color 180ms ease',
+                        }}
+                      >
+                        {t[m.labelKey]}
+                      </button>
+                    ))}
+                  </div>
+
+                  <AnniversaryCalendar ref={scheduleCalendarRef} events={events} lang={lang} t={t} now={now} onRangeChange={setScheduleRange} viewMode={scheduleViewMode} setViewMode={setScheduleViewMode} enabledAltCalendars={enabledAltCalendars} />
+
+                  <div className="flex items-center justify-between gap-2 flex-shrink-0 px-1">
+                    <span className="text-xs" style={{ color: INK_SOFT }}>{t.futureOnlyLabel}</span>
+                    <div className="rounded-2xl px-3 py-1.5 flex items-center gap-2 flex-shrink-0" style={glass()}>
+                      <span className="text-xs" style={{ color: INK_SOFT }}>{t.scheduleShowAllLabel}</span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={scheduleShowAll}
+                        aria-label={t.scheduleShowAllLabel}
+                        onClick={() => setScheduleShowAll(v => !v)}
+                        className="relative flex-shrink-0 rounded-full"
+                        style={{
+                          width: 38,
+                          height: 22,
+                          padding: 2,
+                          background: scheduleShowAll ? ACCENT : 'rgba(120,125,135,0.22)',
+                          border: scheduleShowAll ? `1px solid ${ACCENT}` : '1px solid rgba(120,125,135,0.16)',
+                          boxShadow: scheduleShowAll ? `0 3px 10px ${accentAlpha('30')}` : 'inset 0 1px 2px rgba(0,0,0,0.06)',
+                          transition: 'background 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
+                        }}
+                      >
+                        <span
+                          className="absolute rounded-full"
+                          style={{
+                            width: 16,
+                            height: 16,
+                            top: 2,
+                            left: scheduleShowAll ? 18 : 2,
+                            background: '#fff',
+                            boxShadow: '0 1px 4px rgba(0,0,0,0.18)',
+                            transition: 'left 180ms cubic-bezier(0.22, 1, 0.36, 1)',
+                          }}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-h-0 overflow-y-auto">
+                    <TimelineSection
+                      events={events}
+                      setEvents={setEvents}
+                      lang={lang}
+                      t={t}
+                      now={now}
+                      isDark={isDark}
+                      customIcons={customIcons}
+                      setCustomIcons={setCustomIcons}
+                      viewingId={viewingId}
+                      setViewingId={setViewingId}
+                      onOpenAlbumForEvent={openAlbumsForEvent}
+                      layout="cards"
+                      controlsPortalEl={scheduleControlsEl}
+                      rangeFilter={scheduleRange}
+                      showAll={scheduleShowAll}
+                    />
+                  </div>
+              </div>
+
+              {activeTab === 'gallery' && (
+                <AlbumsFeature
+                  events={events}
+                  setEvents={setEvents}
+                  albums={albums}
+                  setAlbums={setAlbums}
+                  route={albumRoute}
+                  setRoute={setAlbumRoute}
+                  lang={lang}
+                  t={t}
+                  isLargeScreen={isLargeScreen}
+                  onViewEvent={setViewingId}
+                />
+              )}
+
+              {activeTab === 'profile' && (
+                <ProfilePage
+                  t={t}
+                  fbUser={fbUser}
+                  localSaveError={localSaveError}
+                  syncStatus={syncStatus}
+                  onOpenAuth={() => setShowAuthModal(true)}
+                  notifyEnabled={notifyEnabled}
+                  onToggleNotify={handleToggleNotify}
+                  notifyDaysBefore={notifyDaysBefore}
+                  setNotifyDaysBefore={setNotifyDaysBefore}
+                  notifyPermission={notifyPermission}
+                  onOpenFeedback={() => setShowFeedbackModal(true)}
+                  isDark={isDark}
+                  themeMode={themeMode}
+                  setThemeMode={setThemeMode}
+                  lang={lang}
+                  setLang={setLang}
+                  events={events}
+                  albums={albums}
+                  clocks={clocks}
+                  customIcons={customIcons}
+                  onImportBackup={applyCloudData}
+                  lastSyncedAt={lastSyncedAt}
+                  enabledAltCalendars={enabledAltCalendars}
+                  setEnabledAltCalendars={setEnabledAltCalendars}
+                  appVersion={appVersion}
+                />
+              )}
+            </main>
+            <SideNavigation activeTab={activeTab} setActiveTab={setActiveTab} t={t} />
+          </div>
         ) : (
           /* 手機版：五個分頁的底部導覽列架構。
              「時光線」＝原本的複合式首頁（世界時鐘＋時間軸＋拖曳調整比例），完整保留、
@@ -9652,33 +9845,6 @@ export default function App() {
         <FeedbackModal onClose={() => setShowFeedbackModal(false)} />
       )}
       {pendingMerge && <MergeDialog t={t} onResolve={resolveMerge} />}
-      {/* 大屏／桌面版沒有底部分頁列可以切到「相冊」，改用全螢幕覆蓋層顯示同一套相冊功能——
-          由時間軸卡片的「相冊」按鈕，或 Header 上的相冊入口圖示觸發開啟。 */}
-      {isLargeScreen && albumsOverlayOpen && createPortal(
-        <div className="fixed inset-0 flex flex-col" style={{ zIndex: 250, background: 'var(--app-bg, var(--card-bg))' }}>
-          <div className="px-6 md:px-10 py-5 flex items-center justify-between flex-shrink-0" style={{ borderBottom: CARD_BORDER }}>
-            <h1 className="text-xl font-black tracking-tight" style={{ color: INK }}>{t.navGallery}</h1>
-            <button onClick={() => setAlbumsOverlayOpen(false)} aria-label={t.close} className="flex items-center justify-center rounded-full" style={{ ...glass(), width: '2.125rem', height: '2.125rem', color: INK }}>
-              <X size={16} />
-            </button>
-          </div>
-          <div className="flex-1 min-h-0 overflow-y-auto px-6 md:px-10 py-5 max-w-[900px] mx-auto w-full flex flex-col">
-            <AlbumsFeature
-              events={events}
-              setEvents={setEvents}
-              albums={albums}
-              setAlbums={setAlbums}
-              route={albumRoute}
-              setRoute={setAlbumRoute}
-              lang={lang}
-              t={t}
-              isLargeScreen={isLargeScreen}
-              onViewEvent={setViewingId}
-            />
-          </div>
-        </div>,
-        document.body
-      )}
       {fileHandlerMsg && (
         <div
           className="fixed left-1/2 px-4 py-3 rounded-xl text-sm font-bold text-center shadow-lg"
