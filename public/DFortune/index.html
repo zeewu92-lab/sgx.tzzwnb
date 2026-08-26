@@ -28,7 +28,7 @@
   html,body{margin:0; padding:0; height:100%;}
   body{
     font-family:var(--sans);
-    background:linear-gradient(180deg, var(--page-bg-2) 0%, var(--page-bg) 55%);
+    background:var(--page-bg-2);
     color:var(--ink);
     min-height:100%;
     display:flex;
@@ -54,38 +54,87 @@
 
   /* ---------- topbar ---------- */
   .topbar{
-    padding:30px 20px 16px;
-    text-align:center;
+    padding:20px 14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
     position:relative;
   }
   .topbar::after{
     content:"";
-    display:block;
-    width:36px; height:1px;
-    margin:14px auto 0;
+    position:absolute; left:14px; right:14px; bottom:0;
+    height:1px;
     background:var(--card-border);
+  }
+  .topbar-title{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
   }
   .topbar h1{
     font-family:var(--serif);
     font-weight:700;
-    font-size:23px;
-    letter-spacing:5px;
+    font-size:18px;
+    letter-spacing:3px;
     margin:0;
     color:var(--ink);
+    white-space:nowrap;
   }
   .topbar .topbar-sub{
-    margin:8px 0 0;
-    font-size:11px;
-    letter-spacing:2.5px;
+    margin:6px 0 0;
+    font-size:9.5px;
+    letter-spacing:2px;
     color:var(--accent);
     font-weight:700;
+    white-space:nowrap;
   }
   .topbar .topbar-tag{
-    margin:4px 0 0;
-    font-size:11px;
-    letter-spacing:2px;
+    margin:3px 0 0;
+    font-size:9px;
+    letter-spacing:.8px;
     color:var(--ink-soft);
+    white-space:nowrap;
   }
+
+  /* ---------- 年度進度迷你版：與標題並列於 topbar ----------
+     沿用原本 .timeline-widget 的紙卡設計（籤紙暖色調不變），
+     只是整體縮小尺寸；底部保留一句淡色小字提醒文案。
+     永不換行，靠縮小尺寸來塞下。 */
+  .timeline-widget--mini{
+    margin-top:0;
+    flex-shrink:0;
+    width:156px;
+    padding:8px 11px 8px;
+    border-radius:12px;
+    box-shadow:0 2px 8px rgba(41,37,34,0.10);
+  }
+  .timeline-widget--mini::before{height:2px;}
+  .timeline-widget--mini .tl-year{font-size:10px;}
+  .timeline-widget--mini .tl-caption{font-size:7px; letter-spacing:1px;}
+  .timeline-widget--mini .tl-percent{font-size:15px; margin:2px 0 6px;}
+  .timeline-widget--mini .tl-track-area{padding:0 1px 4px;}
+  .timeline-widget--mini .tl-track{height:2px;}
+  .timeline-widget--mini .tl-dot{width:6px; height:6px; border-width:1.5px;}
+  .timeline-widget--mini .tl-months,
+  .timeline-widget--mini .tl-today{display:none;}
+  .timeline-widget--mini .tl-stats{font-size:8px; gap:4px; margin-top:5px;}
+  .timeline-widget--mini .timeline-caption{
+    display:block;
+    margin-top:5px;
+    padding-top:5px;
+    border-top:1px solid rgba(41,37,34,0.08);
+    font-size:7.5px;
+    font-style:normal;
+    letter-spacing:0;
+    color:var(--tl-ink-soft);
+    opacity:.85;
+    white-space:nowrap;
+  }
+
 
   main{flex:1; padding:4px 18px 100px;}
   .view{display:none;}
@@ -191,25 +240,78 @@
     color:var(--tl-ink-soft);
   }
 
-  /* ---------- chips ---------- */
-  .chip-row{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:14px 0 6px;}
-  .chip{
+  /* ---------- focus selector: 綜合 獨立膠囊 + 五項分類滑動膠囊 ---------- */
+  .focus-row{
+    display:flex; align-items:center; gap:7px;
+    margin:14px 0 6px;
+  }
+  .fc-overall{
+    flex-shrink:0;
+    height:38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     font-family:var(--sans);
-    font-size:13px;
-    padding:7px 15px;
+    font-size:12px;
+    font-weight:700;
+    padding:0 14px;
     border-radius:999px;
     border:1px solid var(--card-border);
     background:var(--card-bg);
     color:var(--ink-soft);
     cursor:pointer;
     transition:background .2s, color .2s, border-color .2s;
+    white-space:nowrap;
   }
-  .chip.active{
+  .fc-overall.active{
     background:var(--accent-soft);
     color:var(--accent);
-    font-weight:700;
     border-color:transparent;
   }
+  .fc-segment{
+    position:relative;
+    flex:1;
+    height:38px;
+    display:flex;
+    align-items:center;
+    min-width:0;
+    padding:3px;
+    border-radius:999px;
+    border:1px solid var(--card-border);
+    background:var(--card-bg);
+  }
+  .fc-slider{
+    position:absolute;
+    top:3px; bottom:3px; left:3px;
+    width:calc((100% - 6px) / 5);
+    border-radius:999px;
+    background:var(--accent-soft);
+    transition:transform .28s cubic-bezier(.3,.85,.4,1), opacity .2s;
+    z-index:0;
+  }
+  .fc-slider.hidden{opacity:0;}
+  .fc-btn{
+    position:relative;
+    z-index:1;
+    flex:1;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:0;
+    font-family:var(--sans);
+    font-size:11px;
+    font-weight:700;
+    padding:0;
+    border:none;
+    background:transparent;
+    color:var(--ink-soft);
+    cursor:pointer;
+    text-align:center;
+    white-space:nowrap;
+    transition:color .25s;
+  }
+  .fc-btn.active{color:var(--accent);}
 
   /* ---------- qian tube (signature element, simplified & glassy) ---------- */
   .tube-stage{
@@ -226,18 +328,20 @@
   .stick{
     position:absolute;
     bottom:0;
-    width:5px;
-    height:96px;
+    width:11px;
+    height:92px;
     left:50%;
-    background:linear-gradient(180deg, #F1EEE7, #DCD5C6);
-    border-radius:3px 3px 0 0;
+    background:linear-gradient(180deg, #F3F0E9, #DCD5C6);
+    border:1px solid rgba(41,37,34,0.06);
+    border-radius:5px 5px 2px 2px;
+    box-shadow:1px 0 2px rgba(35,39,51,0.08);
   }
   .stick::after{
     content:"";
-    position:absolute; top:0; left:0; right:0; height:7px;
+    position:absolute; top:0; left:0; right:0; height:12px;
     background:var(--accent);
-    opacity:.82;
-    border-radius:3px 3px 0 0;
+    opacity:.85;
+    border-radius:5px 5px 0 0;
   }
   .tube{
     position:absolute; bottom:0; left:50%; transform:translateX(-50%);
@@ -458,11 +562,13 @@
   }
   .rite-sticks{position:absolute; bottom:82px; left:0; right:0; height:120px; width:130px; margin:0 auto;}
   .rite-stick{
-    position:absolute; bottom:0; left:50%; width:6px; height:110px;
-    background:linear-gradient(180deg, #F1EEE7, #DCD5C6);
-    border-radius:4px 4px 0 0;
+    position:absolute; bottom:0; left:50%; width:12px; height:104px;
+    background:linear-gradient(180deg, #F3F0E9, #DCD5C6);
+    border:1px solid rgba(41,37,34,0.06);
+    border-radius:5px 5px 2px 2px;
+    box-shadow:1px 0 2px rgba(35,39,51,0.08);
   }
-  .rite-stick::after{content:""; position:absolute; top:0; left:0; right:0; height:9px; background:var(--accent); opacity:.82; border-radius:4px 4px 0 0;}
+  .rite-stick::after{content:""; position:absolute; top:0; left:0; right:0; height:13px; background:var(--accent); opacity:.85; border-radius:5px 5px 0 0;}
   .shaking .rite-tube{animation:shakeTube .5s ease-in-out infinite;}
   .shaking .rite-stick{animation:jitterStick .28s ease-in-out infinite;}
   @keyframes shakeTube{
@@ -533,15 +639,23 @@
   .loading-dots::after{content:'·'; animation:dots 1.2s steps(4) infinite;}
   @keyframes dots{0%{content:'·';}25%{content:'··';}50%{content:'···';}75%{content:'····';}}
   .small-muted{font-size:11.5px; color:var(--ink-soft); text-align:center; margin-top:16px;}
+  .ai-risk-note{
+    font-size:11px; line-height:1.6; color:var(--ink-soft);
+    background:var(--card-bg); border:1px solid var(--card-border);
+    border-radius:10px; padding:10px 12px; margin-top:12px;
+  }
 </style>
 </head>
 <body>
 <div id="app">
 
   <div class="topbar">
-    <h1>時 光 籤</h1>
-    <p class="topbar-sub">日籤 × 時光線</p>
-    <p class="topbar-tag">一籤一念 · 不負此刻時光</p>
+    <div class="topbar-title">
+      <h1>時 光 籤</h1>
+      <p class="topbar-sub">日籤 × 時光線</p>
+      <p class="topbar-tag">一籤一念 · 不負此刻時光</p>
+    </div>
+    <div id="topbarYP"></div>
   </div>
 
   <main>
@@ -612,7 +726,7 @@
     <div class="modal-panel">
       <button class="modal-close" data-close="abModal">✕</button>
       <h3 style="font-family:var(--serif); color:var(--ink); margin-top:0;">A / B 選擇求籤</h3>
-      <p style="font-size:13px; color:rgba(245,236,216,0.7); margin-top:-6px;">拿不定主意時，讓籤來給你一個方向。</p>
+      <p style="font-size:13px; color:var(--ink-soft); margin-top:-6px;">拿不定主意時，讓籤來給你一個方向。</p>
       <input type="text" id="abA" placeholder="選項 A（例如：留下）">
       <input type="text" id="abB" placeholder="選項 B（例如：離開）">
       <button class="btn btn-primary" id="abDraw">搖 籤 決 定</button>
@@ -625,9 +739,10 @@
     <div class="modal-panel">
       <button class="modal-close" data-close="aiModal">✕</button>
       <h3 style="font-family:var(--serif); color:var(--ink); margin-top:0;">AI 解籤</h3>
-      <p style="font-size:13px; color:rgba(245,236,216,0.7); margin-top:-6px;" id="aiIntro">針對今日的籤，說說你心裡真正想問的事，讓解籤更貼近你的處境。</p>
+      <p style="font-size:13px; color:var(--ink-soft); margin-top:-6px;" id="aiIntro">針對今日的籤，說說你心裡真正想問的事，讓解籤更貼近你的處境。</p>
       <textarea class="ai-q" id="aiQuestion" placeholder="例如：我正在猶豫要不要換工作，這支籤是什麼意思？"></textarea>
       <button class="btn btn-primary btn-block" id="aiAsk">請 籤 師 解 籤</button>
+      <div class="ai-risk-note">使用者不應僅依據 AI 生成內容作出可能對自身或他人產生重大影響之決定。對於重要事項，應另行透過可靠之官方或專業管道進行確認。</div>
       <div id="aiAnswerBox"></div>
     </div>
   </div>
@@ -853,7 +968,7 @@ function monthMarks(year){
     return {label:mm.label, percent: (offset/totalDays)*100};
   });
 }
-function timelineWidgetHTML(){
+function timelineWidgetHTML(mini){
   const info = yearProgress();
   const marks = monthMarks(info.year);
 
@@ -869,7 +984,7 @@ function timelineWidgetHTML(){
   else if(info.percentRaw > 96) todayTransform = 'translateX(-100%)';
 
   return ''
-    + '<div class="timeline-widget">'
+    + '<div class="timeline-widget'+(mini?' timeline-widget--mini':'')+'">'
       + '<div class="tl-top"><span class="tl-year">'+info.year+'</span><span class="tl-caption">年 度 進 度</span></div>'
       + '<div class="tl-percent">'+info.percent+'%</div>'
       + '<div class="tl-track-area">'
@@ -881,8 +996,13 @@ function timelineWidgetHTML(){
         + '<div class="tl-today" style="left:'+info.percentRaw+'%; transform:'+todayTransform+'"><span class="caret">▲</span><span class="label">TODAY</span></div>'
       + '</div>'
       + '<div class="tl-stats"><span>已行 <b>'+info.dayOfYear+'</b> 日</span><span class="tl-sep">·</span><span>尚餘 <b>'+info.remaining+'</b> 日</span></div>'
-      + '<div class="timeline-caption">今天，是你 '+info.year+' 年裡獨一無二、不會重來的一天。</div>'
+      + '<div class="timeline-caption">今天，獨一無二、不會重來的一天。</div>'
     + '</div>';
+}
+
+function renderTopbarYearProgress(){
+  const el = document.getElementById('topbarYP');
+  if(el) el.innerHTML = timelineWidgetHTML(true);
 }
 
 // 儲存改用瀏覽器原生 localStorage（純前端部署，不依賴任何後端／第三方儲存服務）。
@@ -958,12 +1078,11 @@ function renderToday(){
   if(!entry){
     el.innerHTML = ''
       + '<div class="eyebrow">'+todayDisplay()+' · 尚未抽籤</div>'
-      + timelineWidgetHTML()
-      + '<div class="chip-row" id="focusChips"></div>'
+      + '<div class="focus-row" id="focusChips"></div>'
       + '<div class="tube-stage">'
         + '<div class="tube-wrap" id="tubeTap">'
           + '<div class="sticks">'
-            + [-20,-8,4,16].map(r=>'<div class="stick" style="transform:translateX(-50%) rotate('+r+'deg)"></div>').join('')
+            + [-42,-37,-32,-27,-22,-17,-12,-7,-2,3,8,13,18,23,28,33,38,43].map(r=>'<div class="stick" style="transform:translateX(-50%) rotate('+r+'deg)"></div>').join('')
           + '</div>'
           + '<div class="tube"></div>'
           + '<div class="tube-accent"></div>'
@@ -979,7 +1098,6 @@ function renderToday(){
   } else {
     el.innerHTML = ''
       + '<div class="eyebrow">'+todayDisplay()+' · 今日籤文</div>'
-      + timelineWidgetHTML()
       + renderResultBody(entry)
       + '<div class="btn-row">'
         + '<button class="btn btn-gold" id="shareBtn">生成分享卡</button>'
@@ -996,10 +1114,17 @@ function renderToday(){
 function renderFocusChips(){
   const wrap = document.getElementById('focusChips');
   if(!wrap) return;
-  wrap.innerHTML = FOCUS_CATS.map(f =>
-    '<button class="chip'+(focusCategory===f.key?' active':'')+'" data-focus="'+f.key+'">'+f.label+'</button>'
-  ).join('');
-  wrap.querySelectorAll('.chip').forEach(btn=>{
+  const activeIdx = Math.max(0, CATS.findIndex(c => c.key === focusCategory));
+  const sliderHidden = focusCategory === 'overall';
+
+  wrap.innerHTML = ''
+    + '<button class="fc-overall'+(focusCategory==='overall'?' active':'')+'" data-focus="overall">綜合</button>'
+    + '<div class="fc-segment">'
+      + '<div class="fc-slider'+(sliderHidden?' hidden':'')+'" style="transform:translateX('+(activeIdx*100)+'%)"></div>'
+      + CATS.map(c=>'<button class="fc-btn'+(focusCategory===c.key?' active':'')+'" data-focus="'+c.key+'">'+c.label+'</button>').join('')
+    + '</div>';
+
+  wrap.querySelectorAll('.fc-overall, .fc-btn').forEach(btn=>{
     btn.onclick = () => { focusCategory = btn.dataset.focus; renderFocusChips(); };
   });
 }
@@ -1019,7 +1144,7 @@ function beginDraw(){
   const caption = document.getElementById('drawCaption');
 
   // build rite sticks
-  sticksWrap.innerHTML = [-24,-8,8,24].map(r=>
+  sticksWrap.innerHTML = [-42,-37,-32,-27,-22,-17,-12,-7,-2,3,8,13,18,23,28,33,38,43].map(r=>
     '<div class="rite-stick" style="--r:'+r+'deg; left:calc(50% + '+(r*1.1)+'px)"></div>'
   ).join('');
 
@@ -1395,6 +1520,7 @@ document.querySelectorAll('[data-close]').forEach(btn=>{
 ============================================================ */
 (async function init(){
   await loadHistory();
+  renderTopbarYearProgress();
   renderToday();
 })();
 
