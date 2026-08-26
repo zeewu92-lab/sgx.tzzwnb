@@ -491,7 +491,32 @@ const STRINGS = {
     prefGroupLabel: '偏好', appearanceLabel: '外觀', notifyPrefLabel: '通知', languageLabel: '語言',
     calendarPrefLabel: '日曆', calendarPrefHint: '勾選要在「日程」頁日曆點選日期後，於底部同時顯示對應日期的曆法（可複選）。地標本身要用哪種曆法計算日期，仍在新增或編輯地標時個別設定。',
     otherGroupLabel: '其他', aboutLabel: '關於時光線', privacyLabel: '隱私權政策', termsLabel: '使用條款',
-    aboutBody: '時光線是一款用來記錄生活中重要時刻與紀念日的應用程式，陪你留住值得回味的時光。',
+    aboutBody: `# 關於時光線
+## 時光線
+時光線是一款專注於時間、日程與生活記憶管理的應用程式。
+我們希望透過簡潔、直覺的設計，協助您記錄重要日期、管理日程、查看世界各地時間，並將值得紀念的時刻妥善保存。
+讓時間不只是被計算，也值得被記住。
+---
+## 服務資訊
+**應用程式名稱：** 時光線
+**目前版本：** 1.1.0
+**官方網站：** timezzw.top
+**聯絡電子郵件：** support@timezzw.top
+---
+## 開發與營運
+本服務由個人開發者負責開發及營運。
+「趙子吳工作室」為本服務所使用之工作室名稱及品牌識別。
+---
+## 相關文件
+- [使用條款](https://timezzw.top/help/ToS)
+- [隱私權政策](https://timezzw.top/help/privacypolicy)
+---
+## 意見回饋
+如果您在使用時光線的過程中遇到問題，或對功能、介面及服務有任何建議，歡迎透過意見回饋功能或電子郵件與我們聯絡。
+**電子郵件：** support@timezzw.top
+我們會認真閱讀每一則回饋，並持續改善時光線。
+---
+© 2026 時光線`,
     legalPlaceholder: '完整內容準備中，稍後將於此提供。',
     loginPromptTitle: '登入以同步你的時光',
     appearanceModeSystem: '跟隨系統', appearanceModeLight: '淺色', appearanceModeDark: '深色',
@@ -7912,14 +7937,14 @@ function AlbumDetailScreen({ album, events, setEvents, setAlbums, t, isLargeScre
 }
 
 /* ---------------- 我的（帳戶、我的時光、資料、偏好、其他——完整的個人帳戶與 App 設定中心） ---------------- */
-// 整頁分成「首頁」與「子頁面」兩層：
-// - 首頁：帳戶卡片＋我的時光統計卡片＋三個分組列表卡片（資料／偏好／其他），一次性呈現，不需要點進去。
-// - 子頁面：帳戶管理、資料總覽、本機備份、匯入與匯出、同步與資料、關於／隱私權政策／使用條款，
-//   點擊對應項目後以「獨立頁面」（非置中彈窗）由下往上滑入、蓋住整個畫面（含底部導覽列），
-//   跟時間軸卡片點開詳情視窗是完全不同的呈現方式，符合「帳戶管理需要獨立頁面」的需求。
-// 外觀／通知／語言／日曆這幾項屬於「低頻、內容單薄」的偏好設定，沿用原本 AuthModal／
-// NotifySettingsButton／LangSwitcher 一模一樣的元件與互動邏輯，只是改成以「彈出面板」的形式
-// 掛在列表項目右側，不需要另外開一個獨立頁面——這也是需求文件裡明確允許的兩種呈現方式之一。
+// 整頁分成「首頁」與「彈出視窗」兩層：
+// - 首頁：帳戶卡片＋我的時光統計卡片（純展示、不可點擊）＋三個分組列表卡片（資料／偏好／其他），
+//   一次性呈現，不需要點進去。
+// - 彈出視窗：帳戶管理、本機備份、同步與資料、外觀、通知、語言、日曆、關於時光線，點擊對應
+//   項目後統一以置中彈窗（SettingsChoiceModal）呈現，共用同一個 choiceModal state——本頁除了
+//   「我的時光」統計卡片以外，所有點擊後會彈出新內容的項目都是這種視窗樣式，不再有另外
+//   由下往上滑入、蓋住整個畫面的獨立子頁面。使用條款／隱私權政策已收進「關於時光線」內文的
+//   「相關文件」連結，直接開對應網址，不再是「我的」頁裡的獨立選項。
 
 // 帳戶頭像：優先顯示 Google 等登入方式提供的頭像，沒有圖片時退回顯示名稱／Email 的字首，
 // 兩者都沒有才顯示預設的人形圖示，不會出現「空白圓圈」這種沒有內容的狀態。
@@ -7961,7 +7986,7 @@ function SettingsChoiceModal({ title, onClose, children }) {
     <div
       className="fixed inset-0 flex items-center justify-center px-6"
       style={{
-        zIndex: 300, // 高於「我的」子頁面（260）與其他所有彈窗，確保一定疊在最上層
+        zIndex: 300, // 高於 App 裡其他彈窗，確保一定疊在最上層
         background: shown ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0)',
         transition: `background ${DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
       }}
@@ -7977,11 +8002,13 @@ function SettingsChoiceModal({ title, onClose, children }) {
         }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-shrink-0">
           <h2 className="text-base font-black" style={{ color: INK }}>{title}</h2>
           <button onClick={handleClose} aria-label="close" style={{ color: INK_SOFT }}><X size={16} /></button>
         </div>
-        {children}
+        {/* 帳戶管理／本機備份等內容較多的視窗內文，這裡統一給一個上限高度＋自己捲動，
+            避免內容比手機螢幕還高時把視窗撐出畫面外。 */}
+        <div className="max-h-[70vh] overflow-y-auto">{children}</div>
       </div>
     </div>,
     document.body
@@ -8137,41 +8164,9 @@ function SettingsGroupCard({ title, children }) {
   );
 }
 
-// 子頁面外層容器：以獨立、由下往上滑入的全螢幕頁面呈現（蓋住底部導覽列），
-// 跟「相冊」在大螢幕上的全螢幕覆蓋層共用同一套 z-index 慣例，只是再往上加一層，
-// 確保「我的」的子頁面一定疊在最上面。淡入淡出交給 useOverlayTransition 處理，
-// 手機返回手勢／鍵盤 Esc 則交給 useModalBackClose，行為與 App 裡其他彈窗一致。
-function ProfileSubpageShell({ title, onBack, mounted, shown, children }) {
-  if (!mounted) return null;
-  return createPortal(
-    <div
-      className="fixed inset-0 flex flex-col"
-      style={{
-        zIndex: 260, background: 'var(--app-bg, var(--card-bg))',
-        opacity: shown ? 1 : 0, transform: shown ? 'translateY(0)' : 'translateY(16px)',
-        transition: 'opacity 200ms ease, transform 200ms cubic-bezier(0.22, 1, 0.36, 1)',
-      }}
-    >
-      <div
-        className="px-6 md:px-10 flex items-center gap-3 flex-shrink-0"
-        style={{ borderBottom: CARD_BORDER, paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 0px))', paddingBottom: '1.25rem' }}
-      >
-        <button onClick={onBack} aria-label="back" className="flex items-center justify-center rounded-full flex-shrink-0" style={{ ...glass(), width: '2.125rem', height: '2.125rem', color: INK }}>
-          <ChevronLeft size={18} />
-        </button>
-        <h1 className="text-lg font-black tracking-tight flex-1 truncate" style={{ color: INK }}>{title}</h1>
-      </div>
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 md:px-10 py-5 max-w-[720px] mx-auto w-full flex flex-col gap-4" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))' }}>
-        {children}
-      </div>
-    </div>,
-    document.body
-  );
-}
-
-// 「帳戶管理」子頁面：頭像／使用者名稱／Email／登入方式／帳戶安全（修改密碼，僅 Email 密碼帳號
-// 才有）／登出／刪除帳戶。內部再切三個小視圖（主畫面／修改密碼／刪除確認），邏輯跟原本
-// AuthModal 已登入時的內容完全一致，只是從「置中彈窗」搬成「全頁面」的呈現方式。
+// 「帳戶管理」視窗內容：頭像／使用者名稱／Email／登入方式／帳戶安全（修改密碼，僅 Email 密碼
+// 帳號才有）／登出／刪除帳戶。內部再切三個小視圖（主畫面／修改密碼／刪除確認），邏輯跟原本
+// AuthModal 已登入時的內容完全一致，只是搬進 SettingsChoiceModal 這個共用的置中彈窗呈現。
 function AccountManagementPage({ t, fbUser, onClose }) {
   const [view, setView] = useState('main'); // 'main' | 'password' | 'delete'
   const [busy, setBusy] = useState(false);
@@ -8288,7 +8283,7 @@ function AccountManagementPage({ t, fbUser, onClose }) {
   );
 }
 
-// 「本機備份」：跟原本 AuthModal 裡的匯出／匯入邏輯完全一致，只是搬到獨立頁面呈現。
+// 「本機備份」：跟原本 AuthModal 裡的匯出／匯入邏輯完全一致，只是搬進置中彈窗呈現。
 function BackupDataPage({ t, backupData, onImportBackup }) {
   const importFileRef = useRef(null);
   const [backupMsg, setBackupMsg] = useState(null);
@@ -8369,7 +8364,7 @@ function formatRelativeSync(ts, t) {
   return t.lastSyncedAgo(t.syncDaysAgo(diffDay));
 }
 
-// 「同步與資料」子頁面：只用「帳戶」「同步」等產品層級的語彙呈現狀態，完全不提 Firebase
+// 「同步與資料」視窗內容：只用「帳戶」「同步」等產品層級的語彙呈現狀態，完全不提 Firebase
 // 或特定地區限制等技術細節；連線失敗時才顯示簡潔的錯誤提示，平常不主動暴露任何技術資訊。
 function SyncDataPage({ t, fbUser, syncStatus, lastSyncedAt, onOpenAuth }) {
   const [, forceTick] = useState(0);
@@ -8402,6 +8397,80 @@ function SyncDataPage({ t, fbUser, syncStatus, lastSyncedAt, onOpenAuth }) {
   );
 }
 
+// 把 t.aboutBody 這種簡易 Markdown（# 標題／## 副標題／**粗體**／[文字](網址) 連結／
+// ---分隔線／- 條列／一般段落）轉成排版過的 JSX，讓「關於時光線」可以有標題、分隔線、
+// 粗體與可點擊連結效果，而不是整段純文字擠在一起。之後其他語言要補上一樣格式的文案時，
+// 直接沿用同一套語法即可，不用再動這裡的解析邏輯。
+function renderInlineBold(line, keyPrefix) {
+  // 同時支援 **粗體** 與 [文字](網址) 連結語法，用同一個正則切分後依序判斷是哪一種片段。
+  const parts = line.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\(https?:\/\/[^\s)]+\))/g).filter((s) => s !== '');
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={`${keyPrefix}-${i}`}>{part.slice(2, -2)}</strong>;
+    }
+    const linkMatch = part.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+    if (linkMatch) {
+      return (
+        <a
+          key={`${keyPrefix}-${i}`}
+          href={linkMatch[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-bold underline underline-offset-2"
+          style={{ color: ACCENT }}
+        >
+          {linkMatch[1]}
+        </a>
+      );
+    }
+    return <span key={`${keyPrefix}-${i}`}>{part}</span>;
+  });
+}
+
+function MarkdownBody({ text, color, colorSoft }) {
+  const lines = text.split('\n');
+  const elements = [];
+  let listBuffer = [];
+  const flushList = (key) => {
+    if (listBuffer.length === 0) return;
+    elements.push(
+      <ul key={`ul-${key}`} className="list-disc pl-5 space-y-1">
+        {listBuffer.map((item, i) => (
+          <li key={`li-${key}-${i}`}>{renderInlineBold(item, `li-${key}-${i}`)}</li>
+        ))}
+      </ul>
+    );
+    listBuffer = [];
+  };
+  lines.forEach((rawLine, idx) => {
+    const line = rawLine.trim();
+    if (line === '') { flushList(idx); return; }
+    if (line === '---') {
+      flushList(idx);
+      elements.push(<hr key={`hr-${idx}`} style={{ borderColor: colorSoft }} className="my-3 opacity-30" />);
+      return;
+    }
+    if (line.startsWith('## ')) {
+      flushList(idx);
+      elements.push(<h3 key={`h3-${idx}`} className="text-base font-bold mt-1" style={{ color }}>{line.slice(3)}</h3>);
+      return;
+    }
+    if (line.startsWith('# ')) {
+      flushList(idx);
+      elements.push(<h2 key={`h2-${idx}`} className="text-lg font-bold" style={{ color }}>{line.slice(2)}</h2>);
+      return;
+    }
+    if (line.startsWith('- ')) {
+      listBuffer.push(line.slice(2));
+      return;
+    }
+    flushList(idx);
+    elements.push(<p key={`p-${idx}`} style={{ color }}>{renderInlineBold(line, `p-${idx}`)}</p>);
+  });
+  flushList('end');
+  return <div className="text-sm leading-relaxed space-y-2">{elements}</div>;
+}
+
 function ProfilePage({
   t, fbUser, localSaveError, syncStatus, onOpenAuth,
   notifyEnabled, onToggleNotify, notifyDaysBefore, setNotifyDaysBefore, notifyPermission,
@@ -8409,18 +8478,10 @@ function ProfilePage({
   events, albums, clocks, customIcons, onImportBackup, lastSyncedAt, appVersion,
   enabledAltCalendars, setEnabledAltCalendars,
 }) {
-  const [subpage, setSubpage] = useState(null);
-  const [mounted, shown] = useOverlayTransition(subpage !== null, 200);
-  useModalBackClose(subpage !== null, () => setSubpage(null));
-
-  // 「偏好」分組裡外觀／通知／語言／日曆這四項，點整列跳出的置中視窗——跟 subpage（獨立滑入頁面）
-  // 是兩種不同層級的呈現，這裡另外用一個 state 管理，彼此互不影響。
-  const [choiceModal, setChoiceModal] = useState(null); // null | 'appearance' | 'notify' | 'language' | 'calendar' | 'about' | 'privacy' | 'terms'
-
-  // 淡出動畫播放期間 subpage 已經變成 null，但畫面還在，這裡另外記一份「最後顯示過的子頁面」，
-  // 讓子頁面內容跟著淡出、而不是在動畫播到一半時瞬間清空變成空白。
-  const [renderedSubpage, setRenderedSubpage] = useState(null);
-  useEffect(() => { if (subpage) setRenderedSubpage(subpage); }, [subpage]);
+  // 「我的」頁除了「我的時光」統計卡片（純展示、不可點擊）以外，所有點擊後彈出新內容的項目
+  // （帳戶管理／本機備份／同步與資料／外觀／通知／語言／日曆／關於時光線）都統一用同一個
+  // 置中視窗（SettingsChoiceModal）呈現，不再另外區分「獨立滑入子頁面」與「彈出視窗」兩種樣式。
+  const [choiceModal, setChoiceModal] = useState(null); // null | 'account' | 'backup' | 'sync' | 'appearance' | 'notify' | 'language' | 'calendar' | 'about'
 
   const [photoCount, setPhotoCount] = useState(0);
   useEffect(() => {
@@ -8439,11 +8500,6 @@ function ProfilePage({
   const eventCount = events ? events.length : 0;
   const albumCount = albums ? albums.length : 0;
 
-  const subpageTitle = {
-    account: t.accountManageLabel, backup: t.backupSectionTitle,
-    sync: t.syncDataLabel,
-  }[renderedSubpage] || '';
-
   let syncRightText = t.notSyncedStatus;
   if (fbUser) {
     if (syncStatus === 'syncing') syncRightText = t.syncing;
@@ -8453,12 +8509,11 @@ function ProfilePage({
 
   const appearanceValueText = { system: t.appearanceModeSystem, light: t.appearanceModeLight, dark: t.appearanceModeDark }[themeMode] || t.appearanceModeSystem;
   const notifyValueText = notifyEnabled ? t.darkModeOn : t.darkModeOff;
-  // 「關於時光線／隱私權政策／使用條款」原本跟帳號管理等功能頁共用同一套「子頁面往右滑入」
-  // 的外殼（ProfileSubpageShell），這三個純粹是靜態說明文字，改成跟外觀／通知／語言／日曆
-  // 一樣，用置中彈窗（SettingsChoiceModal）呈現，跟 choiceModal 共用同一個 state。
+  // 帳戶管理／本機備份／同步與資料／外觀／通知／語言／日曆／關於時光線，全部共用同一個
+  // 置中彈窗（SettingsChoiceModal）與同一個 choiceModal state，只是切換裡面顯示的內容。
   const choiceModalTitle = {
     appearance: t.appearanceLabel, notify: t.notifyPrefLabel, language: t.languageLabel, calendar: t.calendarPrefLabel,
-    about: t.aboutLabel, privacy: t.privacyLabel, terms: t.termsLabel,
+    about: t.aboutLabel, account: t.accountManageLabel, backup: t.backupSectionTitle, sync: t.syncDataLabel,
   }[choiceModal] || '';
 
   return (
@@ -8471,7 +8526,7 @@ function ProfilePage({
             <p className="text-base font-black truncate" style={{ color: INK }}>{fbUser.displayName || (fbUser.email ? fbUser.email.split('@')[0] : t.account)}</p>
             {fbUser.email && <p className="text-xs truncate" style={{ color: INK_SOFT }}>{fbUser.email}</p>}
           </div>
-          <button onClick={() => setSubpage('account')} className="relative flex items-center gap-1 text-xs font-bold px-3 py-2 rounded-full flex-shrink-0" style={{ background: accentAlpha('18'), color: ACCENT }}>
+          <button onClick={() => setChoiceModal('account')} className="relative flex items-center gap-1 text-xs font-bold px-3 py-2 rounded-full flex-shrink-0" style={{ background: accentAlpha('18'), color: ACCENT }}>
             {t.accountManageLabel}
             {hasSyncIssue && <span className="absolute rounded-full" style={{ width: 7, height: 7, top: -1, right: -1, background: DANGER, border: '1.5px solid var(--card-bg)' }} />}
             <ChevronRight size={13} />
@@ -8506,9 +8561,9 @@ function ProfilePage({
 
       {/* 三、資料 */}
       <SettingsGroupCard title={t.dataGroupLabel}>
-        <SettingsRow isFirst icon={<Database size={18} />} label={t.backupSectionTitle} onClick={() => setSubpage('backup')} />
+        <SettingsRow isFirst icon={<Database size={18} />} label={t.backupSectionTitle} onClick={() => setChoiceModal('backup')} />
         <SettingsRow
-          icon={<RefreshCw size={18} />} label={t.syncDataLabel} onClick={() => setSubpage('sync')}
+          icon={<RefreshCw size={18} />} label={t.syncDataLabel} onClick={() => setChoiceModal('sync')}
           right={<span className="text-xs font-bold" style={{ color: syncStatus === 'error' ? DANGER : INK_SOFT }}>{syncRightText}</span>}
         />
       </SettingsGroupCard>
@@ -8530,24 +8585,17 @@ function ProfilePage({
         <SettingsRow icon={<Calendar size={18} />} label={t.calendarPrefLabel} onClick={() => setChoiceModal('calendar')} />
       </SettingsGroupCard>
 
-      {/* 五、其他 */}
+      {/* 五、其他：使用條款／隱私權政策已收進「關於時光線」內文的「相關文件」連結，
+          這裡不再重複列出獨立選項。 */}
       <SettingsGroupCard title={t.otherGroupLabel}>
         <SettingsRow isFirst icon={<Mail size={18} />} label={t.feedbackLabel} onClick={onOpenFeedback} />
         <SettingsRow icon={<Info size={18} />} label={t.aboutLabel} onClick={() => setChoiceModal('about')} />
-        <SettingsRow icon={<Shield size={18} />} label={t.privacyLabel} onClick={() => setChoiceModal('privacy')} />
-        <SettingsRow icon={<FileText size={18} />} label={t.termsLabel} onClick={() => setChoiceModal('terms')} />
       </SettingsGroupCard>
 
       <div className="flex flex-col items-center gap-0.5 pt-2 pb-2">
         <span className="text-xs font-bold" style={{ color: INK_SOFT }}>時光線</span>
         {appVersion && <span className="text-[11px]" style={{ color: INK_SOFT, opacity: 0.7 }}>Version {appVersion}</span>}
       </div>
-
-      <ProfileSubpageShell title={subpageTitle} onBack={() => setSubpage(null)} mounted={mounted} shown={shown}>
-        {renderedSubpage === 'account' && <AccountManagementPage t={t} fbUser={fbUser} onClose={() => setSubpage(null)} />}
-        {renderedSubpage === 'backup' && <BackupDataPage t={t} backupData={backupData} onImportBackup={onImportBackup} />}
-        {renderedSubpage === 'sync' && <SyncDataPage t={t} fbUser={fbUser} syncStatus={syncStatus} lastSyncedAt={lastSyncedAt} onOpenAuth={onOpenAuth} />}
-      </ProfileSubpageShell>
 
       {choiceModal && (
         <SettingsChoiceModal title={choiceModalTitle} onClose={() => setChoiceModal(null)}>
@@ -8559,19 +8607,17 @@ function ProfilePage({
           {choiceModal === 'calendar' && (
             <CalendarPrefChoiceContent enabledAltCalendars={enabledAltCalendars} setEnabledAltCalendars={setEnabledAltCalendars} lang={lang} t={t} />
           )}
-          {/* 「關於時光線／隱私權政策／使用條款」：純文字說明，內容都還是暫定佔位文字（見
-              t.aboutBody／t.legalPlaceholder），之後正式文案定案後直接換這兩個翻譯字串內容
-              即可，不用再動這裡的結構。用 max-h+overflow-y-auto 包住，之後換上完整的隱私權
-              政策／使用條款全文時，視窗不會被長文字撐爆版面，會在視窗內部自己捲動。 */}
+          {/* 「關於時光線」：內文已包含使用條款／隱私權政策的可點擊連結（見 t.aboutBody），
+              用 max-h+overflow-y-auto 包住，避免長文字把視窗撐爆版面，會在視窗內部自己捲動。 */}
           {choiceModal === 'about' && (
-            <p className="text-sm leading-relaxed max-h-[60vh] overflow-y-auto" style={{ color: INK }}>{t.aboutBody}</p>
+            <MarkdownBody text={t.aboutBody} color={INK} colorSoft={INK_SOFT} />
           )}
-          {choiceModal === 'privacy' && (
-            <p className="text-sm leading-relaxed max-h-[60vh] overflow-y-auto" style={{ color: INK_SOFT }}>{t.legalPlaceholder}</p>
-          )}
-          {choiceModal === 'terms' && (
-            <p className="text-sm leading-relaxed max-h-[60vh] overflow-y-auto" style={{ color: INK_SOFT }}>{t.legalPlaceholder}</p>
-          )}
+          {/* 帳戶管理／本機備份／同步與資料：原本用獨立全螢幕子頁面（ProfileSubpageShell）呈現，
+              現在統一改成跟外觀／通知／關於一樣的置中視窗，「我的」頁除了「我的時光」統計卡片
+              （純展示、本來就不可點擊）以外，所有點擊後彈出新內容的項目都收斂成同一種視窗樣式。 */}
+          {choiceModal === 'account' && <AccountManagementPage t={t} fbUser={fbUser} onClose={() => setChoiceModal(null)} />}
+          {choiceModal === 'backup' && <BackupDataPage t={t} backupData={backupData} onImportBackup={onImportBackup} />}
+          {choiceModal === 'sync' && <SyncDataPage t={t} fbUser={fbUser} syncStatus={syncStatus} lastSyncedAt={lastSyncedAt} onOpenAuth={onOpenAuth} />}
         </SettingsChoiceModal>
       )}
     </div>
