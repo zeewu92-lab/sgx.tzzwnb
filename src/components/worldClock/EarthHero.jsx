@@ -1,7 +1,7 @@
 import { ACCENT, INK } from '../../constants/colors.js';
 import { LOCALE_MAP } from '../../constants/languages.js';
 import { COUNTRIES } from '../../constants/worldCities.js';
-import { getTzCoords, projectToGlobe } from '../../utils/earthCoords.js';
+import { getTzCoords, projectToGlobe } from './earthCoords.js';
 import earthImg from '../../assets/earth-hero.png';
 
 // 這張地球鏡頭正對著的經緯度（大約對準東南亞／澳洲一帶），跟素材圖的取景角度搭配。
