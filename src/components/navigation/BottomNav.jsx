@@ -10,13 +10,13 @@ export const BOTTOM_NAV_LOGO_SRC_DARK = '/nav-logo-dark.png';
 export const BOTTOM_NAV_ITEMS = [
   { id: 'clock', icon: Globe, labelKey: 'worldClock' },
   { id: 'schedule', icon: Calendar, labelKey: 'navSchedule' },
-  { id: 'brand', icon: null, labelKey: null }, // 中央特殊處理，見下方渲染邏輯
+  { id: 'home', icon: null, labelKey: null }, // 中央特殊處理（時光線），見下方渲染邏輯
   { id: 'gallery', icon: Images, labelKey: 'navGallery' },
   { id: 'profile', icon: User, labelKey: 'navProfile' },
 ];
 
 const NAV_BAR_HEIGHT = 64;
-const NOTCH_BUTTON_SIZE = 56;
+const NOTCH_BUTTON_SIZE = 64;
 // objectBoundingBox 座標系（0~1），會隨容器實際寬高自動縮放，不需要手動換算 px。
 // 形狀：兩側平直，中間用兩段貝茲曲線向下凹，做出「包住」中央按鈕的弧形缺口。
 const NOTCH_PATH =
@@ -62,8 +62,8 @@ export function BottomNavLogo({ active, theme = 'light', size = 26 }) {
 }
 
 export function BottomNavigation({ activeTab, setActiveTab, t, theme = 'light' }) {
-  const sideItems = BOTTOM_NAV_ITEMS.filter(item => item.id !== 'brand');
-  const centerItem = BOTTOM_NAV_ITEMS.find(item => item.id === 'brand');
+  const sideItems = BOTTOM_NAV_ITEMS.filter(item => item.id !== 'home');
+  const centerItem = BOTTOM_NAV_ITEMS.find(item => item.id === 'home');
   const centerActive = activeTab === centerItem.id;
 
   return (
@@ -135,7 +135,7 @@ export function BottomNavigation({ activeTab, setActiveTab, t, theme = 'light' }
             boxShadow: '0 6px 16px rgba(0,0,0,0.18)',
           }}
         >
-          <BottomNavLogo active={centerActive} theme={theme} size={26} />
+          <BottomNavLogo active={centerActive} theme={theme} size={32} />
         </button>
       </div>
     </nav>
@@ -161,7 +161,7 @@ export function SideNavigation({ activeTab, setActiveTab, t, theme = 'light' }) 
     >
       {BOTTOM_NAV_ITEMS.map(item => {
         const active = activeTab === item.id;
-        const isCenter = item.id === 'brand';
+        const isCenter = item.id === 'home';
         const Icon = item.icon;
         return (
           <button
@@ -173,9 +173,9 @@ export function SideNavigation({ activeTab, setActiveTab, t, theme = 'light' }) 
             {isCenter ? (
               <span
                 className="flex items-center justify-center rounded-full flex-shrink-0"
-                style={{ width: 44, height: 44, background: 'var(--card-bg, #fff)', border: CARD_BORDER, boxShadow: '0 4px 10px rgba(0,0,0,0.14)' }}
+                style={{ width: 52, height: 52, background: 'var(--card-bg, #fff)', border: CARD_BORDER, boxShadow: '0 4px 10px rgba(0,0,0,0.14)' }}
               >
-                <BottomNavLogo active={active} theme={theme} size={22} />
+                <BottomNavLogo active={active} theme={theme} size={26} />
               </span>
             ) : (
               <Icon size={20} style={{ color: active ? ACCENT : INK_SOFT, transition: 'color 150ms ease' }} strokeWidth={active ? 2.4 : 2} />
