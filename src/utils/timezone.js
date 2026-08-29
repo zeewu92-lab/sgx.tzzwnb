@@ -63,3 +63,62 @@ export function getTimeHMS(date, tz) {
     return { h: date.getHours(), m: date.getMinutes(), s: date.getSeconds(), ms: date.getMilliseconds() };
   }
 }
+
+// 取得某個時區「現在」對應的當地日期（年/月/日），日出日落計算要用「當地那一天」
+// 而不是使用者瀏覽器所在地的日期，兩者在日期交界前後可能差一天。
+export function getLocalDateParts(date, tz) {
+  try {
+    const zone = tz || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: zone, year: 'numeric', month: 'numeric', day: 'numeric',
+    }).formatToParts(date);
+    const obj = {};
+    parts.forEach(p => { if (p.type !== 'literal') obj[p.type] = parseInt(p.value, 10); });
+    return { y: obj.year, m: obj.month, d: obj.day };
+  } catch (err) {
+    return { y: date.getFullYear(), m: date.getMonth() + 1, d: date.getDate() };
+  }
+}
+
+// 日出／日落時間計算（NOAA／《天文年鑑》通用簡化公式，又稱 Sunrise Equation）。
+// 傳入某個時區「當地那一天」＋座標，回傳當天日出/日落的 UTC 時刻（Date）；
+// 極晝/極夜等算不出日出或日落的情況回傳 null。精度落在幾分鐘之內，
+// 給「城市詳細頁」參考已經足夠，不是導航等級的精確計算。
+export function getSunTimes(date, tz, lat, lng) {
+  const { y, m, d } = getLocalDateParts(date, tz);
+  const rad = Math.PI / 180;
+  const dayStartUTC = Date.UTC(y, m - 1, d);
+  const dayOfYear = Math.floor((dayStartUTC - Date.UTC(y, 0, 1)) / 86400000) + 1;
+  const lngHour = lng / 15;
+
+  function calc(isSunrise) {
+    const t = dayOfYear + ((isSunrise ? 6 : 18) - lngHour) / 24;
+    const M = 0.9856 * t - 3.289;
+    let L = M + 1.916 * Math.sin(M * rad) + 0.020 * Math.sin(2 * M * rad) + 282.634;
+    L = ((L % 360) + 360) % 360;
+    let RA = Math.atan(0.91764 * Math.tan(L * rad)) / rad;
+    RA = ((RA % 360) + 360) % 360;
+    const Lquadrant = Math.floor(L / 90) * 90;
+    const RAquadrant = Math.floor(RA / 90) * 90;
+    RA = (RA + (Lquadrant - RAquadrant)) / 15;
+    const sinDec = 0.39782 * Math.sin(L * rad);
+    const cosDec = Math.cos(Math.asin(sinDec));
+    const zenith = 90.833;
+    const cosH = (Math.cos(zenith * rad) - sinDec * Math.sin(lat * rad)) / (cosDec * Math.cos(lat * rad));
+    if (cosH > 1 || cosH < -1) return null; // 極夜（升不起來）／極晝（不會落下）
+    let H = isSunrise ? 360 - Math.acos(cosH) / rad : Math.acos(cosH) / rad;
+    H = H / 15;
+    const T = H + RA - 0.06571 * t - 6.622;
+    let UT = ((T - lngHour) % 24 + 24) % 24;
+    const hour = Math.floor(UT);
+    const minute = Math.round((UT - hour) * 60);
+    return new Date(Date.UTC(y, m - 1, d, hour, minute));
+  }
+
+  return { sunrise: calc(true), sunset: calc(false) };
+}
+
+export function formatSunTime(sunDate, tz, lang, localeMap) {
+  if (!sunDate) return '—';
+  return new Intl.DateTimeFormat(localeMap[lang], { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(sunDate);
+}
