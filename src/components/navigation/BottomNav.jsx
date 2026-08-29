@@ -20,9 +20,9 @@ const NAV_BAR_HEIGHT = 64;
 // 中央浮動按鈕實際尺寸
 const NOTCH_BUTTON_SIZE = 64;
 
-// 中央預留空間。
-// 比按鈕本身稍寬，讓「日程」與「相冊」不會貼近中央 Logo。
-const NOTCH_SPACE = 84;
+// 中央實際佔據的空間。
+// 這個值會真正參與 flex 佈局，所以左右兩側項目會被推開。
+const NOTCH_SPACE = 88;
 
 // 中央凹槽
 const NOTCH_PATH =
@@ -126,16 +126,20 @@ function NavItem({
         transition: 'transform 100ms ease',
       }}
       onPointerDown={event => {
-        event.currentTarget.style.transform = 'scale(0.94)';
+        event.currentTarget.style.transform =
+          'scale(0.94)';
       }}
       onPointerUp={event => {
-        event.currentTarget.style.transform = 'scale(1)';
+        event.currentTarget.style.transform =
+          'scale(1)';
       }}
       onPointerCancel={event => {
-        event.currentTarget.style.transform = 'scale(1)';
+        event.currentTarget.style.transform =
+          'scale(1)';
       }}
       onPointerLeave={event => {
-        event.currentTarget.style.transform = 'scale(1)';
+        event.currentTarget.style.transform =
+          'scale(1)';
       }}
     >
       <span
@@ -184,8 +188,16 @@ export function BottomNavigation({
   t,
   theme = 'light',
 }) {
-  const sideItems = BOTTOM_NAV_ITEMS.filter(
-    item => item.id !== 'home'
+  const leftItems = BOTTOM_NAV_ITEMS.filter(
+    item =>
+      item.id === 'clock' ||
+      item.id === 'schedule'
+  );
+
+  const rightItems = BOTTOM_NAV_ITEMS.filter(
+    item =>
+      item.id === 'gallery' ||
+      item.id === 'profile'
   );
 
   const centerItem = BOTTOM_NAV_ITEMS.find(
@@ -215,7 +227,7 @@ export function BottomNavigation({
           height: NAV_BAR_HEIGHT,
         }}
       >
-        {/* 背景層與中央凹槽 */}
+        {/* 導覽列背景與中央凹槽 */}
         <div
           aria-hidden="true"
           style={{
@@ -232,41 +244,69 @@ export function BottomNavigation({
           }}
         />
 
-        {/* 四個普通導航項目 */}
+        {/* 左右四個導航項目 */}
         <div
-          className="relative h-full flex items-center justify-between px-2"
+          className="relative h-full flex items-stretch"
+          style={{
+            paddingLeft: 8,
+            paddingRight: 8,
+          }}
         >
-          {sideItems.map((item, index) => (
-            <NavItem
-              key={item.id}
-              item={item}
-              active={activeTab === item.id}
-              onClick={() =>
-                setActiveTab(item.id)
-              }
-              t={t}
-            />
-          ))}
+          {/* 左側：世界時鐘 + 日程 */}
+          <div
+            className="flex-1 flex items-stretch"
+            style={{
+              minWidth: 0,
+            }}
+          >
+            {leftItems.map(item => (
+              <NavItem
+                key={item.id}
+                item={item}
+                active={
+                  activeTab === item.id
+                }
+                onClick={() =>
+                  setActiveTab(item.id)
+                }
+                t={t}
+              />
+            ))}
+          </div>
 
-          {/* 中央預留區。
-              84px > 中央按鈕 64px，
-              因此日程 / 相冊會與 Logo 保持更大的距離。 */}
-          <span
+          {/* 真正佔據空間的中央區域 */}
+          <div
             aria-hidden="true"
             style={{
-              position: 'absolute',
-              left: '50%',
-              top: 0,
               width: NOTCH_SPACE,
-              height: '100%',
-              transform:
-                'translateX(-50%)',
-              pointerEvents: 'none',
+              flexShrink: 0,
             }}
           />
+
+          {/* 右側：相冊 + 我的 */}
+          <div
+            className="flex-1 flex items-stretch"
+            style={{
+              minWidth: 0,
+            }}
+          >
+            {rightItems.map(item => (
+              <NavItem
+                key={item.id}
+                item={item}
+                active={
+                  activeTab === item.id
+                }
+                onClick={() =>
+                  setActiveTab(item.id)
+                }
+                t={t}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* 中央浮動按鈕 */}
+        {/* 中央浮動「時光線」按鈕 */}
         <button
           type="button"
           onClick={() =>
@@ -274,7 +314,9 @@ export function BottomNavigation({
           }
           aria-label="時光線"
           aria-current={
-            centerActive ? 'page' : undefined
+            centerActive
+              ? 'page'
+              : undefined
           }
           className="flex items-center justify-center rounded-full"
           style={{
@@ -371,7 +413,9 @@ export function SideNavigation({
                 : t[item.labelKey]
             }
             aria-current={
-              active ? 'page' : undefined
+              active
+                ? 'page'
+                : undefined
             }
             className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-2xl"
             style={{
