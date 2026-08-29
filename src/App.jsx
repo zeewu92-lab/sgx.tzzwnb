@@ -138,7 +138,7 @@ export default function App() {
     } else {
       setAlbumRoute({ screen: 'create', detailAlbumId: null, prefillEventId: eventId });
     }
-    setActiveTab('gallery');
+    navigateToTab('gallery');
   }
 
   // File Handling API：使用者在作業系統裡直接用「開啟檔案」／雙擊 .tzzwnb 備份檔、
@@ -216,7 +216,45 @@ export default function App() {
   // 完全不看這個 state。放在 App 這一層而不是各分頁自己的 local state，是因為分頁互相
   // 切換時（例如切去「圖片庫」再切回「時光線」）不會重新掛載 WorldClockSection／
   // TimelineSection，兩者的內部狀態（捲動位置、展開的相冊、搜尋關鍵字等）才不會被重置。
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === 'undefined') return 'home';
+
+    const hash = window.location.hash.replace(/^#/, '');
+    const validTabs = ['home', 'clock', 'schedule', 'gallery', 'profile'];
+
+    return validTabs.includes(hash) ? hash : 'home';
+  });
+
+  function navigateToTab(tab) {
+    const validTabs = ['home', 'clock', 'schedule', 'gallery', 'profile'];
+
+    if (!validTabs.includes(tab)) return;
+
+    setActiveTab(tab);
+
+    if (typeof window !== 'undefined') {
+      const currentHash = window.location.hash.replace(/^#/, '');
+
+      if (currentHash !== tab) {
+        window.location.hash = tab;
+      }
+    }
+  }
+
+  useEffect(() => {
+    function handleHashChange() {
+      const hash = window.location.hash.replace(/^#/, '');
+      const validTabs = ['home', 'clock', 'schedule', 'gallery', 'profile'];
+
+      setActiveTab(validTabs.includes(hash) ? hash : 'home');
+    }
+
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
   // 「日程」分頁（layout='cards'）專用的狀態，放在 App 這一層而不是 AnniversaryCalendar／
   // TimelineSection 自己的 local state，理由跟 activeTab 一樣：分頁切走切回時不希望被重置，
   // 而且日曆（AnniversaryCalendar）跟事件列表（TimelineSection）是兩個獨立元件，
@@ -1064,7 +1102,7 @@ export default function App() {
                 />
               )}
             </main>
-            <SideNavigation activeTab={activeTab} setActiveTab={setActiveTab} t={t} />
+            <SideNavigation activeTab={activeTab} setActiveTab={navigateToTab} t={t} />
           </div>
         ) : (
           /* 手機版：五個分頁的底部導覽列架構。
@@ -1294,7 +1332,7 @@ export default function App() {
                 />
               )}
             </main>
-            <BottomNavigation activeTab={activeTab} setActiveTab={setActiveTab} t={t} />
+            <BottomNavigation activeTab={activeTab} setActiveTab={navigateToTab} t={t} />
           </>
         )}
       </div>
