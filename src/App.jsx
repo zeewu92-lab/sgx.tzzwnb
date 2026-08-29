@@ -920,6 +920,7 @@ export default function App() {
                     homeTzId={homeTzId}
                     setHomeTzId={setHomeTzId}
                     unlimitedHeight
+                    fullPage
                   />
                 </div>
               )}
@@ -1126,6 +1127,7 @@ export default function App() {
                     homeTzId={homeTzId}
                     setHomeTzId={setHomeTzId}
                     unlimitedHeight
+                    fullPage
                   />
                 </div>
               )}
