@@ -20,20 +20,39 @@ const NAV_BAR_HEIGHT = 64;
 // 中央浮動按鈕實際尺寸
 const NOTCH_BUTTON_SIZE = 64;
 
-// 中央實際佔據的空間。
-// 這個值會真正參與 flex 佈局，所以左右兩側項目會被推開。
+// 中央真正佔據的空間
 const NOTCH_SPACE = 88;
 
-// 中央凹槽
-const NOTCH_PATH =
-  'M0,0 L0.40,0 C0.455,0 0.455,0.62 0.5,0.62 C0.545,0.62 0.545,0 0.60,0 L1,0 L1,1 L0,1 Z';
+/*
+ * 中央凹槽幾何。
+ *
+ * 這次使用更深、更圓的弧形，
+ * 讓左右兩側真正形成「包住中央 Logo」的視覺。
+ */
+const NOTCH_LEFT = 0.395;
+const NOTCH_RIGHT = 0.605;
+const NOTCH_DEPTH = 0.68;
+
+const NOTCH_PATH = `
+  M0,0
+  L${NOTCH_LEFT},0
+  C0.445,0 0.445,${NOTCH_DEPTH} 0.5,${NOTCH_DEPTH}
+  C0.555,${NOTCH_DEPTH} 0.555,0 ${NOTCH_RIGHT},0
+  L1,0
+  L1,1
+  L0,1
+  Z
+`;
 
 function NotchClipDefs() {
   return (
     <svg
       width="0"
       height="0"
-      style={{ position: 'absolute' }}
+      style={{
+        position: 'absolute',
+        overflow: 'hidden',
+      }}
       aria-hidden="true"
     >
       <defs>
@@ -44,6 +63,44 @@ function NotchClipDefs() {
           <path d={NOTCH_PATH} />
         </clipPath>
       </defs>
+    </svg>
+  );
+}
+
+/*
+ * 凹槽邊緣描線。
+ *
+ * clip-path 本身只負責挖掉背景，
+ * 所以額外用 SVG 把兩側弧線真正畫出來。
+ */
+function NotchBorder() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 100 64"
+      preserveAspectRatio="none"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: NAV_BAR_HEIGHT,
+        pointerEvents: 'none',
+        overflow: 'visible',
+      }}
+    >
+      <path
+        d={`
+          M0,0
+          H${NOTCH_LEFT * 100}
+          C44.5,0 44.5,${NOTCH_DEPTH * 64} 50,${NOTCH_DEPTH * 64}
+          C55.5,${NOTCH_DEPTH * 64} 55.5,0 ${NOTCH_RIGHT * 100},0
+          H100
+        `}
+        fill="none"
+        stroke="var(--card-border)"
+        strokeWidth="0.8"
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
   );
 }
@@ -227,7 +284,7 @@ export function BottomNavigation({
           height: NAV_BAR_HEIGHT,
         }}
       >
-        {/* 導覽列背景與中央凹槽 */}
+        {/* 導覽列背景 */}
         <div
           aria-hidden="true"
           style={{
@@ -243,6 +300,9 @@ export function BottomNavigation({
               'url(#bottom-nav-notch)',
           }}
         />
+
+        {/* 凹槽弧線 */}
+        <NotchBorder />
 
         {/* 左右四個導航項目 */}
         <div
@@ -274,7 +334,7 @@ export function BottomNavigation({
             ))}
           </div>
 
-          {/* 真正佔據空間的中央區域 */}
+          {/* 真正佔據中央空間 */}
           <div
             aria-hidden="true"
             style={{
@@ -333,8 +393,8 @@ export function BottomNavigation({
             border: CARD_BORDER,
             boxShadow:
               centerActive
-                ? '0 7px 18px rgba(0,0,0,0.22)'
-                : '0 5px 14px rgba(0,0,0,0.16)',
+                ? '0 7px 18px rgba(0,0,0,0.20)'
+                : '0 5px 14px rgba(0,0,0,0.14)',
             WebkitTapHighlightColor:
               'transparent',
             transition:
