@@ -17,13 +17,13 @@ export const BOTTOM_NAV_ITEMS = [
 
 const NAV_BAR_HEIGHT = 64;
 
-// 中央浮動按鈕
+// 中央 Logo
 const NOTCH_BUTTON_SIZE = 64;
 
-// 中央真正佔據的空間
+// 中央空間
 const NOTCH_SPACE = 88;
 
-// 凹槽左右位置
+// 凹槽位置
 const NOTCH_LEFT = 0.395;
 const NOTCH_RIGHT = 0.605;
 
@@ -64,7 +64,7 @@ function NotchClipDefs() {
   );
 }
 
-// 中央凹槽邊緣
+// 凹槽邊界
 function NotchBorder() {
   return (
     <svg
@@ -90,8 +90,9 @@ function NotchBorder() {
         `}
         fill="none"
         stroke="var(--card-border)"
-        strokeWidth="0.8"
+        strokeWidth="0.65"
         vectorEffect="non-scaling-stroke"
+        opacity="0.72"
       />
     </svg>
   );
@@ -120,7 +121,7 @@ export function BottomNavLogo({
           background: active
             ? ACCENT
             : 'var(--card-border)',
-          opacity: active ? 1 : 0.7,
+          opacity: active ? 1 : 0.55,
           transition:
             'background 150ms ease, opacity 150ms ease',
         }}
@@ -140,10 +141,16 @@ export function BottomNavLogo({
         width: size,
         height: size,
         objectFit: 'contain',
-        opacity: active ? 1 : 0.78,
-        transform: active ? 'scale(1.04)' : 'scale(1)',
+
+        opacity: active ? 1 : 0.72,
+
+        transform:
+          active
+            ? 'scale(1.03)'
+            : 'scale(1)',
+
         transition:
-          'opacity 150ms ease, transform 150ms ease',
+          'opacity 180ms ease, transform 180ms ease',
       }}
     />
   );
@@ -170,13 +177,18 @@ function NavItem({
         padding: '5px 2px 4px',
         gap: 2,
         borderRadius: 14,
+
         background: 'transparent',
-        WebkitTapHighlightColor: 'transparent',
-        transition: 'transform 100ms ease',
+
+        WebkitTapHighlightColor:
+          'transparent',
+
+        transition:
+          'transform 100ms ease',
       }}
       onPointerDown={event => {
         event.currentTarget.style.transform =
-          'scale(0.94)';
+          'scale(0.95)';
       }}
       onPointerUp={event => {
         event.currentTarget.style.transform =
@@ -197,32 +209,55 @@ function NavItem({
           width: 34,
           height: 28,
           borderRadius: 10,
+
+          /*
+           * Apple 式選中狀態：
+           * 保留極淡的色彩提示，不做明顯色塊。
+           */
           background: active
-            ? 'var(--accent-alpha)'
+            ? 'color-mix(in srgb, var(--accent-alpha) 45%, transparent)'
             : 'transparent',
+
           transition:
-            'background 150ms ease',
+            'background 180ms ease',
         }}
       >
         <Icon
           size={20}
           style={{
-            color: active ? ACCENT : INK_SOFT,
-            transition: 'color 150ms ease',
+            color:
+              active
+                ? ACCENT
+                : INK_SOFT,
+
+            transition:
+              'color 180ms ease',
           }}
-          strokeWidth={active ? 2.4 : 2}
+          strokeWidth={
+            active ? 2.35 : 1.9
+          }
         />
       </span>
 
       <span
         className="text-[10px] truncate"
         style={{
-          color: active ? ACCENT : INK_SOFT,
-          fontWeight: active ? 700 : 500,
-          lineHeight: '14px',
-          maxWidth: '100%',
+          color:
+            active
+              ? ACCENT
+              : INK_SOFT,
+
+          fontWeight:
+            active ? 600 : 500,
+
+          lineHeight:
+            '14px',
+
+          maxWidth:
+            '100%',
+
           transition:
-            'color 150ms ease, font-weight 150ms ease',
+            'color 180ms ease',
         }}
       >
         {t[item.labelKey]}
@@ -237,17 +272,19 @@ export function BottomNavigation({
   t,
   theme = 'light',
 }) {
-  const leftItems = BOTTOM_NAV_ITEMS.filter(
-    item =>
-      item.id === 'clock' ||
-      item.id === 'schedule'
-  );
+  const leftItems =
+    BOTTOM_NAV_ITEMS.filter(
+      item =>
+        item.id === 'clock' ||
+        item.id === 'schedule'
+    );
 
-  const rightItems = BOTTOM_NAV_ITEMS.filter(
-    item =>
-      item.id === 'gallery' ||
-      item.id === 'profile'
-  );
+  const rightItems =
+    BOTTOM_NAV_ITEMS.filter(
+      item =>
+        item.id === 'gallery' ||
+        item.id === 'profile'
+    );
 
   const centerItem =
     BOTTOM_NAV_ITEMS.find(
@@ -266,29 +303,28 @@ export function BottomNavigation({
         zIndex: 30,
 
         /*
-         * Safe Area 獨立處理。
-         * 不會改變實際 64px 導覽列高度。
+         * Safe Area 不影響主導覽列 64px 高度。
          */
         paddingBottom:
           'env(safe-area-inset-bottom, 0px)',
 
         /*
-         * Safe Area 延續同一層玻璃背景。
+         * Apple 式半透明玻璃。
          */
         background:
-          'color-mix(in srgb, var(--header-bg) 82%, transparent)',
+          'color-mix(in srgb, var(--header-bg) 76%, transparent)',
 
         backdropFilter:
-          'blur(20px) saturate(180%)',
+          'blur(24px) saturate(180%)',
 
         WebkitBackdropFilter:
-          'blur(20px) saturate(180%)',
+          'blur(24px) saturate(180%)',
 
         /*
-         * 讓底部玻璃有很輕的層次。
+         * 只保留非常淡的上方分界。
          */
         boxShadow:
-          '0 -1px 0 rgba(255,255,255,0.10)',
+          '0 -0.5px 0 rgba(255,255,255,0.08)',
       }}
     >
       <NotchClipDefs />
@@ -300,40 +336,31 @@ export function BottomNavigation({
           height: NAV_BAR_HEIGHT,
         }}
       >
-        {/* 導覽列玻璃背景 */}
+        {/* 玻璃背景 */}
         <div
           aria-hidden="true"
           style={{
             position: 'absolute',
             inset: 0,
 
-            /*
-             * 使用半透明背景，
-             * 讓後方內容可以透出一點。
-             */
             background:
-              'color-mix(in srgb, var(--header-bg) 82%, transparent)',
+              'color-mix(in srgb, var(--header-bg) 76%, transparent)',
 
             backdropFilter:
-              'blur(20px) saturate(180%)',
+              'blur(24px) saturate(180%)',
 
             WebkitBackdropFilter:
-              'blur(20px) saturate(180%)',
+              'blur(24px) saturate(180%)',
 
-            /*
-             * 保留原本的上邊界。
-             */
-            borderTop: CARD_BORDER,
+            borderTop:
+              '0.5px solid var(--card-border)',
 
-            /*
-             * 中央凹槽。
-             */
             clipPath:
               'url(#bottom-nav-notch)',
           }}
         />
 
-        {/* 上方玻璃高光 */}
+        {/* 極淡的玻璃上緣 */}
         <div
           aria-hidden="true"
           style={{
@@ -344,19 +371,17 @@ export function BottomNavigation({
             height: 1,
 
             background:
-              'rgba(255,255,255,0.16)',
+              'rgba(255,255,255,0.08)',
 
-            opacity:
-              'var(--glass-highlight-opacity, 0.7)',
-
-            pointerEvents: 'none',
+            pointerEvents:
+              'none',
 
             clipPath:
               'url(#bottom-nav-notch)',
           }}
         />
 
-        {/* 中央凹槽描線 */}
+        {/* 凹槽邊界 */}
         <NotchBorder />
 
         {/* 左右四個頁籤 */}
@@ -439,8 +464,7 @@ export function BottomNavigation({
             left: '50%',
 
             /*
-             * 目前已確認的位置：
-             * 比最初版本向下 8px。
+             * 目前已確認的位置。
              */
             top:
               -(NOTCH_BUTTON_SIZE - 34) + 8,
@@ -456,25 +480,33 @@ export function BottomNavigation({
 
             padding: 0,
 
+            /*
+             * 中央按鈕本身保持實色，
+             * 確保 Logo 在透明玻璃背景上始終清楚。
+             */
             background:
               'var(--card-bg, #fff)',
 
-            border: CARD_BORDER,
+            border:
+              '0.5px solid var(--card-border)',
 
+            /*
+             * 陰影降低，避免「懸浮按鈕」感。
+             */
             boxShadow:
               centerActive
-                ? '0 6px 16px rgba(0,0,0,0.18)'
-                : '0 4px 11px rgba(0,0,0,0.12)',
+                ? '0 4px 12px rgba(0,0,0,0.14)'
+                : '0 3px 9px rgba(0,0,0,0.10)',
 
             WebkitTapHighlightColor:
               'transparent',
 
             transition:
-              'box-shadow 150ms ease, transform 100ms ease',
+              'box-shadow 180ms ease, transform 100ms ease',
           }}
           onPointerDown={event => {
             event.currentTarget.style.transform =
-              'translateX(-50%) scale(0.94)';
+              'translateX(-50%) scale(0.95)';
           }}
           onPointerUp={event => {
             event.currentTarget.style.transform =
@@ -514,14 +546,25 @@ export function SideNavigation({
         width: 84,
         position: 'relative',
         zIndex: 30,
-        background: 'var(--header-bg)',
+
+        background:
+          'var(--header-bg)',
+
         backdropFilter:
           'blur(20px) saturate(180%)',
+
         WebkitBackdropFilter:
           'blur(20px) saturate(180%)',
-        borderLeft: CARD_BORDER,
-        paddingTop: '1.5rem',
-        paddingBottom: '1.5rem',
+
+        borderLeft:
+          CARD_BORDER,
+
+        paddingTop:
+          '1.5rem',
+
+        paddingBottom:
+          '1.5rem',
+
         gap: 4,
       }}
     >
@@ -532,7 +575,8 @@ export function SideNavigation({
         const isCenter =
           item.id === 'home';
 
-        const Icon = item.icon;
+        const Icon =
+          item.icon;
 
         return (
           <button
@@ -556,18 +600,21 @@ export function SideNavigation({
               width: 64,
               minHeight: 58,
               flexShrink: 0,
+
               background:
                 active && !isCenter
-                  ? 'var(--accent-alpha)'
+                  ? 'color-mix(in srgb, var(--accent-alpha) 45%, transparent)'
                   : 'transparent',
+
               WebkitTapHighlightColor:
                 'transparent',
+
               transition:
-                'background 150ms ease, transform 100ms ease',
+                'background 180ms ease, transform 100ms ease',
             }}
             onPointerDown={event => {
               event.currentTarget.style.transform =
-                'scale(0.94)';
+                'scale(0.95)';
             }}
             onPointerUp={event => {
               event.currentTarget.style.transform =
@@ -588,15 +635,20 @@ export function SideNavigation({
                 style={{
                   width: 52,
                   height: 52,
+
                   background:
                     'var(--card-bg, #fff)',
-                  border: CARD_BORDER,
+
+                  border:
+                    '0.5px solid var(--card-border)',
+
                   boxShadow:
                     active
-                      ? '0 5px 14px rgba(0,0,0,0.18)'
-                      : '0 4px 10px rgba(0,0,0,0.14)',
+                      ? '0 4px 12px rgba(0,0,0,0.14)'
+                      : '0 3px 9px rgba(0,0,0,0.10)',
+
                   transition:
-                    'box-shadow 150ms ease',
+                    'box-shadow 180ms ease',
                 }}
               >
                 <BottomNavLogo
@@ -612,25 +664,29 @@ export function SideNavigation({
                   width: 34,
                   height: 28,
                   borderRadius: 10,
+
                   background:
                     active
-                      ? 'var(--accent-alpha)'
+                      ? 'color-mix(in srgb, var(--accent-alpha) 45%, transparent)'
                       : 'transparent',
+
                   transition:
-                    'background 150ms ease',
+                    'background 180ms ease',
                 }}
               >
                 <Icon
                   size={20}
                   style={{
-                    color: active
-                      ? ACCENT
-                      : INK_SOFT,
+                    color:
+                      active
+                        ? ACCENT
+                        : INK_SOFT,
+
                     transition:
-                      'color 150ms ease',
+                      'color 180ms ease',
                   }}
                   strokeWidth={
-                    active ? 2.4 : 2
+                    active ? 2.35 : 1.9
                   }
                 />
               </span>
@@ -639,13 +695,19 @@ export function SideNavigation({
             <span
               className="text-[10px] truncate"
               style={{
-                color: active
-                  ? ACCENT
-                  : INK_SOFT,
+                color:
+                  active
+                    ? ACCENT
+                    : INK_SOFT,
+
                 fontWeight:
-                  active ? 700 : 500,
-                maxWidth: '100%',
-                lineHeight: '14px',
+                  active ? 600 : 500,
+
+                maxWidth:
+                  '100%',
+
+                lineHeight:
+                  '14px',
               }}
             >
               {isCenter
