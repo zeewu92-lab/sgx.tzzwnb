@@ -17,25 +17,24 @@ export const BOTTOM_NAV_ITEMS = [
 
 const NAV_BAR_HEIGHT = 64;
 
-// 中央浮動按鈕實際尺寸
+// 中央浮動按鈕
 const NOTCH_BUTTON_SIZE = 64;
 
 // 中央實際佔據空間
 const NOTCH_SPACE = 88;
 
 // 凹槽左右位置
-const NOTCH_LEFT = 0.405;
-const NOTCH_RIGHT = 0.595;
+const NOTCH_LEFT = 0.385;
+const NOTCH_RIGHT = 0.615;
 
-// 凹槽深度。
-// 降低深度，讓兩側弧線更加平緩。
+// 凹槽深度
 const NOTCH_DEPTH = 0.58;
 
 const NOTCH_PATH = `
   M0,0
   L${NOTCH_LEFT},0
-  C0.455,0 0.455,${NOTCH_DEPTH} 0.5,${NOTCH_DEPTH}
-  C0.545,${NOTCH_DEPTH} 0.545,0 ${NOTCH_RIGHT},0
+  C0.435,0 0.435,${NOTCH_DEPTH} 0.5,${NOTCH_DEPTH}
+  C0.565,${NOTCH_DEPTH} 0.565,0 ${NOTCH_RIGHT},0
   L1,0
   L1,1
   L0,1
@@ -65,7 +64,7 @@ function NotchClipDefs() {
   );
 }
 
-// 凹槽邊緣描線
+// 中央凹槽邊緣描線
 function NotchBorder() {
   return (
     <svg
@@ -85,8 +84,8 @@ function NotchBorder() {
         d={`
           M0,0
           H${NOTCH_LEFT * 100}
-          C45.5,0 45.5,${NOTCH_DEPTH * 64} 50,${NOTCH_DEPTH * 64}
-          C54.5,${NOTCH_DEPTH * 64} 54.5,0 ${NOTCH_RIGHT * 100},0
+          C43.5,0 43.5,${NOTCH_DEPTH * 64} 50,${NOTCH_DEPTH * 64}
+          C56.5,${NOTCH_DEPTH * 64} 56.5,0 ${NOTCH_RIGHT * 100},0
           H100
         `}
         fill="none"
@@ -173,7 +172,8 @@ function NavItem({
         borderRadius: 14,
         background: 'transparent',
         WebkitTapHighlightColor: 'transparent',
-        transition: 'transform 100ms ease',
+        transition:
+          'transform 100ms ease',
       }}
       onPointerDown={event => {
         event.currentTarget.style.transform =
@@ -192,10 +192,11 @@ function NavItem({
           'scale(1)';
       }}
     >
+      {/* 圖示 Active 背景 */}
       <span
         className="flex items-center justify-center"
         style={{
-          width: 32,
+          width: 34,
           height: 28,
           borderRadius: 10,
           background: active
@@ -208,18 +209,27 @@ function NavItem({
         <Icon
           size={20}
           style={{
-            color: active ? ACCENT : INK_SOFT,
-            transition: 'color 150ms ease',
+            color: active
+              ? ACCENT
+              : INK_SOFT,
+            transition:
+              'color 150ms ease',
           }}
-          strokeWidth={active ? 2.4 : 2}
+          strokeWidth={
+            active ? 2.4 : 2
+          }
         />
       </span>
 
+      {/* 文字 */}
       <span
         className="text-[10px] truncate"
         style={{
-          color: active ? ACCENT : INK_SOFT,
-          fontWeight: active ? 700 : 500,
+          color: active
+            ? ACCENT
+            : INK_SOFT,
+          fontWeight:
+            active ? 700 : 500,
           lineHeight: '14px',
           maxWidth: '100%',
           transition:
@@ -250,9 +260,10 @@ export function BottomNavigation({
       item.id === 'profile'
   );
 
-  const centerItem = BOTTOM_NAV_ITEMS.find(
-    item => item.id === 'home'
-  );
+  const centerItem =
+    BOTTOM_NAV_ITEMS.find(
+      item => item.id === 'home'
+    );
 
   const centerActive =
     activeTab === centerItem.id;
@@ -283,7 +294,8 @@ export function BottomNavigation({
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'var(--header-bg)',
+            background:
+              'var(--header-bg)',
             backdropFilter:
               'blur(20px) saturate(180%)',
             WebkitBackdropFilter:
@@ -294,10 +306,10 @@ export function BottomNavigation({
           }}
         />
 
-        {/* 凹槽邊緣 */}
+        {/* 中央凹槽描線 */}
         <NotchBorder />
 
-        {/* 左右四個導航項目 */}
+        {/* 左右四個頁籤 */}
         <div
           className="relative h-full flex items-stretch"
           style={{
@@ -308,7 +320,9 @@ export function BottomNavigation({
           {/* 左側 */}
           <div
             className="flex-1 flex items-stretch"
-            style={{ minWidth: 0 }}
+            style={{
+              minWidth: 0,
+            }}
           >
             {leftItems.map(item => (
               <NavItem
@@ -325,7 +339,7 @@ export function BottomNavigation({
             ))}
           </div>
 
-          {/* 中央實際佔據空間 */}
+          {/* 中央真正佔據的空間 */}
           <div
             aria-hidden="true"
             style={{
@@ -337,7 +351,9 @@ export function BottomNavigation({
           {/* 右側 */}
           <div
             className="flex-1 flex items-stretch"
-            style={{ minWidth: 0 }}
+            style={{
+              minWidth: 0,
+            }}
           >
             {rightItems.map(item => (
               <NavItem
@@ -355,7 +371,7 @@ export function BottomNavigation({
           </div>
         </div>
 
-        {/* 中央浮動按鈕 */}
+        {/* 中央浮動 Logo */}
         <button
           type="button"
           onClick={() =>
@@ -372,14 +388,18 @@ export function BottomNavigation({
             position: 'absolute',
             left: '50%',
 
-            // 比之前向下 6px
-            top: -(NOTCH_BUTTON_SIZE - 34) + 6,
+            // 保留上一版向下 6px
+            top:
+              -(NOTCH_BUTTON_SIZE - 34) + 6,
 
             transform:
               'translateX(-50%)',
 
-            width: NOTCH_BUTTON_SIZE,
-            height: NOTCH_BUTTON_SIZE,
+            width:
+              NOTCH_BUTTON_SIZE,
+            height:
+              NOTCH_BUTTON_SIZE,
+
             padding: 0,
 
             background:
@@ -387,9 +407,13 @@ export function BottomNavigation({
 
             border: CARD_BORDER,
 
+            /*
+             * Active 與非 Active 的差異
+             * 控制在陰影層級，不改 Logo 背景。
+             */
             boxShadow:
               centerActive
-                ? '0 6px 16px rgba(0,0,0,0.18)'
+                ? '0 6px 17px rgba(0,0,0,0.20)'
                 : '0 4px 12px rgba(0,0,0,0.13)',
 
             WebkitTapHighlightColor:
@@ -400,19 +424,19 @@ export function BottomNavigation({
           }}
           onPointerDown={event => {
             event.currentTarget.style.transform =
-              'translateX(-50%) translateY(0) scale(0.94)';
+              'translateX(-50%) scale(0.94)';
           }}
           onPointerUp={event => {
             event.currentTarget.style.transform =
-              'translateX(-50%) translateY(0) scale(1)';
+              'translateX(-50%) scale(1)';
           }}
           onPointerCancel={event => {
             event.currentTarget.style.transform =
-              'translateX(-50%) translateY(0) scale(1)';
+              'translateX(-50%) scale(1)';
           }}
           onPointerLeave={event => {
             event.currentTarget.style.transform =
-              'translateX(-50%) translateY(0) scale(1)';
+              'translateX(-50%) scale(1)';
           }}
         >
           <BottomNavLogo
@@ -440,7 +464,8 @@ export function SideNavigation({
         width: 84,
         position: 'relative',
         zIndex: 30,
-        background: 'var(--header-bg)',
+        background:
+          'var(--header-bg)',
         backdropFilter:
           'blur(20px) saturate(180%)',
         WebkitBackdropFilter:
@@ -454,8 +479,10 @@ export function SideNavigation({
       {BOTTOM_NAV_ITEMS.map(item => {
         const active =
           activeTab === item.id;
+
         const isCenter =
           item.id === 'home';
+
         const Icon = item.icon;
 
         return (
@@ -480,14 +507,33 @@ export function SideNavigation({
               width: 64,
               minHeight: 58,
               flexShrink: 0,
+
               background:
                 active && !isCenter
                   ? 'var(--accent-alpha)'
                   : 'transparent',
+
               WebkitTapHighlightColor:
                 'transparent',
+
               transition:
-                'background 150ms ease',
+                'background 150ms ease, transform 100ms ease',
+            }}
+            onPointerDown={event => {
+              event.currentTarget.style.transform =
+                'scale(0.94)';
+            }}
+            onPointerUp={event => {
+              event.currentTarget.style.transform =
+                'scale(1)';
+            }}
+            onPointerCancel={event => {
+              event.currentTarget.style.transform =
+                'scale(1)';
+            }}
+            onPointerLeave={event => {
+              event.currentTarget.style.transform =
+                'scale(1)';
             }}
           >
             {isCenter ? (
@@ -499,10 +545,12 @@ export function SideNavigation({
                   background:
                     'var(--card-bg, #fff)',
                   border: CARD_BORDER,
+
                   boxShadow:
                     active
-                      ? '0 5px 13px rgba(0,0,0,0.18)'
+                      ? '0 5px 14px rgba(0,0,0,0.18)'
                       : '0 4px 10px rgba(0,0,0,0.14)',
+
                   transition:
                     'box-shadow 150ms ease',
                 }}
@@ -517,7 +565,7 @@ export function SideNavigation({
               <span
                 className="flex items-center justify-center"
                 style={{
-                  width: 32,
+                  width: 34,
                   height: 28,
                   borderRadius: 10,
                   background:
