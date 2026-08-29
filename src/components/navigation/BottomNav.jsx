@@ -16,10 +16,15 @@ export const BOTTOM_NAV_ITEMS = [
 ];
 
 const NAV_BAR_HEIGHT = 64;
+
+// 中央浮動按鈕實際尺寸
 const NOTCH_BUTTON_SIZE = 64;
 
-// 中央按鈕凹槽。
-// 使用 objectBoundingBox，會依導覽列實際寬度自動縮放。
+// 中央預留空間。
+// 比按鈕本身稍寬，讓「日程」與「相冊」不會貼近中央 Logo。
+const NOTCH_SPACE = 84;
+
+// 中央凹槽
 const NOTCH_PATH =
   'M0,0 L0.40,0 C0.455,0 0.455,0.62 0.5,0.62 C0.545,0.62 0.545,0 0.60,0 L1,0 L1,1 L0,1 Z';
 
@@ -210,7 +215,7 @@ export function BottomNavigation({
           height: NAV_BAR_HEIGHT,
         }}
       >
-        {/* 導覽列背景與中央凹槽 */}
+        {/* 背景層與中央凹槽 */}
         <div
           aria-hidden="true"
           style={{
@@ -227,7 +232,7 @@ export function BottomNavigation({
           }}
         />
 
-        {/* 四個一般導覽項目 */}
+        {/* 四個普通導航項目 */}
         <div
           className="relative h-full flex items-center justify-between px-2"
         >
@@ -243,14 +248,16 @@ export function BottomNavigation({
             />
           ))}
 
-          {/* 中央空位，確保左右四項始終對稱 */}
+          {/* 中央預留區。
+              84px > 中央按鈕 64px，
+              因此日程 / 相冊會與 Logo 保持更大的距離。 */}
           <span
             aria-hidden="true"
             style={{
               position: 'absolute',
               left: '50%',
               top: 0,
-              width: NOTCH_BUTTON_SIZE,
+              width: NOTCH_SPACE,
               height: '100%',
               transform:
                 'translateX(-50%)',
@@ -259,7 +266,7 @@ export function BottomNavigation({
           />
         </div>
 
-        {/* 中央浮動「時光線」按鈕 */}
+        {/* 中央浮動按鈕 */}
         <button
           type="button"
           onClick={() =>
@@ -378,7 +385,7 @@ export function SideNavigation({
               WebkitTapHighlightColor:
                 'transparent',
               transition:
-                'background 150ms ease, transform 100ms ease',
+                'background 150ms ease',
             }}
           >
             {isCenter ? (
