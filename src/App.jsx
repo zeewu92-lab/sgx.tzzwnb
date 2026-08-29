@@ -1103,7 +1103,7 @@ export default function App() {
                 />
               )}
             </main>
-            <SideNavigation activeTab={activeTab} setActiveTab={navigateToTab} t={t} />
+            <SideNavigation activeTab={activeTab} setActiveTab={navigateToTab} t={t} theme={isDark ? "dark" : "light"} />
           </div>
         ) : (
           /* 手機版：五個分頁的底部導覽列架構。
@@ -1334,7 +1334,7 @@ export default function App() {
                 />
               )}
             </main>
-            <BottomNavigation activeTab={activeTab} setActiveTab={navigateToTab} t={t} />
+            <BottomNavigation activeTab={activeTab} setActiveTab={navigateToTab} t={t} theme={isDark ? "dark" : "light"} />
           </>
         )}
       </div>
