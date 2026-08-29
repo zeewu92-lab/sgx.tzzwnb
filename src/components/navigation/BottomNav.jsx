@@ -24,12 +24,10 @@ const NOTCH_BUTTON_SIZE = 64;
 const NOTCH_SPACE = 88;
 
 // 凹槽左右位置
-// 稍微收窄，讓弧線更接近中央 Logo。
 const NOTCH_LEFT = 0.395;
 const NOTCH_RIGHT = 0.605;
 
 // 凹槽深度
-// 保持較平緩的弧線。
 const NOTCH_DEPTH = 0.58;
 
 const NOTCH_PATH = `
@@ -266,8 +264,25 @@ export function BottomNavigation({
       style={{
         position: 'relative',
         zIndex: 30,
+
+        /*
+         * Safe Area 單獨佔位。
+         * 不會改變 64px 主導覽列的高度。
+         */
         paddingBottom:
           'env(safe-area-inset-bottom, 0px)',
+
+        /*
+         * 讓 Safe Area 區域也保持導覽列背景。
+         */
+        background:
+          'var(--header-bg)',
+
+        backdropFilter:
+          'blur(20px) saturate(180%)',
+
+        WebkitBackdropFilter:
+          'blur(20px) saturate(180%)',
       }}
     >
       <NotchClipDefs />
@@ -285,12 +300,18 @@ export function BottomNavigation({
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'var(--header-bg)',
+
+            background:
+              'var(--header-bg)',
+
             backdropFilter:
               'blur(20px) saturate(180%)',
+
             WebkitBackdropFilter:
               'blur(20px) saturate(180%)',
+
             borderTop: CARD_BORDER,
+
             clipPath:
               'url(#bottom-nav-notch)',
           }}
@@ -310,7 +331,9 @@ export function BottomNavigation({
           {/* 左側 */}
           <div
             className="flex-1 flex items-stretch"
-            style={{ minWidth: 0 }}
+            style={{
+              minWidth: 0,
+            }}
           >
             {leftItems.map(item => (
               <NavItem
@@ -327,7 +350,7 @@ export function BottomNavigation({
             ))}
           </div>
 
-          {/* 中央真正佔據空間 */}
+          {/* 中央空間 */}
           <div
             aria-hidden="true"
             style={{
@@ -339,7 +362,9 @@ export function BottomNavigation({
           {/* 右側 */}
           <div
             className="flex-1 flex items-stretch"
-            style={{ minWidth: 0 }}
+            style={{
+              minWidth: 0,
+            }}
           >
             {rightItems.map(item => (
               <NavItem
@@ -375,8 +400,8 @@ export function BottomNavigation({
             left: '50%',
 
             /*
-             * 比上一版再向下 2px。
-             * 原本向下 6px → 現在向下 8px。
+             * 保持目前已確認的 Logo 位置。
+             * 相比最初版本總共向下 8px。
              */
             top:
               -(NOTCH_BUTTON_SIZE - 34) + 8,
@@ -384,8 +409,11 @@ export function BottomNavigation({
             transform:
               'translateX(-50%)',
 
-            width: NOTCH_BUTTON_SIZE,
-            height: NOTCH_BUTTON_SIZE,
+            width:
+              NOTCH_BUTTON_SIZE,
+
+            height:
+              NOTCH_BUTTON_SIZE,
 
             padding: 0,
 
@@ -489,12 +517,15 @@ export function SideNavigation({
               width: 64,
               minHeight: 58,
               flexShrink: 0,
+
               background:
                 active && !isCenter
                   ? 'var(--accent-alpha)'
                   : 'transparent',
+
               WebkitTapHighlightColor:
                 'transparent',
+
               transition:
                 'background 150ms ease, transform 100ms ease',
             }}
@@ -524,10 +555,12 @@ export function SideNavigation({
                   background:
                     'var(--card-bg, #fff)',
                   border: CARD_BORDER,
+
                   boxShadow:
                     active
                       ? '0 5px 14px rgba(0,0,0,0.18)'
                       : '0 4px 10px rgba(0,0,0,0.14)',
+
                   transition:
                     'box-shadow 150ms ease',
                 }}
