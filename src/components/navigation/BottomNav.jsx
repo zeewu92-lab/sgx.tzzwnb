@@ -20,21 +20,23 @@ const NAV_BAR_HEIGHT = 64;
 // 中央浮動按鈕
 const NOTCH_BUTTON_SIZE = 64;
 
-// 中央實際佔據空間
+// 中央真正佔據的空間
 const NOTCH_SPACE = 88;
 
 // 凹槽左右位置
-const NOTCH_LEFT = 0.385;
-const NOTCH_RIGHT = 0.615;
+// 稍微收窄，讓弧線更接近中央 Logo。
+const NOTCH_LEFT = 0.395;
+const NOTCH_RIGHT = 0.605;
 
 // 凹槽深度
+// 保持較平緩的弧線。
 const NOTCH_DEPTH = 0.58;
 
 const NOTCH_PATH = `
   M0,0
   L${NOTCH_LEFT},0
-  C0.435,0 0.435,${NOTCH_DEPTH} 0.5,${NOTCH_DEPTH}
-  C0.565,${NOTCH_DEPTH} 0.565,0 ${NOTCH_RIGHT},0
+  C0.44,0 0.44,${NOTCH_DEPTH} 0.5,${NOTCH_DEPTH}
+  C0.56,${NOTCH_DEPTH} 0.56,0 ${NOTCH_RIGHT},0
   L1,0
   L1,1
   L0,1
@@ -84,8 +86,8 @@ function NotchBorder() {
         d={`
           M0,0
           H${NOTCH_LEFT * 100}
-          C43.5,0 43.5,${NOTCH_DEPTH * 64} 50,${NOTCH_DEPTH * 64}
-          C56.5,${NOTCH_DEPTH * 64} 56.5,0 ${NOTCH_RIGHT * 100},0
+          C44,0 44,${NOTCH_DEPTH * 64} 50,${NOTCH_DEPTH * 64}
+          C56,${NOTCH_DEPTH * 64} 56,0 ${NOTCH_RIGHT * 100},0
           H100
         `}
         fill="none"
@@ -172,8 +174,7 @@ function NavItem({
         borderRadius: 14,
         background: 'transparent',
         WebkitTapHighlightColor: 'transparent',
-        transition:
-          'transform 100ms ease',
+        transition: 'transform 100ms ease',
       }}
       onPointerDown={event => {
         event.currentTarget.style.transform =
@@ -192,7 +193,6 @@ function NavItem({
           'scale(1)';
       }}
     >
-      {/* 圖示 Active 背景 */}
       <span
         className="flex items-center justify-center"
         style={{
@@ -209,27 +209,18 @@ function NavItem({
         <Icon
           size={20}
           style={{
-            color: active
-              ? ACCENT
-              : INK_SOFT,
-            transition:
-              'color 150ms ease',
+            color: active ? ACCENT : INK_SOFT,
+            transition: 'color 150ms ease',
           }}
-          strokeWidth={
-            active ? 2.4 : 2
-          }
+          strokeWidth={active ? 2.4 : 2}
         />
       </span>
 
-      {/* 文字 */}
       <span
         className="text-[10px] truncate"
         style={{
-          color: active
-            ? ACCENT
-            : INK_SOFT,
-          fontWeight:
-            active ? 700 : 500,
+          color: active ? ACCENT : INK_SOFT,
+          fontWeight: active ? 700 : 500,
           lineHeight: '14px',
           maxWidth: '100%',
           transition:
@@ -294,8 +285,7 @@ export function BottomNavigation({
           style={{
             position: 'absolute',
             inset: 0,
-            background:
-              'var(--header-bg)',
+            background: 'var(--header-bg)',
             backdropFilter:
               'blur(20px) saturate(180%)',
             WebkitBackdropFilter:
@@ -320,9 +310,7 @@ export function BottomNavigation({
           {/* 左側 */}
           <div
             className="flex-1 flex items-stretch"
-            style={{
-              minWidth: 0,
-            }}
+            style={{ minWidth: 0 }}
           >
             {leftItems.map(item => (
               <NavItem
@@ -339,7 +327,7 @@ export function BottomNavigation({
             ))}
           </div>
 
-          {/* 中央真正佔據的空間 */}
+          {/* 中央真正佔據空間 */}
           <div
             aria-hidden="true"
             style={{
@@ -351,9 +339,7 @@ export function BottomNavigation({
           {/* 右側 */}
           <div
             className="flex-1 flex items-stretch"
-            style={{
-              minWidth: 0,
-            }}
+            style={{ minWidth: 0 }}
           >
             {rightItems.map(item => (
               <NavItem
@@ -388,17 +374,18 @@ export function BottomNavigation({
             position: 'absolute',
             left: '50%',
 
-            // 保留上一版向下 6px
+            /*
+             * 比上一版再向下 2px。
+             * 原本向下 6px → 現在向下 8px。
+             */
             top:
-              -(NOTCH_BUTTON_SIZE - 34) + 6,
+              -(NOTCH_BUTTON_SIZE - 34) + 8,
 
             transform:
               'translateX(-50%)',
 
-            width:
-              NOTCH_BUTTON_SIZE,
-            height:
-              NOTCH_BUTTON_SIZE,
+            width: NOTCH_BUTTON_SIZE,
+            height: NOTCH_BUTTON_SIZE,
 
             padding: 0,
 
@@ -407,14 +394,10 @@ export function BottomNavigation({
 
             border: CARD_BORDER,
 
-            /*
-             * Active 與非 Active 的差異
-             * 控制在陰影層級，不改 Logo 背景。
-             */
             boxShadow:
               centerActive
-                ? '0 6px 17px rgba(0,0,0,0.20)'
-                : '0 4px 12px rgba(0,0,0,0.13)',
+                ? '0 6px 16px rgba(0,0,0,0.18)'
+                : '0 4px 11px rgba(0,0,0,0.12)',
 
             WebkitTapHighlightColor:
               'transparent',
@@ -464,8 +447,7 @@ export function SideNavigation({
         width: 84,
         position: 'relative',
         zIndex: 30,
-        background:
-          'var(--header-bg)',
+        background: 'var(--header-bg)',
         backdropFilter:
           'blur(20px) saturate(180%)',
         WebkitBackdropFilter:
@@ -507,15 +489,12 @@ export function SideNavigation({
               width: 64,
               minHeight: 58,
               flexShrink: 0,
-
               background:
                 active && !isCenter
                   ? 'var(--accent-alpha)'
                   : 'transparent',
-
               WebkitTapHighlightColor:
                 'transparent',
-
               transition:
                 'background 150ms ease, transform 100ms ease',
             }}
@@ -545,12 +524,10 @@ export function SideNavigation({
                   background:
                     'var(--card-bg, #fff)',
                   border: CARD_BORDER,
-
                   boxShadow:
                     active
                       ? '0 5px 14px rgba(0,0,0,0.18)'
                       : '0 4px 10px rgba(0,0,0,0.14)',
-
                   transition:
                     'box-shadow 150ms ease',
                 }}
