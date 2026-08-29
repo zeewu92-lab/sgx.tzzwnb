@@ -20,24 +20,22 @@ const NAV_BAR_HEIGHT = 64;
 // 中央浮動按鈕實際尺寸
 const NOTCH_BUTTON_SIZE = 64;
 
-// 中央真正佔據的空間
+// 中央實際佔據空間
 const NOTCH_SPACE = 88;
 
-/*
- * 中央凹槽幾何。
- *
- * 這次使用更深、更圓的弧形，
- * 讓左右兩側真正形成「包住中央 Logo」的視覺。
- */
-const NOTCH_LEFT = 0.395;
-const NOTCH_RIGHT = 0.605;
-const NOTCH_DEPTH = 0.68;
+// 凹槽左右位置
+const NOTCH_LEFT = 0.405;
+const NOTCH_RIGHT = 0.595;
+
+// 凹槽深度。
+// 降低深度，讓兩側弧線更加平緩。
+const NOTCH_DEPTH = 0.58;
 
 const NOTCH_PATH = `
   M0,0
   L${NOTCH_LEFT},0
-  C0.445,0 0.445,${NOTCH_DEPTH} 0.5,${NOTCH_DEPTH}
-  C0.555,${NOTCH_DEPTH} 0.555,0 ${NOTCH_RIGHT},0
+  C0.455,0 0.455,${NOTCH_DEPTH} 0.5,${NOTCH_DEPTH}
+  C0.545,${NOTCH_DEPTH} 0.545,0 ${NOTCH_RIGHT},0
   L1,0
   L1,1
   L0,1
@@ -67,12 +65,7 @@ function NotchClipDefs() {
   );
 }
 
-/*
- * 凹槽邊緣描線。
- *
- * clip-path 本身只負責挖掉背景，
- * 所以額外用 SVG 把兩側弧線真正畫出來。
- */
+// 凹槽邊緣描線
 function NotchBorder() {
   return (
     <svg
@@ -92,8 +85,8 @@ function NotchBorder() {
         d={`
           M0,0
           H${NOTCH_LEFT * 100}
-          C44.5,0 44.5,${NOTCH_DEPTH * 64} 50,${NOTCH_DEPTH * 64}
-          C55.5,${NOTCH_DEPTH * 64} 55.5,0 ${NOTCH_RIGHT * 100},0
+          C45.5,0 45.5,${NOTCH_DEPTH * 64} 50,${NOTCH_DEPTH * 64}
+          C54.5,${NOTCH_DEPTH * 64} 54.5,0 ${NOTCH_RIGHT * 100},0
           H100
         `}
         fill="none"
@@ -301,7 +294,7 @@ export function BottomNavigation({
           }}
         />
 
-        {/* 凹槽弧線 */}
+        {/* 凹槽邊緣 */}
         <NotchBorder />
 
         {/* 左右四個導航項目 */}
@@ -312,12 +305,10 @@ export function BottomNavigation({
             paddingRight: 8,
           }}
         >
-          {/* 左側：世界時鐘 + 日程 */}
+          {/* 左側 */}
           <div
             className="flex-1 flex items-stretch"
-            style={{
-              minWidth: 0,
-            }}
+            style={{ minWidth: 0 }}
           >
             {leftItems.map(item => (
               <NavItem
@@ -334,7 +325,7 @@ export function BottomNavigation({
             ))}
           </div>
 
-          {/* 真正佔據中央空間 */}
+          {/* 中央實際佔據空間 */}
           <div
             aria-hidden="true"
             style={{
@@ -343,12 +334,10 @@ export function BottomNavigation({
             }}
           />
 
-          {/* 右側：相冊 + 我的 */}
+          {/* 右側 */}
           <div
             className="flex-1 flex items-stretch"
-            style={{
-              minWidth: 0,
-            }}
+            style={{ minWidth: 0 }}
           >
             {rightItems.map(item => (
               <NavItem
@@ -366,7 +355,7 @@ export function BottomNavigation({
           </div>
         </div>
 
-        {/* 中央浮動「時光線」按鈕 */}
+        {/* 中央浮動按鈕 */}
         <button
           type="button"
           onClick={() =>
@@ -382,39 +371,48 @@ export function BottomNavigation({
           style={{
             position: 'absolute',
             left: '50%',
-            top: -(NOTCH_BUTTON_SIZE - 34),
+
+            // 比之前向下 6px
+            top: -(NOTCH_BUTTON_SIZE - 34) + 6,
+
             transform:
               'translateX(-50%)',
+
             width: NOTCH_BUTTON_SIZE,
             height: NOTCH_BUTTON_SIZE,
             padding: 0,
+
             background:
               'var(--card-bg, #fff)',
+
             border: CARD_BORDER,
+
             boxShadow:
               centerActive
-                ? '0 7px 18px rgba(0,0,0,0.20)'
-                : '0 5px 14px rgba(0,0,0,0.14)',
+                ? '0 6px 16px rgba(0,0,0,0.18)'
+                : '0 4px 12px rgba(0,0,0,0.13)',
+
             WebkitTapHighlightColor:
               'transparent',
+
             transition:
               'box-shadow 150ms ease, transform 100ms ease',
           }}
           onPointerDown={event => {
             event.currentTarget.style.transform =
-              'translateX(-50%) scale(0.94)';
+              'translateX(-50%) translateY(0) scale(0.94)';
           }}
           onPointerUp={event => {
             event.currentTarget.style.transform =
-              'translateX(-50%) scale(1)';
+              'translateX(-50%) translateY(0) scale(1)';
           }}
           onPointerCancel={event => {
             event.currentTarget.style.transform =
-              'translateX(-50%) scale(1)';
+              'translateX(-50%) translateY(0) scale(1)';
           }}
           onPointerLeave={event => {
             event.currentTarget.style.transform =
-              'translateX(-50%) scale(1)';
+              'translateX(-50%) translateY(0) scale(1)';
           }}
         >
           <BottomNavLogo
