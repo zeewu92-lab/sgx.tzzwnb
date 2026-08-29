@@ -40,7 +40,7 @@ export const STRINGS = {
     noAlbumsYet: '尚未建立相冊，先建立一個吧', noPhotosYet: '這個相冊還沒有相片，點一下新增',
     addPhoto: '新增相片', deleteAlbum: '刪除相冊', deletePhoto: '刪除相片', confirmRename: '確認更名', moveTo: '移到',
     albumPhotoUploadError: '相片上傳失敗，請換一張再試一次', renameAlbum: '重新命名相冊', syncErrorHint: '最近一次儲存失敗，資料可能量太大，請稍後再試',
-    createAlbumBtn: '＋ 建立相冊', albumFilterAll: '全部', albumFilterLinked: '事件相冊', albumFilterUnlinked: '未關聯',
+    createAlbumBtn: '建立相冊', albumFilterAll: '全部', albumFilterLinked: '事件相冊', albumFilterUnlinked: '未關聯',
     albumHomeEmpty: '尚未建立相冊，先建立第一本，保存你的回憶吧', albumPhotoCount: n => `${n} 張照片`,
     linkedEventBadge: e => `⌁ ${e}`, selectPhotosStepTitle: '選擇照片', selectPhotosHint: '從裝置圖片庫選擇一張或多張照片開始',
     selectedPhotosCount: n => `已選擇 ${n} 張照片`, nextStep: '下一步', createAlbumStepTitle: '建立相冊',
