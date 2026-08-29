@@ -64,7 +64,7 @@ function NotchClipDefs() {
   );
 }
 
-// 中央凹槽邊緣描線
+// 中央凹槽邊緣
 function NotchBorder() {
   return (
     <svg
@@ -266,23 +266,29 @@ export function BottomNavigation({
         zIndex: 30,
 
         /*
-         * Safe Area 單獨佔位。
-         * 不會改變 64px 主導覽列的高度。
+         * Safe Area 獨立處理。
+         * 不會改變實際 64px 導覽列高度。
          */
         paddingBottom:
           'env(safe-area-inset-bottom, 0px)',
 
         /*
-         * 讓 Safe Area 區域也保持導覽列背景。
+         * Safe Area 延續同一層玻璃背景。
          */
         background:
-          'var(--header-bg)',
+          'color-mix(in srgb, var(--header-bg) 82%, transparent)',
 
         backdropFilter:
           'blur(20px) saturate(180%)',
 
         WebkitBackdropFilter:
           'blur(20px) saturate(180%)',
+
+        /*
+         * 讓底部玻璃有很輕的層次。
+         */
+        boxShadow:
+          '0 -1px 0 rgba(255,255,255,0.10)',
       }}
     >
       <NotchClipDefs />
@@ -294,15 +300,19 @@ export function BottomNavigation({
           height: NAV_BAR_HEIGHT,
         }}
       >
-        {/* 導覽列背景 */}
+        {/* 導覽列玻璃背景 */}
         <div
           aria-hidden="true"
           style={{
             position: 'absolute',
             inset: 0,
 
+            /*
+             * 使用半透明背景，
+             * 讓後方內容可以透出一點。
+             */
             background:
-              'var(--header-bg)',
+              'color-mix(in srgb, var(--header-bg) 82%, transparent)',
 
             backdropFilter:
               'blur(20px) saturate(180%)',
@@ -310,7 +320,36 @@ export function BottomNavigation({
             WebkitBackdropFilter:
               'blur(20px) saturate(180%)',
 
+            /*
+             * 保留原本的上邊界。
+             */
             borderTop: CARD_BORDER,
+
+            /*
+             * 中央凹槽。
+             */
+            clipPath:
+              'url(#bottom-nav-notch)',
+          }}
+        />
+
+        {/* 上方玻璃高光 */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 1,
+
+            background:
+              'rgba(255,255,255,0.16)',
+
+            opacity:
+              'var(--glass-highlight-opacity, 0.7)',
+
+            pointerEvents: 'none',
 
             clipPath:
               'url(#bottom-nav-notch)',
@@ -400,8 +439,8 @@ export function BottomNavigation({
             left: '50%',
 
             /*
-             * 保持目前已確認的 Logo 位置。
-             * 相比最初版本總共向下 8px。
+             * 目前已確認的位置：
+             * 比最初版本向下 8px。
              */
             top:
               -(NOTCH_BUTTON_SIZE - 34) + 8,
@@ -517,15 +556,12 @@ export function SideNavigation({
               width: 64,
               minHeight: 58,
               flexShrink: 0,
-
               background:
                 active && !isCenter
                   ? 'var(--accent-alpha)'
                   : 'transparent',
-
               WebkitTapHighlightColor:
                 'transparent',
-
               transition:
                 'background 150ms ease, transform 100ms ease',
             }}
@@ -555,12 +591,10 @@ export function SideNavigation({
                   background:
                     'var(--card-bg, #fff)',
                   border: CARD_BORDER,
-
                   boxShadow:
                     active
                       ? '0 5px 14px rgba(0,0,0,0.18)'
                       : '0 4px 10px rgba(0,0,0,0.14)',
-
                   transition:
                     'box-shadow 150ms ease',
                 }}
