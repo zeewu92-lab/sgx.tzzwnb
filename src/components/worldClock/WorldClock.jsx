@@ -450,30 +450,19 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
         }}
       >
         <div className={(columns === 2 ? "grid grid-cols-2 gap-2" : "flex flex-col gap-2") + " pt-1 pb-6"}>
-          {/* 當前時區也算清單裡的一筆，固定排第一個；因為不是真的存在 clocks 陣列裡的項目，
-              長按/點擊都不接（傳 no-op），跟 Part 1 那張 hero 卡片一樣不能被選取或刪除 */}
-          <ClockRow
-            key={homeClock.id} clock={homeClock} now={now}
-            selectMode={selectMode} selected={false}
-            onLongPress={() => {}} onTap={() => {}} lang={lang} t={t}
-            compact={columns === 2}
-            isHome
-            homeTz={homeClock.tz}
-          />
-          {clocks.length === 0 ? (
-            <div className="text-sm px-2 py-4 col-span-2" style={{ color: INK_SOFT }}>{t.emptyClocks}</div>
-          ) : (
-            restClocks.map(c => (
-              <ClockRow 
-                key={c.id} clock={c} now={now} 
-                selectMode={selectMode} selected={selected.includes(c.id)} 
-                onLongPress={longPress} onTap={tap} lang={lang} t={t} 
-                compact={columns === 2}
-                isHome={false}
-                homeTz={homeClock.tz}
-              />
-            ))
-          )}
+          {/* 當前時區算是已經「加入」的其中一個時區（在 Part 1 hero 卡片顯示），所以 clocks 是空的
+              不代表「尚未加入任何時區」，這裡不用再顯示 emptyClocks 提示；沒有其他城市時這裡就單純
+              不渲染任何東西 */}
+          {restClocks.map(c => (
+            <ClockRow 
+              key={c.id} clock={c} now={now} 
+              selectMode={selectMode} selected={selected.includes(c.id)} 
+              onLongPress={longPress} onTap={tap} lang={lang} t={t} 
+              compact={columns === 2}
+              isHome={false}
+              homeTz={homeClock.tz}
+            />
+          ))}
         </div>
       </div>
     </div>
