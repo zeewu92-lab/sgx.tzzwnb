@@ -11,7 +11,7 @@ export const CAL_OPTIONS = [
 // 精度足夠給「城市詳細頁」參考用，不是導航等級的精確座標。
 // 每一筆代表「一個時區」，用該時區裡最具代表性的城市命名（例如中國統一用北京，不分省市）。
 export const CITIES = [
-  { id: 'TPE', tz: 'Asia/Taipei', lat: 25.03, lng: 121.56, name: { 'zh-TW': '台北', en: 'Taipei', ja: '台北', ko: '타이베이' }, country: { 'zh-TW': '台灣', en: 'Taiwan', ja: '台湾', ko: '대만' } },
+  { id: 'TPE', tz: 'Asia/Taipei', lat: 25.03, lng: 121.56, name: { 'zh-TW': '台北', en: 'Taipei', ja: '台北', ko: '타이베이' }, country: { 'zh-TW': 'Taipei', en: 'Taipei', ja: 'Taipei', ko: 'Taipei' } },
   { id: 'BJS', tz: 'Asia/Shanghai', lat: 39.90, lng: 116.41, name: { 'zh-TW': '北京', en: 'Beijing', ja: '北京', ko: '베이징' }, country: { 'zh-TW': '中國', en: 'China', ja: '中国', ko: '중국' } },
   { id: 'TYO', tz: 'Asia/Tokyo', lat: 35.68, lng: 139.69, name: { 'zh-TW': '東京', en: 'Tokyo', ja: '東京', ko: '도쿄' }, country: { 'zh-TW': '日本', en: 'Japan', ja: '日本', ko: '일본' } },
   { id: 'SEL', tz: 'Asia/Seoul', lat: 37.57, lng: 126.98, name: { 'zh-TW': '首爾', en: 'Seoul', ja: 'ソウル', ko: '서울' }, country: { 'zh-TW': '韓國', en: 'South Korea', ja: '韓国', ko: '대한민국' } },
