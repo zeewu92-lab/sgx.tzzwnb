@@ -8,6 +8,14 @@ import { useModalBackClose } from '../../hooks/useModalBackClose.js';
 import { openDropdownExclusive, useExclusiveDropdown } from '../../hooks/useOverlayTransition.js';
 import { formatSunTime, getOffsetMinutes, getSunTimes, getUtcOffset } from '../../utils/timezone.js';
 
+// 新增城市選單裡的顯示文字：「城市名（國家/地區）」，中文/日文用全形括號，其他語言用半形括號
+function cityOptionLabel(city, lang) {
+  const useFullWidth = lang === 'zh-TW' || lang === 'ja';
+  return useFullWidth
+    ? `${city.name[lang]}（${city.country[lang]}）`
+    : `${city.name[lang]} (${city.country[lang]})`;
+}
+
 export function CurrentLocationClockModal({ clock, now, restClocks, lang, t, onClose, dock = false, closing = false }) {
   const city = CITIES.find(c => c.tz === clock.tz);
   const nameLabel = city ? city.name[lang] : clock.tz;
@@ -150,10 +158,16 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
   useExclusiveDropdown('timezone', showMenu, () => setShowMenu(false));
 
   const addedTz = new Set(clocks.map(c => c.tz));
-  const homeClock = clocks.find(c => c.id === homeTzId) || null;
+
+  // 「目前位置」改成純粹偵測系統時區決定，使用者不能再手動設定／切換；
+  // 不是 clocks 清單裡的一筆，而是每次都直接抓裝置目前的時區來算，所以一定存在、也永遠跟系統一致。
+  const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const systemCity = CITIES.find(c => c.tz === systemTz) || null;
+  const homeClock = { id: '__system_home__', tz: systemTz };
+  const homeCityName = systemCity ? systemCity.name[lang] : systemTz.split('/').pop().replace(/_/g, ' ');
 
   // 將「目前位置」的時區回報給上層 App，讓頂部標題列能依此判斷早上好／中午好／晚上好
-  useEffect(() => { onHomeTzChange && onHomeTzChange(homeClock ? homeClock.tz : null); }, [homeClock, onHomeTzChange]);
+  useEffect(() => { onHomeTzChange && onHomeTzChange(systemTz); }, [systemTz, onHomeTzChange]);
 
   function addZone(city) {
     setClocks(prev => [...prev, { id: Date.now().toString(), tz: city.tz }]);
@@ -163,23 +177,21 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
   function tap(id) {
     if (selectMode) {
       setSelected(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
-      return;
     }
-    // 單獨點一下：設為目前位置，再點一下取消
-    setHomeTzId(prev => (prev === id ? null : id));
+    // 目前位置改由系統時區自動判斷，不再支援點一下設為目前位置
   }
   function confirmDelete() {
     setClocks(prev => prev.filter(c => !selected.includes(c.id)));
-    if (selected.includes(homeTzId)) setHomeTzId(null);
     setSelectMode(false);
     setSelected([]);
   }
   function cancelSelect() { setSelectMode(false); setSelected([]); }
 
-  const cityOptions = CITIES.filter(c => !addedTz.has(c.tz));
+  // 新增城市清單排除系統時區本身（不需要把自己的所在地也加進「已加入城市」比較）
+  const cityOptions = CITIES.filter(c => !addedTz.has(c.tz) && c.tz !== systemTz);
 
-  // Part 2 只顯示「非目前位置」的時區；目前位置改成在 Part 1 置頂區塊常駐顯示
-  const restClocks = clocks.filter(c => c.id !== homeTzId);
+  // clocks 現在全部都是使用者自己加入的外地城市，不再需要濾掉「目前位置」
+  const restClocks = clocks;
 
   // ============================================================
   // fullPage：獨立「世界時鐘」分頁的極簡版面（時光線首頁內嵌的樣式維持在下面完全不動）。
@@ -224,7 +236,7 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
     }
 
     function timeStrOf(tz) {
-      return new Intl.DateTimeFormat(LOCALE_MAP[lang], { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+      return new Intl.DateTimeFormat(LOCALE_MAP[lang], { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
     }
 
     return (
@@ -249,7 +261,7 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
                     <button key={c.id} onClick={() => addZone(c)}
                       className="w-full text-left px-3 py-2 text-sm"
                       style={{ color: INK }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--card-border)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                      {c.name[lang]}
+                      {cityOptionLabel(c, lang)}
                     </button>
                   ))
                 )}
@@ -258,24 +270,18 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
           </div>
         </div>
 
-        {/* 焦點區：目前位置的大字時間，縮小一些不佔滿整頁 */}
-        {homeClock ? (
-          <div className="flex flex-col items-center text-center pt-1 pb-6">
-            <span className="font-bold tabular-nums leading-none" style={{ fontFamily: "'Quicksand', sans-serif", fontSize: 52, color: INK }}>
-              {timeStrOf(homeClock.tz)}
-            </span>
-            <span className="font-medium mt-1.5" style={{ fontSize: 18, color: INK }}>
-              {cityLabel(homeClock).name}
-            </span>
-            <span className="mt-0.5" style={{ fontSize: 13, color: INK_SOFT }}>
-              {new Intl.DateTimeFormat(LOCALE_MAP[lang], { timeZone: homeClock.tz, month: 'long', day: 'numeric', weekday: 'short' }).format(now)}
-            </span>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center text-center pt-1 pb-6">
-            <p className="text-sm px-6 text-center" style={{ color: INK_SOFT }}>{t.emptyClocks}</p>
-          </div>
-        )}
+        {/* 焦點區：目前位置的大字時間，縮小一些不佔滿整頁。目前位置永遠等於系統時區，一定存在 */}
+        <div className="flex flex-col items-center text-center pt-1 pb-6">
+          <span className="font-bold tabular-nums leading-none" style={{ fontFamily: "'Quicksand', sans-serif", fontSize: 52, color: INK }}>
+            {timeStrOf(homeClock.tz)}
+          </span>
+          <span className="font-medium mt-1.5" style={{ fontSize: 18, color: INK }}>
+            {t.standardTimeLabel(homeCityName)}
+          </span>
+          <span className="mt-0.5" style={{ fontSize: 13, color: INK_SOFT }}>
+            {new Intl.DateTimeFormat(LOCALE_MAP[lang], { timeZone: homeClock.tz, month: 'long', day: 'numeric', weekday: 'short' }).format(now)}
+          </span>
+        </div>
 
         {/* 全球時間軸：一條很細的刻度線，只用「現在」這個點用品牌色標出目前位置的時刻 */}
         {homeClock && (
@@ -334,20 +340,17 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
           </div>
         </div>
 
-        {/* 城市詳細頁：UTC／時差／日期／日出日落／從世界時鐘移除 */}
+        {/* 城市詳細頁：UTC／時差／日期／日出日落／從世界時鐘移除。目前位置已改由系統時區
+            自動判斷、不能手動指定，所以這裡拿掉了「設為/取消設為目前位置」的操作 */}
         {detailClock && (
           <CityDetailSheet
             clock={detailClock}
             now={now}
             lang={lang}
             t={t}
-            isHome={detailClock.id === homeTzId}
             onClose={() => setDetailClockId(null)}
-            onSetHome={() => { setHomeTzId(detailClock.id); setDetailClockId(null); }}
-            onUnsetHome={() => { setHomeTzId(null); setDetailClockId(null); }}
             onRemove={() => {
               setClocks(prev => prev.filter(x => x.id !== detailClock.id));
-              if (detailClock.id === homeTzId) setHomeTzId(null);
               setDetailClockId(null);
             }}
             diffLabel={diffFromHomeLabel(detailClock.tz)}
@@ -395,7 +398,7 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
                       <button key={c.id} onClick={() => addZone(c)}
                         className="w-full text-left px-3 py-2 text-sm"
                         style={{ color: INK }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--card-border)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                        {c.name[lang]}
+                        {cityOptionLabel(c, lang)}
                       </button>
                     ))
                   )}
@@ -406,23 +409,20 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
           )}
         </div>
 
-        {homeClock && (
-          <ClockRow
-            key={homeClock.id} clock={homeClock} now={now}
-            selectMode={selectMode} selected={selected.includes(homeClock.id)}
-            onLongPress={longPress} onTap={tap} lang={lang} t={t}
-            hero isHome homeTz={homeClock.tz}
-          />
-        )}
+        {/* 目前位置改由系統時區自動判斷，不能手動指定，這裡的 hero 卡片純顯示、不再接收點擊/長按 */}
+        <ClockRow
+          key={homeClock.id} clock={homeClock} now={now}
+          selectMode={false} selected={false}
+          onLongPress={() => {}} onTap={() => {}} lang={lang} t={t}
+          hero isHome homeTz={homeClock.tz}
+        />
       </div>
 
-      {/* Part 2：其餘時區列表（以及尚未設定「目前位置」時的提示文字）。高度預設有上限（依畫面高度換算），
+      {/* Part 2：其餘時區列表。高度預設有上限（依畫面高度換算），
           時區加再多也不會把下面的時間軸推出畫面——超過上限的部份改成在這個範圍內自行上下捲動查看。
           收合／展開只能靠「時間軸」標題列手動往上拖曳（詳見上層的 handleWorldClockDragStart／Move／End）；
           原本清單自己捲到底/頂也會連動收合展開的功能已依需求移除，避免捲動清單時不小心誤觸收合。
-          最高只能收到這裡完全消失（高度 0），不會蓋到上面 Part 1 的「目前位置」卡片或世界時鐘標題列——
-          「點一下設為目前位置」這句提示原本放在 Part 1（固定不動），現在改放進這裡，
-          這樣往上拖曳收合時也會一起被蓋住，而不是永遠浮在畫面上。
+          最高只能收到這裡完全消失（高度 0），不會蓋到上面 Part 1 的「目前位置」卡片或世界時鐘標題列。
           大屏分欄且時間軸在右側（unlimitedHeight）時，世界時鐘自己獨占整個左欄，
           底下沒有時間軸要搶空間，這個高度上限就沒有意義了，直接取消、讓清單自然展開到底 */}
       <div
@@ -437,13 +437,10 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
           transition: isDraggingWorldClock ? 'none' : 'max-height 0.25s ease',
         }}
       >
-        {clocks.length > 0 && !homeTzId && !selectMode && (
-          <p className="text-xs pt-2 px-1" style={{ color: INK_SOFT }}>{t.setAsCurrent}</p>
-        )}
         <div className={(columns === 2 ? "grid grid-cols-2 gap-2" : "flex flex-col gap-2") + " pt-1 pb-6"}>
           {clocks.length === 0 ? (
             <div className="text-sm px-2 py-4 col-span-2" style={{ color: INK_SOFT }}>{t.emptyClocks}</div>
-          ) : restClocks.length === 0 ? null : (
+          ) : (
             restClocks.map(c => (
               <ClockRow 
                 key={c.id} clock={c} now={now} 
@@ -451,7 +448,7 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
                 onLongPress={longPress} onTap={tap} lang={lang} t={t} 
                 compact={columns === 2}
                 isHome={false}
-                homeTz={homeClock ? homeClock.tz : null}
+                homeTz={homeClock.tz}
               />
             ))
           )}
@@ -461,9 +458,9 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
   );
 }
 
-// 城市詳細頁（fullPage 版世界時鐘專用）：城市名、大字時間、日期、UTC、跟目前位置的時差、
-// 日出日落，以及「設為/取消設為目前位置」「從世界時鐘移除」兩個操作。
-function CityDetailSheet({ clock, now, lang, t, isHome, onClose, onSetHome, onUnsetHome, onRemove, diffLabel, periodInfo }) {
+// 城市詳細頁（fullPage 版世界時鐘專用）：城市名、大字時間、日期、UTC、跟目前位置的時差、日出日落，
+// 以及「從世界時鐘移除」操作。目前位置改由系統時區自動判斷，這裡不再有「設為目前位置」的按鈕。
+function CityDetailSheet({ clock, now, lang, t, onClose, onRemove, diffLabel, periodInfo }) {
   const city = CITIES.find(c => c.tz === clock.tz);
   const nameLabel = city ? city.name[lang] : clock.tz;
 
@@ -480,7 +477,7 @@ function CityDetailSheet({ clock, now, lang, t, isHome, onClose, onSetHome, onUn
   useModalBackClose(true, handleClose);
   const shown = phase === 'shown';
 
-  const timeStr = new Intl.DateTimeFormat(LOCALE_MAP[lang], { timeZone: clock.tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+  const timeStr = new Intl.DateTimeFormat(LOCALE_MAP[lang], { timeZone: clock.tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
   const offsetStr = getUtcOffset(clock.tz, now);
   const hour = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: clock.tz, hour: 'numeric', hour12: false }).format(now), 10) % 24;
   const period = periodInfo(hour);
@@ -534,15 +531,6 @@ function CityDetailSheet({ clock, now, lang, t, isHome, onClose, onSetHome, onUn
         </div>
 
         <div className="w-full flex flex-col gap-2 mt-6">
-          {isHome ? (
-            <button onClick={onUnsetHome} className="w-full text-center py-2.5 rounded-xl text-sm font-medium" style={{ background: CARD_BG, border: CARD_BORDER, color: INK }}>
-              {t.tapToUnset}
-            </button>
-          ) : (
-            <button onClick={onSetHome} className="w-full text-center py-2.5 rounded-xl text-sm font-medium" style={{ background: ACCENT, color: '#fff' }}>
-              {t.setAsCurrent}
-            </button>
-          )}
           <button onClick={onRemove} className="w-full flex items-center justify-center gap-1.5 text-center py-2.5 rounded-xl text-sm font-medium" style={{ color: DANGER }}>
             <Trash2 size={14} /> {t.removeFromWorldClock}
           </button>
