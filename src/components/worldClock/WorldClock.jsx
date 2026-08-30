@@ -7,6 +7,7 @@ import { CITIES } from '../../constants/worldCities.js';
 import { useModalBackClose } from '../../hooks/useModalBackClose.js';
 import { openDropdownExclusive, useExclusiveDropdown } from '../../hooks/useOverlayTransition.js';
 import { formatSunTime, getOffsetMinutes, getSunTimes, getUtcOffset } from '../../utils/timezone.js';
+import { getNetworkNow, syncNetworkTime } from '../../utils/networkTime.js';
 
 // 新增城市選單裡的顯示文字：「城市名（國家/地區）」，中文/日文用全形括號，其他語言用半形括號
 function cityOptionLabel(city, lang) {
@@ -127,7 +128,7 @@ export function CurrentLocationClockModal({ clock, now, restClocks, lang, t, onC
 }
 
 export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, homeTzId, setHomeTzId, part2Ref, part2Height, isDraggingWorldClock, isLargeScreen = false, unlimitedHeight = false, fullPage = false }) {
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(() => getNetworkNow());
   const [showMenu, setShowMenu] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState([]);
@@ -143,7 +144,18 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
   // 那段，用 CurrentLocationClockModal 的 dock 模式渲染），這裡不用再持有任何開關狀態。
   const menuRef = useRef(null);
 
-  useEffect(() => { const iv = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(iv); }, []);
+  // 每秒鐘更新一次畫面上的時間；顯示的時間會盡量以網路校正過的時間為準（見下方 syncNetworkTime），
+  // 校時請求失敗或還沒校過的時候，offset 是 0，這裡就等於直接用系統時間，畫面不會因此卡住或空白。
+  useEffect(() => { const iv = setInterval(() => setNow(getNetworkNow()), 1000); return () => clearInterval(iv); }, []);
+
+  // 掛載時先同步一次，之後每 5 分鐘背景重新校正一次（裝置時鐘不太會在短時間內明顯漂移，
+  // 5 分鐘是準確度與耗電/流量之間一個還算合理的頻率）。校時本身是背景的非同步網路請求，
+  // 不會擋到畫面渲染或讓介面卡頓；就算全部失敗也只是 offset 維持 0，不影響其他功能。
+  useEffect(() => {
+    syncNetworkTime();
+    const resyncIv = setInterval(() => { syncNetworkTime(); }, 5 * 60 * 1000);
+    return () => clearInterval(resyncIv);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -272,7 +284,7 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
 
         {/* 焦點區：目前位置的大字時間，縮小一些不佔滿整頁。目前位置永遠等於系統時區，一定存在 */}
         <div className="flex flex-col items-center text-center pt-1 pb-6">
-          <span className="font-bold tabular-nums leading-none" style={{ fontFamily: "'Quicksand', sans-serif", fontSize: 52, color: INK }}>
+          <span className="tabular-nums leading-none" style={{ fontFamily: "'Quicksand', sans-serif", fontSize: 60, fontWeight: 800, color: INK }}>
             {timeStrOf(homeClock.tz)}
           </span>
           <span className="font-medium mt-1.5" style={{ fontSize: 18, color: INK }}>
