@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight, X, Globe, Sun, User, Mail, Bell, BellOff, Calendar, Info, Database, RefreshCw } from 'lucide-react';
+import { ChevronRight, X, Sun, User, Mail, Bell, BellOff, Calendar, Info, Database, RefreshCw } from 'lucide-react';
 import { collectAllAlbumPhotos } from '../album/Album.jsx';
 import { MarkdownBody } from './About.jsx';
 import { AccountManagementPage, ProfileAvatar } from './Account.jsx';
 import { AppearanceChoiceContent } from './Appearance.jsx';
 import { BackupDataPage, SyncDataPage } from './Backup.jsx';
 import { CalendarPrefChoiceContent, LanguageChoiceContent } from './Language.jsx';
+import { LanguageIcon } from '../icons/AppIcons.jsx';
 import { ACCENT, AUTH_GLASS, CARD_BORDER, DANGER, INK, INK_SOFT, glass } from '../../constants/colors.js';
 import { LANG_NAMES } from '../../constants/languages.js';
 import { useModalBackClose } from '../../hooks/useModalBackClose.js';
@@ -316,7 +317,7 @@ export function ProfilePage({
           right={<span className="text-xs font-bold" style={{ color: INK_SOFT }}>{notifyValueText}</span>}
         />
         <SettingsRow
-          icon={<Globe size={18} />} label={t.languageLabel} onClick={() => setChoiceModal('language')}
+          icon={<LanguageIcon size={18} />} label={t.languageLabel} onClick={() => setChoiceModal('language')}
           right={<span className="text-xs font-bold" style={{ color: INK_SOFT }}>{LANG_NAMES[lang]}</span>}
         />
         <SettingsRow icon={<Calendar size={18} />} label={t.calendarPrefLabel} onClick={() => setChoiceModal('calendar')} />
