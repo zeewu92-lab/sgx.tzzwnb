@@ -144,12 +144,22 @@ export function BottomNavLogo({
         style={{
           width: size,
           height: size,
-          background: active
-            ? ACCENT
-            : 'var(--card-border)',
-          opacity: active ? 1 : 0.55,
+
+          background:
+            active
+              ? ACCENT
+              : 'var(--card-border)',
+
+          opacity:
+            active ? 1 : 0.55,
+
+          boxShadow:
+            active
+              ? '0 0 12px var(--accent-alpha)'
+              : 'none',
+
           transition:
-            'background 150ms ease, opacity 150ms ease',
+            'background 180ms ease, opacity 180ms ease, box-shadow 220ms ease',
         }}
       />
     );
@@ -168,15 +178,16 @@ export function BottomNavLogo({
         height: size,
         objectFit: 'contain',
 
-        opacity: active ? 1 : 0.72,
+        opacity:
+          active ? 1 : 0.72,
 
         transform:
           active
-            ? 'scale(1.03)'
+            ? 'scale(1.08)'
             : 'scale(1)',
 
         transition:
-          'opacity 180ms ease, transform 180ms ease',
+          'opacity 180ms ease, transform 220ms ease',
       }}
     />
   );
@@ -196,7 +207,9 @@ function NavItem({
       type="button"
       onClick={onClick}
       aria-label={t[item.labelKey]}
-      aria-current={active ? 'page' : undefined}
+      aria-current={
+        active ? 'page' : undefined
+      }
       className="flex-1 flex flex-col items-center justify-center"
       style={{
         minWidth: 0,
@@ -237,9 +250,10 @@ function NavItem({
           height: 28,
           borderRadius: 10,
 
-          background: active
-            ? 'color-mix(in srgb, var(--accent-alpha) 45%, transparent)'
-            : 'transparent',
+          background:
+            active
+              ? 'color-mix(in srgb, var(--accent-alpha) 45%, transparent)'
+              : 'transparent',
 
           transition:
             'background 180ms ease',
@@ -255,9 +269,6 @@ function NavItem({
 
               transform:
                 'translateY(-0.5px)',
-
-              transition:
-                'transform 180ms ease',
             }}
           >
             {item.emoji}
@@ -511,16 +522,24 @@ export function BottomNavigation({
             border:
               '0.5px solid var(--card-border)',
 
+            /*
+             * 選中時：
+             * 1. 保留原本的柔和陰影
+             * 2. 增加非常淡的品牌色外圈
+             *
+             * 未選中時：
+             * 維持原本較輕的懸浮感。
+             */
             boxShadow:
               centerActive
-                ? '0 4px 12px rgba(0,0,0,0.14)'
+                ? '0 4px 14px rgba(0,0,0,0.14), 0 0 0 3px var(--accent-alpha)'
                 : '0 3px 9px rgba(0,0,0,0.10)',
 
             WebkitTapHighlightColor:
               'transparent',
 
             transition:
-              'box-shadow 180ms ease, transform 100ms ease',
+              'box-shadow 220ms ease, transform 100ms ease',
           }}
           onPointerDown={event => {
             event.currentTarget.style.transform =
@@ -662,11 +681,11 @@ export function SideNavigation({
 
                   boxShadow:
                     active
-                      ? '0 4px 12px rgba(0,0,0,0.14)'
+                      ? '0 4px 12px rgba(0,0,0,0.14), 0 0 0 3px var(--accent-alpha)'
                       : '0 3px 9px rgba(0,0,0,0.10)',
 
                   transition:
-                    'box-shadow 180ms ease',
+                    'box-shadow 220ms ease',
                 }}
               >
                 <BottomNavLogo
