@@ -155,11 +155,16 @@ export function BottomNavLogo({
 
           boxShadow:
             active
-              ? '0 0 12px var(--accent-alpha)'
+              ? '0 0 14px var(--accent-alpha)'
               : 'none',
 
+          transform:
+            active
+              ? 'scale(1.08)'
+              : 'scale(1)',
+
           transition:
-            'background 180ms ease, opacity 180ms ease, box-shadow 220ms ease',
+            'background 180ms ease, opacity 180ms ease, box-shadow 300ms ease, transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1)',
         }}
       />
     );
@@ -181,13 +186,28 @@ export function BottomNavLogo({
         opacity:
           active ? 1 : 0.72,
 
+        /*
+         * 線條 Logo 選中時：
+         * 先明顯放大，再回落到穩定尺寸。
+         *
+         * 由於這裡沒有重新掛載元件，
+         * CSS 會自然完成平滑過渡。
+         */
         transform:
           active
-            ? 'scale(1.08)'
+            ? 'scale(1.15)'
             : 'scale(1)',
 
+        /*
+         * 讓線條產生非常輕微的品牌色光感。
+         */
+        filter:
+          active
+            ? 'drop-shadow(0 0 3px var(--accent-alpha)) drop-shadow(0 0 7px var(--accent-alpha))'
+            : 'none',
+
         transition:
-          'opacity 180ms ease, transform 220ms ease',
+          'opacity 180ms ease, transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 300ms ease',
       }}
     />
   );
@@ -523,12 +543,8 @@ export function BottomNavigation({
               '0.5px solid var(--card-border)',
 
             /*
-             * 選中時：
-             * 1. 保留原本的柔和陰影
-             * 2. 增加非常淡的品牌色外圈
-             *
-             * 未選中時：
-             * 維持原本較輕的懸浮感。
+             * 時光線選中時：
+             * 柔和陰影 + Accent 外圈。
              */
             boxShadow:
               centerActive
@@ -539,7 +555,7 @@ export function BottomNavigation({
               'transparent',
 
             transition:
-              'box-shadow 220ms ease, transform 100ms ease',
+              'box-shadow 300ms ease, transform 100ms ease',
           }}
           onPointerDown={event => {
             event.currentTarget.style.transform =
@@ -685,7 +701,7 @@ export function SideNavigation({
                       : '0 3px 9px rgba(0,0,0,0.10)',
 
                   transition:
-                    'box-shadow 220ms ease',
+                    'box-shadow 300ms ease',
                 }}
               >
                 <BottomNavLogo
