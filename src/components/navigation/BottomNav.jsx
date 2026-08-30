@@ -1,10 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Calendar, Globe, Images, User } from 'lucide-react';
-import { ACCENT, CARD_BORDER, INK_SOFT } from '../../constants/colors.js';
+import {
+  ACCENT,
+  CARD_BORDER,
+  INK_SOFT,
+} from '../../constants/colors.js';
 
 // 中央 Logo：深色模式 / 淺色模式各一份圖檔，放在 public 目錄下即可自動套用。
-export const BOTTOM_NAV_LOGO_SRC_LIGHT = '/nav-logo-light.png';
-export const BOTTOM_NAV_LOGO_SRC_DARK = '/nav-logo-dark.png';
+export const BOTTOM_NAV_LOGO_SRC_LIGHT =
+  '/nav-logo-light.png';
+
+export const BOTTOM_NAV_LOGO_SRC_DARK =
+  '/nav-logo-dark.png';
 
 // 順序：世界時鐘 → 日程 → 中央 Logo → 相冊 → 我的
 export const BOTTOM_NAV_ITEMS = [
@@ -130,11 +137,63 @@ export function BottomNavLogo({
   size = 26,
 }) {
   const [imgFailed, setImgFailed] = useState(false);
+  const [playAnimation, setPlayAnimation] = useState(false);
+
+  const previousActive = useRef(active);
+  const animationTimer = useRef(null);
 
   const src =
     theme === 'dark'
       ? BOTTOM_NAV_LOGO_SRC_DARK
       : BOTTOM_NAV_LOGO_SRC_LIGHT;
+
+  /*
+   * 每次由「未選中 → 選中」時重新播放一次動畫。
+   */
+  useEffect(() => {
+    const becameActive =
+      !previousActive.current && active;
+
+    previousActive.current = active;
+
+    if (!becameActive) {
+      return;
+    }
+
+    setPlayAnimation(false);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setPlayAnimation(true);
+      });
+    });
+
+    if (animationTimer.current) {
+      clearTimeout(animationTimer.current);
+    }
+
+    animationTimer.current =
+      setTimeout(() => {
+        setPlayAnimation(false);
+      }, 360);
+
+    return () => {
+      if (animationTimer.current) {
+        clearTimeout(animationTimer.current);
+      }
+    };
+  }, [active]);
+
+  /*
+   * 元件卸載時清理 timer。
+   */
+  useEffect(() => {
+    return () => {
+      if (animationTimer.current) {
+        clearTimeout(animationTimer.current);
+      }
+    };
+  }, []);
 
   if (imgFailed) {
     return (
@@ -153,18 +212,22 @@ export function BottomNavLogo({
           opacity:
             active ? 1 : 0.55,
 
-          boxShadow:
-            active
-              ? '0 0 14px var(--accent-alpha)'
-              : 'none',
-
           transform:
             active
-              ? 'scale(1.08)'
+              ? playAnimation
+                ? 'scale(1.16)'
+                : 'scale(1.08)'
               : 'scale(1)',
 
+          boxShadow:
+            active
+              ? playAnimation
+                ? '0 0 18px var(--accent-alpha)'
+                : '0 0 9px var(--accent-alpha)'
+              : 'none',
+
           transition:
-            'background 180ms ease, opacity 180ms ease, box-shadow 300ms ease, transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+            'transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 320ms ease, opacity 180ms ease',
         }}
       />
     );
@@ -187,27 +250,41 @@ export function BottomNavLogo({
           active ? 1 : 0.72,
 
         /*
-         * 線條 Logo 選中時：
-         * 先明顯放大，再回落到穩定尺寸。
+         * 「時光線」動畫：
          *
-         * 由於這裡沒有重新掛載元件，
-         * CSS 會自然完成平滑過渡。
+         * 未選中：
+         * 1.00
+         *
+         * 點擊選中：
+         * 1.00 → 1.16
+         *
+         * 動畫完成：
+         * 1.16 → 1.08
+         *
+         * 最終保持 1.08。
          */
         transform:
           active
-            ? 'scale(1.15)'
+            ? playAnimation
+              ? 'scale(1.16)'
+              : 'scale(1.08)'
             : 'scale(1)',
 
         /*
-         * 讓線條產生非常輕微的品牌色光感。
+         * 線條 Logo 的 Accent 微光。
+         *
+         * 動畫期間光暈更強，
+         * 完成後留下非常淡的光。
          */
         filter:
           active
-            ? 'drop-shadow(0 0 3px var(--accent-alpha)) drop-shadow(0 0 7px var(--accent-alpha))'
+            ? playAnimation
+              ? 'drop-shadow(0 0 3px var(--accent-alpha)) drop-shadow(0 0 10px var(--accent-alpha))'
+              : 'drop-shadow(0 0 3px var(--accent-alpha)) drop-shadow(0 0 6px var(--accent-alpha))'
             : 'none',
 
         transition:
-          'opacity 180ms ease, transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 300ms ease',
+          'opacity 180ms ease, transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 320ms ease',
       }}
     />
   );
