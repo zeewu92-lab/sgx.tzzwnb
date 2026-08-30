@@ -2,12 +2,8 @@ import { useRef } from 'react';
 import { Check } from 'lucide-react';
 import { ACCENT, CARD_BG, CARD_BORDER, DANGER, INK, INK_SOFT } from '../../constants/colors.js';
 import { LOCALE_MAP } from '../../constants/languages.js';
-import { COUNTRIES } from '../../constants/worldCities.js';
+import { CITIES } from '../../constants/worldCities.js';
 import { formatOffsetDiff, getOffsetMinutes, getTimeHMS, getUtcOffset } from '../../utils/timezone.js';
-
-export function Flag({ flag, className, style }) {
-  return <span className={className} style={style}>{flag}</span>;
-}
 
 export function ClockRow({ clock, now, selectMode, selected, onLongPress, onTap, lang, t, compact, isHome, homeTz, hero }) {
   const timerRef = useRef(null);
@@ -39,10 +35,9 @@ export function ClockRow({ clock, now, selectMode, selected, onLongPress, onTap,
     onTap(clock.id);
   };
 
-  const country = COUNTRIES.find(c => c.id === clock.countryId);
-  const zone = country ? country.zones.find(z => z.tz === clock.tz) : null;
-  const nameLabel = country ? country.name[lang] : clock.tz;
-  const subLabel = country && country.zones.length > 1 && zone && zone.label ? zone.label[lang] : null;
+  const city = CITIES.find(c => c.tz === clock.tz);
+  const nameLabel = city ? city.name[lang] : clock.tz;
+  const subLabel = city ? city.country[lang] : null;
 
   const timeStr = new Intl.DateTimeFormat(LOCALE_MAP[lang], { timeZone: clock.tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
   const offsetStr = getUtcOffset(clock.tz, now);
@@ -82,11 +77,6 @@ export function ClockRow({ clock, now, selectMode, selected, onLongPress, onTap,
           </span>
         )}
         <div className="flex items-center gap-3 min-w-0">
-          <Flag
-            flag={country ? country.flag : '🌐'}
-            className="text-3xl flex-shrink-0 leading-none flex items-center justify-center rounded-xl"
-            style={{ width: 44, height: 44, background: CARD_BG, border: CARD_BORDER }}
-          />
           <div className="flex flex-col items-start min-w-0">
             <span className="text-xs font-bold truncate" style={{ color: ACCENT }}>📍{t.currentLocation}</span>
             <span className="font-bold text-base truncate" style={{ color: INK }}>{nameLabel}</span>
@@ -122,7 +112,6 @@ export function ClockRow({ clock, now, selectMode, selected, onLongPress, onTap,
           </span>
         )}
         <div className="flex items-center gap-1.5 min-w-0">
-          <Flag flag={country ? country.flag : '🌐'} className="text-lg flex-shrink-0 leading-none" />
           <div className="flex flex-col items-start min-w-0">
             <span className="font-bold text-xs truncate" style={{ color: INK, maxWidth: 62 }}>{nameLabel}</span>
             {isHome ? (
@@ -162,7 +151,6 @@ export function ClockRow({ clock, now, selectMode, selected, onLongPress, onTap,
         </span>
       )}
       <div className="flex items-center gap-2.5 min-w-0">
-        <Flag flag={country ? country.flag : '🌐'} className="text-2xl flex-shrink-0 leading-none" />
         <div className="flex flex-col items-start min-w-0">
           <span className="font-bold text-sm truncate" style={{ color: INK }}>{nameLabel}</span>
           {isHome ? (
