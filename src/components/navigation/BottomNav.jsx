@@ -8,11 +8,36 @@ export const BOTTOM_NAV_LOGO_SRC_DARK = '/nav-logo-dark.png';
 
 // 順序：世界時鐘 → 日程 → 中央 Logo → 相冊 → 我的
 export const BOTTOM_NAV_ITEMS = [
-  { id: 'clock', icon: Globe, labelKey: 'worldClock' },
-  { id: 'schedule', icon: Calendar, labelKey: 'navSchedule' },
-  { id: 'home', icon: null, labelKey: null },
-  { id: 'gallery', icon: Images, labelKey: 'navGallery' },
-  { id: 'profile', icon: User, labelKey: 'navProfile' },
+  {
+    id: 'clock',
+    icon: Globe,
+    emoji: '🌏',
+    labelKey: 'worldClock',
+  },
+  {
+    id: 'schedule',
+    icon: Calendar,
+    emoji: '🗓️',
+    labelKey: 'navSchedule',
+  },
+  {
+    id: 'home',
+    icon: null,
+    emoji: null,
+    labelKey: null,
+  },
+  {
+    id: 'gallery',
+    icon: Images,
+    emoji: '🖼️',
+    labelKey: 'navGallery',
+  },
+  {
+    id: 'profile',
+    icon: User,
+    emoji: '🧚',
+    labelKey: 'navProfile',
+  },
 ];
 
 const NAV_BAR_HEIGHT = 64;
@@ -98,6 +123,7 @@ function NotchBorder() {
   );
 }
 
+// 中央 Logo
 export function BottomNavLogo({
   active,
   theme = 'light',
@@ -156,6 +182,7 @@ export function BottomNavLogo({
   );
 }
 
+// 底部導覽列單項
 function NavItem({
   item,
   active,
@@ -210,10 +237,6 @@ function NavItem({
           height: 28,
           borderRadius: 10,
 
-          /*
-           * Apple 式選中狀態：
-           * 保留極淡的色彩提示，不做明顯色塊。
-           */
           background: active
             ? 'color-mix(in srgb, var(--accent-alpha) 45%, transparent)'
             : 'transparent',
@@ -222,21 +245,35 @@ function NavItem({
             'background 180ms ease',
         }}
       >
-        <Icon
-          size={20}
-          style={{
-            color:
-              active
-                ? ACCENT
-                : INK_SOFT,
+        {active ? (
+          <span
+            aria-hidden="true"
+            style={{
+              fontSize: 21,
+              lineHeight: 1,
+              display: 'block',
 
-            transition:
-              'color 180ms ease',
-          }}
-          strokeWidth={
-            active ? 2.35 : 1.9
-          }
-        />
+              transform:
+                'translateY(-0.5px)',
+
+              transition:
+                'transform 180ms ease',
+            }}
+          >
+            {item.emoji}
+          </span>
+        ) : (
+          <Icon
+            size={20}
+            style={{
+              color: INK_SOFT,
+
+              transition:
+                'color 180ms ease',
+            }}
+            strokeWidth={1.9}
+          />
+        )}
       </span>
 
       <span
@@ -302,15 +339,9 @@ export function BottomNavigation({
         position: 'relative',
         zIndex: 30,
 
-        /*
-         * Safe Area 不影響主導覽列 64px 高度。
-         */
         paddingBottom:
           'env(safe-area-inset-bottom, 0px)',
 
-        /*
-         * Apple 式半透明玻璃。
-         */
         background:
           'color-mix(in srgb, var(--header-bg) 76%, transparent)',
 
@@ -320,9 +351,6 @@ export function BottomNavigation({
         WebkitBackdropFilter:
           'blur(24px) saturate(180%)',
 
-        /*
-         * 只保留非常淡的上方分界。
-         */
         boxShadow:
           '0 -0.5px 0 rgba(255,255,255,0.08)',
       }}
@@ -463,9 +491,6 @@ export function BottomNavigation({
             position: 'absolute',
             left: '50%',
 
-            /*
-             * 目前已確認的位置。
-             */
             top:
               -(NOTCH_BUTTON_SIZE - 34) + 8,
 
@@ -480,19 +505,12 @@ export function BottomNavigation({
 
             padding: 0,
 
-            /*
-             * 中央按鈕本身保持實色，
-             * 確保 Logo 在透明玻璃背景上始終清楚。
-             */
             background:
               'var(--card-bg, #fff)',
 
             border:
               '0.5px solid var(--card-border)',
 
-            /*
-             * 陰影降低，避免「懸浮按鈕」感。
-             */
             boxShadow:
               centerActive
                 ? '0 4px 12px rgba(0,0,0,0.14)'
@@ -674,21 +692,32 @@ export function SideNavigation({
                     'background 180ms ease',
                 }}
               >
-                <Icon
-                  size={20}
-                  style={{
-                    color:
-                      active
-                        ? ACCENT
-                        : INK_SOFT,
+                {active ? (
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      fontSize: 21,
+                      lineHeight: 1,
+                      display: 'block',
 
-                    transition:
-                      'color 180ms ease',
-                  }}
-                  strokeWidth={
-                    active ? 2.35 : 1.9
-                  }
-                />
+                      transform:
+                        'translateY(-0.5px)',
+                    }}
+                  >
+                    {item.emoji}
+                  </span>
+                ) : (
+                  <Icon
+                    size={20}
+                    style={{
+                      color: INK_SOFT,
+
+                      transition:
+                        'color 180ms ease',
+                    }}
+                    strokeWidth={1.9}
+                  />
+                )}
               </span>
             )}
 
