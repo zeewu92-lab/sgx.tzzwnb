@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Check, Globe } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { ACCENT, INK, INK_SOFT, glass } from '../../constants/colors.js';
 import { LANGS, LANG_NAMES } from '../../constants/languages.js';
 import { CAL_OPTIONS } from '../../constants/worldCities.js';
+import { LanguageIcon } from '../icons/AppIcons.jsx';
 import { openDropdownExclusive, useExclusiveDropdown } from '../../hooks/useOverlayTransition.js';
 import { accentAlpha } from '../../utils/accentAlpha.js';
 
@@ -31,7 +32,7 @@ export function LangSwitcher({ lang, setLang }) {
         className="flex items-center gap-1 text-sm px-3 py-1.5 rounded-full"
         style={glass({ color: INK })}
       >
-        <Globe size={14} /> {LANG_NAMES[lang]}
+        <LanguageIcon size={14} /> {LANG_NAMES[lang]}
       </button>
       {open && (
         <div className="absolute right-0 mt-2 rounded-xl overflow-hidden z-20" style={{ ...glass(), width: 140, boxShadow: '0 10px 30px rgba(35,39,51,0.15)' }}>
