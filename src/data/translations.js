@@ -9,6 +9,7 @@ export const STRINGS = {
     sameAsCurrent: '與目前位置同時', diffHourSuffix: '小時',
     addedCities: '已加入城市', sunrise: '日出', sunset: '日落', removeFromWorldClock: '從世界時鐘移除',
     nowLabel: '現在', periodDawn: '清晨', periodDay: '白天', periodNight: '夜晚',
+    standardTimeLabel: (name) => `${name}標準時間`,
     fasterThanHome: (name, h) => `比${name}快 ${h} 小時`, slowerThanHome: (name, h) => `比${name}慢 ${h} 小時`,
     newLandmark: '新增地標', titleLabel: '標題', titlePlaceholder: '事件名稱，給這件事起個名字',
     dateLabel: '日期', datePlaceholder: '選擇日期', timeLabel: '時間（選填）', calendarLabel: '曆法參照',
@@ -40,7 +41,7 @@ export const STRINGS = {
     noAlbumsYet: '尚未建立相冊，先建立一個吧', noPhotosYet: '這個相冊還沒有相片，點一下新增',
     addPhoto: '新增相片', deleteAlbum: '刪除相冊', deletePhoto: '刪除相片', confirmRename: '確認更名', moveTo: '移到',
     albumPhotoUploadError: '相片上傳失敗，請換一張再試一次', renameAlbum: '重新命名相冊', syncErrorHint: '最近一次儲存失敗，資料可能量太大，請稍後再試',
-    createAlbumBtn: '建立相冊', albumFilterAll: '全部', albumFilterLinked: '事件相冊', albumFilterUnlinked: '未關聯',
+    createAlbumBtn: '＋ 建立相冊', albumFilterAll: '全部', albumFilterLinked: '事件相冊', albumFilterUnlinked: '未關聯',
     albumHomeEmpty: '尚未建立相冊，先建立第一本，保存你的回憶吧', albumPhotoCount: n => `${n} 張照片`,
     linkedEventBadge: e => `⌁ ${e}`, selectPhotosStepTitle: '選擇照片', selectPhotosHint: '從裝置圖片庫選擇一張或多張照片開始',
     selectedPhotosCount: n => `已選擇 ${n} 張照片`, nextStep: '下一步', createAlbumStepTitle: '建立相冊',
@@ -160,6 +161,7 @@ export const STRINGS = {
     sameAsCurrent: 'Same time as current location', diffHourSuffix: 'h',
     addedCities: 'Added cities', sunrise: 'Sunrise', sunset: 'Sunset', removeFromWorldClock: 'Remove from World Clock',
     nowLabel: 'Now', periodDawn: 'Dawn', periodDay: 'Day', periodNight: 'Night',
+    standardTimeLabel: (name) => `${name} Standard Time`,
     fasterThanHome: (name, h) => `${h}h ahead of ${name}`, slowerThanHome: (name, h) => `${h}h behind ${name}`,
     newLandmark: 'New Landmark', titleLabel: 'Title', titlePlaceholder: 'Event name — give it a name',
     dateLabel: 'Date', datePlaceholder: 'Select a date', timeLabel: 'Time (optional)', calendarLabel: 'Calendar system',
@@ -288,7 +290,7 @@ This service is developed and operated by an independent developer.
 "Zhao Ziwu Studio" is the studio name and brand identity used for this service.
 ---
 ## Related Documents
-- [Terms of Use](https://timezzw.top/help/ToS)
+- [Terms of Service](https://timezzw.top/help/ToS)
 - [Privacy Policy](https://timezzw.top/help/privacypolicy)
 ---
 ## Feedback
@@ -311,6 +313,7 @@ We read every piece of feedback carefully and keep improving 時光線.
     sameAsCurrent: '現在地と同じ時刻', diffHourSuffix: '時間',
     addedCities: '追加済みの都市', sunrise: '日の出', sunset: '日の入り', removeFromWorldClock: '世界時計から削除',
     nowLabel: '現在', periodDawn: '明け方', periodDay: '日中', periodNight: '夜',
+    standardTimeLabel: (name) => `${name}標準時`,
     fasterThanHome: (name, h) => `${name}より ${h} 時間進んでいます`, slowerThanHome: (name, h) => `${name}より ${h} 時間遅れています`,
     newLandmark: '新しいランドマーク', titleLabel: 'タイトル', titlePlaceholder: 'イベント名を入力してください',
     dateLabel: '日付', datePlaceholder: '日付を選択', timeLabel: '時刻（任意）', calendarLabel: '暦法',
@@ -462,6 +465,7 @@ We read every piece of feedback carefully and keep improving 時光線.
     sameAsCurrent: '현재 위치와 같은 시간', diffHourSuffix: '시간',
     addedCities: '추가된 도시', sunrise: '일출', sunset: '일몰', removeFromWorldClock: '세계 시계에서 제거',
     nowLabel: '지금', periodDawn: '새벽', periodDay: '낮', periodNight: '밤',
+    standardTimeLabel: (name) => `${name} 표준시`,
     fasterThanHome: (name, h) => `${name}보다 ${h}시간 빠름`, slowerThanHome: (name, h) => `${name}보다 ${h}시간 느림`,
     newLandmark: '새 랜드마크', titleLabel: '제목', titlePlaceholder: '이벤트 이름을 지어 주세요',
     dateLabel: '날짜', datePlaceholder: '날짜 선택', timeLabel: '시간(선택)', calendarLabel: '달력 체계',
