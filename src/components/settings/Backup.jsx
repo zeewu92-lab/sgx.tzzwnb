@@ -185,7 +185,7 @@ export function BackupDataPage({ t, backupData, onImportBackup }) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm" style={{ color: INK_SOFT }}>{t.backupHint}</p>
-      <p className="text-xs leading-relaxed" style={{ color: INK_SOFT }}>{t.albumBackupReminder}</p>
+      <p className="text-xs leading-relaxed" style={{ color: INK_SOFT }}>{t.backupSlowdownHint}</p>
       <div className="flex gap-2">
         <button type="button" onClick={handleExportBackup} className="flex-1 py-3 rounded-xl text-sm font-bold" style={{ ...glass(), color: INK }}>
           {t.backupExportBtn}
