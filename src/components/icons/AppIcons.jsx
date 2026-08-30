@@ -48,9 +48,9 @@ export function LanguageIcon({ size = 24, strokeWidth = 2, className, style }) {
       className={className}
       style={style}
     >
-      <text x="1.5" y="17" fontSize="13" fontWeight="800" fontFamily="'Quicksand', system-ui, sans-serif" fill="currentColor">A</text>
+      <text x="1.5" y="17" fontSize="11" fontWeight="800" fontFamily="'Quicksand', system-ui, sans-serif" fill="currentColor">文</text>
       <path d="M12.3 19 15.2 3.5" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
-      <text x="14.8" y="18.5" fontSize="13" fontWeight="700" fontFamily="system-ui, sans-serif" fill="currentColor">文</text>
+      <text x="14.8" y="18.5" fontSize="13" fontWeight="700" fontFamily="system-ui, sans-serif" fill="currentColor">A</text>
     </svg>
   );
 }
