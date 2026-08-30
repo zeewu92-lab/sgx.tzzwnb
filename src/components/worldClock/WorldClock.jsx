@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronLeft, ChevronRight, X, Clock, Moon, Sun, Sunrise, Sunset } from 'lucide-react';
-import { AnalogClock, ClockRow, Flag } from './ClockCard.jsx';
+import { Plus, Trash2, ChevronRight, X, Clock, Moon, Sun, Sunrise, Sunset } from 'lucide-react';
+import { AnalogClock, ClockRow } from './ClockCard.jsx';
 import { ACCENT, AUTH_GLASS, CARD_BG, CARD_BORDER, DANGER, INK, INK_SOFT, glass } from '../../constants/colors.js';
 import { LOCALE_MAP } from '../../constants/languages.js';
-import { COUNTRIES } from '../../constants/worldCities.js';
+import { CITIES } from '../../constants/worldCities.js';
 import { useModalBackClose } from '../../hooks/useModalBackClose.js';
 import { openDropdownExclusive, useExclusiveDropdown } from '../../hooks/useOverlayTransition.js';
 import { formatSunTime, getOffsetMinutes, getSunTimes, getUtcOffset } from '../../utils/timezone.js';
 
 export function CurrentLocationClockModal({ clock, now, restClocks, lang, t, onClose, dock = false, closing = false }) {
-  const country = COUNTRIES.find(c => c.id === clock.countryId);
-  const nameLabel = country ? country.name[lang] : clock.tz;
+  const city = CITIES.find(c => c.tz === clock.tz);
+  const nameLabel = city ? city.name[lang] : clock.tz;
   const timeStr = new Intl.DateTimeFormat(LOCALE_MAP[lang], { timeZone: clock.tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
   const offsetStr = getUtcOffset(clock.tz, now);
 
@@ -76,7 +76,6 @@ export function CurrentLocationClockModal({ clock, now, restClocks, lang, t, onC
         </div>
 
         <div className="flex items-center gap-2 mt-1">
-          <Flag flag={country ? country.flag : '🌐'} className="text-2xl leading-none" />
           <span className="font-bold text-lg" style={{ color: INK }}>{nameLabel}</span>
         </div>
 
@@ -93,16 +92,14 @@ export function CurrentLocationClockModal({ clock, now, restClocks, lang, t, onC
         {/* 其他已加入的時區列表（唯讀） */}
         <div className="w-full flex flex-col gap-2">
           {restClocks.map(c => {
-            const rc = COUNTRIES.find(x => x.id === c.countryId);
-            const rZone = rc ? rc.zones.find(z => z.tz === c.tz) : null;
+            const rc = CITIES.find(x => x.tz === c.tz);
             const rName = rc ? rc.name[lang] : c.tz;
-            const rSubLabel = rc && rc.zones.length > 1 && rZone && rZone.label ? rZone.label[lang] : null;
+            const rSubLabel = rc ? rc.country[lang] : null;
             const rTimeStr = new Intl.DateTimeFormat(LOCALE_MAP[lang], { timeZone: c.tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
             const rOffsetStr = getUtcOffset(c.tz, now);
             return (
               <div key={c.id} className="w-full flex items-center justify-between px-4 py-3 rounded-2xl" style={{ background: CARD_BG, border: CARD_BORDER }}>
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <Flag flag={rc ? rc.flag : '🌐'} className="text-xl flex-shrink-0 leading-none" />
                   <div className="flex flex-col items-start min-w-0">
                     <span className="font-bold text-sm truncate" style={{ color: INK }}>{rName}</span>
                     {rSubLabel && <span className="text-xs truncate" style={{ color: INK_SOFT }}>{rSubLabel}</span>}
@@ -124,7 +121,6 @@ export function CurrentLocationClockModal({ clock, now, restClocks, lang, t, onC
 export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, homeTzId, setHomeTzId, part2Ref, part2Height, isDraggingWorldClock, isLargeScreen = false, unlimitedHeight = false, fullPage = false }) {
   const [now, setNow] = useState(new Date());
   const [showMenu, setShowMenu] = useState(false);
-  const [submenuCountry, setSubmenuCountry] = useState(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState([]);
   // fullPage（獨立「世界時鐘」分頁）版面專用：目前開啟哪一筆時鐘的詳細頁（存 id，null＝沒開）
@@ -145,14 +141,13 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setShowMenu(false);
-        setSubmenuCountry(null);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useExclusiveDropdown('timezone', showMenu, () => { setShowMenu(false); setSubmenuCountry(null); });
+  useExclusiveDropdown('timezone', showMenu, () => setShowMenu(false));
 
   const addedTz = new Set(clocks.map(c => c.tz));
   const homeClock = clocks.find(c => c.id === homeTzId) || null;
@@ -160,14 +155,9 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
   // 將「目前位置」的時區回報給上層 App，讓頂部標題列能依此判斷早上好／中午好／晚上好
   useEffect(() => { onHomeTzChange && onHomeTzChange(homeClock ? homeClock.tz : null); }, [homeClock, onHomeTzChange]);
 
-  function addZone(country, tz) {
-    setClocks(prev => [...prev, { id: Date.now().toString(), tz, countryId: country.id }]);
+  function addZone(city) {
+    setClocks(prev => [...prev, { id: Date.now().toString(), tz: city.tz }]);
     setShowMenu(false);
-    setSubmenuCountry(null);
-  }
-  function handleCountryClick(country) {
-    if (country.zones.length === 1) addZone(country, country.zones[0].tz);
-    else setSubmenuCountry(country);
   }
   function longPress(id) { setSelectMode(true); setSelected(prev => (prev.includes(id) ? prev : [...prev, id])); }
   function tap(id) {
@@ -186,8 +176,7 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
   }
   function cancelSelect() { setSelectMode(false); setSelected([]); }
 
-  const rootOptions = COUNTRIES.filter(c => !c.zones.every(z => addedTz.has(z.tz)));
-  const subOptions = submenuCountry ? submenuCountry.zones.filter(z => !addedTz.has(z.tz)) : [];
+  const cityOptions = CITIES.filter(c => !addedTz.has(c.tz));
 
   // Part 2 只顯示「非目前位置」的時區；目前位置改成在 Part 1 置頂區塊常駐顯示
   const restClocks = clocks.filter(c => c.id !== homeTzId);
@@ -212,7 +201,7 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
       const h = Math.floor(abs / 60);
       const mm = abs % 60;
       const hourStr = `${h}${mm ? `:${String(mm).padStart(2, '0')}` : ''}`;
-      const homeName = (COUNTRIES.find(c => c.id === homeClock.countryId) || {}).name || {};
+      const homeName = (CITIES.find(c => c.tz === homeClock.tz) || {}).name || {};
       const homeLabel = homeName[lang] || homeClock.tz;
       return diffMinutes > 0 ? t.fasterThanHome(homeLabel, hourStr) : t.slowerThanHome(homeLabel, hourStr);
     };
@@ -228,11 +217,9 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
     const detailClock = detailClockId ? clocks.find(c => c.id === detailClockId) : null;
 
     function cityLabel(clock) {
-      const country = COUNTRIES.find(c => c.id === clock.countryId);
-      const zone = country ? country.zones.find(z => z.tz === clock.tz) : null;
-      const name = country ? country.name[lang] : clock.tz;
-      // 有多時區的國家（如美國）顯示地區名當第二行；單一時區國家第二行就是國名本身
-      const secondLine = country && country.zones.length > 1 && zone && zone.label ? zone.label[lang] : country ? country.name[lang] : null;
+      const city = CITIES.find(c => c.tz === clock.tz);
+      const name = city ? city.name[lang] : clock.tz;
+      const secondLine = city ? city.country[lang] : null;
       return { name, secondLine };
     }
 
@@ -246,7 +233,7 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
         <div className="flex items-center justify-end pt-1 pb-2">
           <div className="relative" ref={menuRef}>
             <button
-              onClick={() => { setShowMenu(v => { const next = !v; if (next) openDropdownExclusive('timezone'); return next; }); setSubmenuCountry(null); }}
+              onClick={() => setShowMenu(v => { const next = !v; if (next) openDropdownExclusive('timezone'); return next; })}
               aria-label={t.addTimezone}
               className="flex items-center justify-center rounded-full"
               style={{ width: 32, height: 32, color: ACCENT }}
@@ -255,39 +242,16 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
             </button>
             {showMenu && (
               <div className="absolute right-0 mt-2 rounded-xl overflow-y-auto z-10" style={{ ...glass(), width: 220, maxHeight: 280, boxShadow: '0 10px 30px rgba(35,39,51,0.15)' }}>
-                {!submenuCountry ? (
-                  rootOptions.length === 0 ? (
-                    <div className="px-3 py-3 text-sm" style={{ color: INK_SOFT }}>{t.allAdded}</div>
-                  ) : (
-                    rootOptions.map(c => (
-                      <button key={c.id} onClick={() => handleCountryClick(c)}
-                        className="w-full flex items-center justify-between text-left px-3 py-2 text-sm"
-                        style={{ color: INK }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--card-border)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                        <span>{c.name[lang]}</span>
-                        {c.zones.length > 1 && <ChevronDown size={14} style={{ transform: 'rotate(-90deg)', color: INK_SOFT }} />}
-                      </button>
-                    ))
-                  )
+                {cityOptions.length === 0 ? (
+                  <div className="px-3 py-3 text-sm" style={{ color: INK_SOFT }}>{t.allAdded}</div>
                 ) : (
-                  <div>
-                    <button onClick={() => setSubmenuCountry(null)} className="w-full flex items-center gap-1 text-left px-3 py-2 text-sm font-medium" style={{ color: ACCENT, borderBottom: CARD_BORDER }}>
-                      <ChevronLeft size={14} /> {t.back}
+                  cityOptions.map(c => (
+                    <button key={c.id} onClick={() => addZone(c)}
+                      className="w-full text-left px-3 py-2 text-sm"
+                      style={{ color: INK }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--card-border)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                      {c.name[lang]}
                     </button>
-                    {subOptions.length === 0 ? (
-                      <div className="px-3 py-3 text-sm" style={{ color: INK_SOFT }}>{t.allAdded}</div>
-                    ) : (
-                      subOptions.map(z => (
-                        <button key={z.tz} onClick={() => addZone(submenuCountry, z.tz)}
-                          className="w-full text-left px-3 py-2 text-sm"
-                          style={{ color: INK }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--card-border)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                        >
-                          {z.label ? z.label[lang] : z.tz}
-                        </button>
-                      ))
-                    )}
-                  </div>
+                  ))
                 )}
               </div>
             )}
@@ -418,48 +382,22 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
           ) : (
             <div className="flex items-center gap-2">
               <div className="relative" ref={menuRef}>
-                <button onClick={() => { setShowMenu(v => { const next = !v; if (next) openDropdownExclusive('timezone'); return next; }); setSubmenuCountry(null); }}
+                <button onClick={() => setShowMenu(v => { const next = !v; if (next) openDropdownExclusive('timezone'); return next; })}
                   className="flex items-center gap-1 text-sm px-3 py-1.5 rounded-lg font-medium" style={{ background: ACCENT, color: '#fff' }}>
                   <Plus size={14} /> {t.addTimezone}
                 </button>
               {showMenu && (
                 <div className="absolute right-0 mt-2 rounded-xl overflow-y-auto z-10" style={{ ...glass(), width: 220, maxHeight: 280, boxShadow: '0 10px 30px rgba(35,39,51,0.15)' }}>
-                  {!submenuCountry ? (
-                    rootOptions.length === 0 ? (
-                      <div className="px-3 py-3 text-sm" style={{ color: INK_SOFT }}>{t.allAdded}</div>
-                    ) : (
-                      rootOptions.map(c => (
-                        <button key={c.id} onClick={() => handleCountryClick(c)}
-                          className="w-full flex items-center justify-between text-left px-3 py-2 text-sm"
-                          style={{ color: INK }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--card-border)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                          <span className="flex items-center gap-1.5">
-                            <Flag flag={c.flag} style={{ display: 'inline-block', lineHeight: 1 }} />
-                            {c.name[lang]}
-                          </span>
-                          {c.zones.length > 1 && <ChevronDown size={14} style={{ transform: 'rotate(-90deg)', color: INK_SOFT }} />}
-                        </button>
-                      ))
-                    )
+                  {cityOptions.length === 0 ? (
+                    <div className="px-3 py-3 text-sm" style={{ color: INK_SOFT }}>{t.allAdded}</div>
                   ) : (
-                    <div>
-                      <button onClick={() => setSubmenuCountry(null)} className="w-full flex items-center gap-1 text-left px-3 py-2 text-sm font-medium" style={{ color: ACCENT, borderBottom: CARD_BORDER }}>
-                        <ChevronLeft size={14} /> {t.back}
+                    cityOptions.map(c => (
+                      <button key={c.id} onClick={() => addZone(c)}
+                        className="w-full text-left px-3 py-2 text-sm"
+                        style={{ color: INK }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--card-border)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                        {c.name[lang]}
                       </button>
-                      {subOptions.length === 0 ? (
-                        <div className="px-3 py-3 text-sm" style={{ color: INK_SOFT }}>{t.allAdded}</div>
-                      ) : (
-                        subOptions.map(z => (
-                          <button key={z.tz} onClick={() => addZone(submenuCountry, z.tz)}
-                                                      className="w-full text-left px-3 py-2 text-sm"
-                            style={{ color: INK }} 
-                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--card-border)')} 
-                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                          >
-                            {z.label ? z.label[lang] : z.tz}
-                          </button>
-                        ))
-                      )}
-                    </div>
+                    ))
                   )}
                 </div>
               )}
@@ -526,9 +464,8 @@ export function WorldClockSection({ clocks, setClocks, lang, t, onHomeTzChange, 
 // 城市詳細頁（fullPage 版世界時鐘專用）：城市名、大字時間、日期、UTC、跟目前位置的時差、
 // 日出日落，以及「設為/取消設為目前位置」「從世界時鐘移除」兩個操作。
 function CityDetailSheet({ clock, now, lang, t, isHome, onClose, onSetHome, onUnsetHome, onRemove, diffLabel, periodInfo }) {
-  const country = COUNTRIES.find(c => c.id === clock.countryId);
-  const zone = country ? country.zones.find(z => z.tz === clock.tz) : null;
-  const nameLabel = country ? country.name[lang] : clock.tz;
+  const city = CITIES.find(c => c.tz === clock.tz);
+  const nameLabel = city ? city.name[lang] : clock.tz;
 
   const [phase, setPhase] = useState('enter');
   const CLOSE_DURATION = 60;
@@ -547,7 +484,7 @@ function CityDetailSheet({ clock, now, lang, t, isHome, onClose, onSetHome, onUn
   const offsetStr = getUtcOffset(clock.tz, now);
   const hour = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: clock.tz, hour: 'numeric', hour12: false }).format(now), 10) % 24;
   const period = periodInfo(hour);
-  const sun = (zone && typeof zone.lat === 'number') ? getSunTimes(now, clock.tz, zone.lat, zone.lng) : { sunrise: null, sunset: null };
+  const sun = (city && typeof city.lat === 'number') ? getSunTimes(now, clock.tz, city.lat, city.lng) : { sunrise: null, sunset: null };
 
   return (
     <div
