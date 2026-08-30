@@ -78,8 +78,7 @@ export function BackupSection({ t, handleExportBackup, importFileRef, handleImpo
     <div className="flex flex-col gap-2 pt-3 mt-1" style={{ borderTop: CARD_BORDER }}>
       <p className="text-xs font-bold" style={{ color: INK_SOFT }}>{t.backupSectionTitle}</p>
       <p className="text-xs" style={{ color: INK_SOFT }}>{t.backupHint}</p>
-      {/* 原本這裡有一段「相片會讓備份檔變大，匯入／匯出速度可能因此變慢」的提醒（backupSlowdownHint），
-          已經移到「新增相片」前的提醒視窗裡，跟 albumBackupReminder 一起分兩段顯示，這裡不再重複。 */}
+      <p className="text-xs" style={{ color: INK_SOFT }}>{t.backupSlowdownHint}</p>
       <div className="flex gap-2">
         <button
           type="button"
