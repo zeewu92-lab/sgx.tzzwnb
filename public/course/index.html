@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>課表</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#4654B3;
+    --primary-dark:#323E8C;
+    --primary-light:#6472CC;
+    --primary-tint:#EEF0FB;
+    --accent-break:#F2994A;
+    --accent-break-tint:#FFF2E5;
+    --bg:#F6F7FC;
+    --card:#FFFFFF;
+    --text:#1D2140;
+    --text-muted:#767CA3;
+    --border:#E4E6F5;
+    --danger:#E0555C;
+    --danger-tint:#FDEBEC;
+    --radius:16px;
+    --radius-sm:10px;
+    --shadow:0 2px 10px rgba(70,84,179,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Noto Sans TC',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding-bottom:24px;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  #app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;}
+
+  /* ---------- Header ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    background:var(--primary);
+    color:#fff;
+    padding:18px 18px 22px;
+    border-radius:0 0 26px 26px;
+    box-shadow:0 6px 20px rgba(70,84,179,0.25);
+  }
+  .topbar-row{display:flex;align-items:center;justify-content:space-between;}
+  .topbar-title{font-size:20px;font-weight:800;letter-spacing:0.5px;}
+  .topbar-sub{font-size:12px;opacity:0.75;margin-top:2px;font-weight:500;}
+  .icon-btn{
+    width:38px;height:38px;border-radius:12px;
+    background:rgba(255,255,255,0.16);
+    border:none;color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:18px;
+    transition:background .15s;
+  }
+  .icon-btn:active{background:rgba(255,255,255,0.3);}
+  .icon-group{display:flex;gap:8px;}
+
+  /* ---------- Day tabs ---------- */
+  .day-tabs{
+    display:flex;gap:6px;margin-top:16px;overflow-x:auto;
+    scrollbar-width:none;padding-bottom:2px;
+  }
+  .day-tabs::-webkit-scrollbar{display:none;}
+  .day-tab{
+    flex:0 0 auto;min-width:52px;
+    padding:8px 4px;border-radius:14px;
+    text-align:center;cursor:pointer;
+    background:rgba(255,255,255,0.12);
+    transition:background .15s, transform .15s;
+  }
+  .day-tab .dn{font-size:11px;opacity:0.75;font-weight:600;}
+  .day-tab .dd{font-size:16px;font-weight:700;margin-top:2px;font-family:'JetBrains Mono',monospace;}
+  .day-tab.active{background:#fff;color:var(--primary-dark);transform:translateY(-2px);}
+  .day-tab.active .dn{opacity:1;color:var(--primary-dark);}
+
+  /* ---------- Main content ---------- */
+  .content{padding:18px 16px 100px;}
+  .empty-state{
+    text-align:center;color:var(--text-muted);
+    padding:60px 20px;font-size:14px;
+  }
+  .empty-state .em-icon{font-size:36px;margin-bottom:10px;}
+
+  /* ---------- Timeline ---------- */
+  .timeline{position:relative;}
+  .tl-row{display:flex;gap:12px;position:relative;padding-bottom:18px;}
+  .tl-rail{
+    display:flex;flex-direction:column;align-items:center;
+    width:52px;flex:0 0 auto;padding-top:4px;
+  }
+  .tl-time{font-size:11px;font-weight:600;color:var(--text-muted);text-align:center;line-height:1.3;}
+  .tl-dot{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--primary);margin:6px 0;
+    box-shadow:0 0 0 4px var(--primary-tint);
+    flex:0 0 auto;
+  }
+  .tl-dot.break-dot{background:var(--accent-break);box-shadow:0 0 0 4px var(--accent-break-tint);}
+  .tl-line{width:2px;flex:1;background:var(--border);margin-bottom:-18px;}
+  .tl-row:last-child .tl-line{display:none;}
+
+  .card{
+    flex:1;background:var(--card);border-radius:var(--radius);
+    padding:14px 16px;box-shadow:var(--shadow);
+    cursor:pointer;border:1px solid transparent;
+    transition:transform .12s, box-shadow .12s;
+  }
+  .card:active{transform:scale(0.98);}
+  .card-subject{font-size:16px;font-weight:700;color:var(--text);}
+  .card-meta{font-size:12.5px;color:var(--text-muted);margin-top:4px;}
+  .card.empty{
+    border:1.5px dashed var(--border);box-shadow:none;
+    color:var(--text-muted);display:flex;align-items:center;
+    font-size:14px;font-weight:600;
+  }
+  .card.break-card{background:var(--accent-break-tint);}
+  .card.break-card .card-subject{color:#B4611B;}
+  .card-icon{font-size:15px;margin-right:6px;}
+
+  /* ---------- Bottom actions ---------- */
+  .fab-bar{
+    position:fixed;bottom:0;left:0;right:0;
+    max-width:480px;margin:0 auto;
+    display:flex;gap:10px;padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg, rgba(246,247,252,0) 0%, var(--bg) 40%);
+  }
+  .btn{
+    flex:1;padding:13px;border-radius:14px;border:none;
+    font-size:14.5px;font-weight:700;cursor:pointer;
+    font-family:'Noto Sans TC',sans-serif;
+  }
+  .btn-primary{background:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(70,84,179,0.35);}
+  .btn-primary:active{background:var(--primary-dark);}
+  .btn-ghost{background:#fff;color:var(--primary);border:1.5px solid var(--primary-tint);}
+
+  /* ---------- Sheet / Modal ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(29,33,64,0.45);
+    z-index:50;display:flex;align-items:flex-end;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .2s;
+  }
+  .overlay.show{opacity:1;pointer-events:auto;}
+  .sheet{
+    background:#fff;width:100%;max-width:480px;
+    border-radius:24px 24px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));
+    transform:translateY(100%);transition:transform .25s ease;
+    max-height:86vh;overflow-y:auto;
+  }
+  .overlay.show .sheet{transform:translateY(0);}
+  .sheet-handle{width:36px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 14px;}
+  .sheet-title{font-size:17px;font-weight:800;margin-bottom:16px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--text-muted);margin-bottom:6px;}
+  .field input, .field select{
+    width:100%;padding:11px 13px;border-radius:12px;
+    border:1.5px solid var(--border);font-size:14.5px;
+    font-family:'Noto Sans TC',sans-serif;background:#FBFBFF;
+  }
+  .field input:focus, .field select:focus{outline:none;border-color:var(--primary-light);}
+  .row2{display:flex;gap:10px;}
+  .row2 .field{flex:1;}
+  .sheet-actions{display:flex;gap:10px;margin-top:6px;}
+  .link-danger{
+    text-align:center;color:var(--danger);font-weight:700;font-size:13.5px;
+    padding:10px;margin-top:4px;cursor:pointer;
+  }
+
+  /* ---------- Settings ---------- */
+  .settings-section{background:#fff;border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .settings-section h3{font-size:13px;color:var(--text-muted);margin:0 0 12px;font-weight:700;}
+  .day-checks{display:flex;flex-wrap:wrap;gap:8px;}
+  .day-chip{
+    padding:8px 12px;border-radius:20px;border:1.5px solid var(--border);
+    font-size:13px;font-weight:600;cursor:pointer;color:var(--text-muted);
+  }
+  .day-chip.on{background:var(--primary);border-color:var(--primary);color:#fff;}
+  .period-row{
+    display:flex;align-items:center;gap:8px;padding:10px 0;
+    border-bottom:1px solid var(--border);
+    background:var(--card);
+  }
+  .period-row:last-child{border-bottom:none;}
+  .period-row input[type=text]{width:58px;}
+  .period-row input[type=time]{width:82px;}
+  .period-row select{width:68px;padding:8px;}
+  .period-del{color:var(--danger);font-size:18px;cursor:pointer;padding:0 4px;}
+  .drag-handle{
+    flex:0 0 auto;width:26px;height:32px;display:flex;align-items:center;justify-content:center;
+    color:var(--text-muted);font-size:16px;cursor:grab;touch-action:none;
+    border-radius:8px;
+  }
+  .drag-handle:active{background:var(--primary-tint);color:var(--primary);}
+  .period-row.dragging{
+    opacity:0.55;box-shadow:0 4px 14px rgba(70,84,179,0.18);border-radius:12px;
+    background:var(--primary-tint);
+  }
+  .drag-hint{font-size:11.5px;color:var(--text-muted);margin:-4px 0 10px;}
+  .add-period-btn{
+    margin-top:8px;padding:10px;border-radius:12px;border:1.5px dashed var(--border);
+    text-align:center;color:var(--primary);font-weight:700;font-size:13.5px;cursor:pointer;
+  }
+
+  /* ---------- AI Import ---------- */
+  .upload-box{
+    border:1.5px dashed var(--border);border-radius:var(--radius);
+    padding:34px 16px;text-align:center;color:var(--text-muted);
+    cursor:pointer;background:#fff;
+  }
+  .upload-box .up-icon{font-size:30px;margin-bottom:8px;}
+  .preview-img{width:100%;border-radius:var(--radius);margin-bottom:14px;max-height:260px;object-fit:contain;background:#fff;}
+  .warn-banner{
+    background:#FFF6E9;border:1px solid #F5D9A8;color:#8A5A15;
+    border-radius:12px;padding:10px 12px;font-size:12px;margin-bottom:14px;line-height:1.5;
+  }
+  .ai-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
+  .ai-table th{background:var(--primary-tint);color:var(--primary-dark);padding:6px 4px;font-size:11px;}
+  .ai-table td{border:1px solid var(--border);padding:6px 4px;text-align:center;vertical-align:middle;}
+  .ai-table td.flag{background:var(--accent-break-tint);}
+  .ai-table input{width:100%;border:none;background:transparent;text-align:center;font-size:12px;font-family:'Noto Sans TC',sans-serif;}
+  .flag-note{font-size:11.5px;color:#B4611B;margin:10px 0;font-weight:600;}
+  .spinner{
+    width:22px;height:22px;border:3px solid var(--primary-tint);
+    border-top-color:var(--primary);border-radius:50%;
+    animation:spin .7s linear infinite;margin:0 auto;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-wrap{padding:40px 0;text-align:center;color:var(--text-muted);font-size:13px;}
+  .loading-wrap .spinner{margin-bottom:12px;}
+
+  .toast{
+    position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+    background:var(--text);color:#fff;padding:10px 18px;border-radius:30px;
+    font-size:13px;font-weight:600;z-index:99;opacity:0;transition:opacity .25s;
+    pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   課表小程式  timetable mini-app
+   資料結構、模組命名沿用架構文件（timetableStorage / timetableAI / timetableParser）
+   AI 供應商：DeepSeek（原文件建議先做 OpenAI，此版改為 DeepSeek）
+   ========================================================= */
+
+const WEEKDAYS = [
+  {key:'sunday', label:'日'}, {key:'monday', label:'一'}, {key:'tuesday', label:'二'},
+  {key:'wednesday', label:'三'}, {key:'thursday', label:'四'}, {key:'friday', label:'五'},
+  {key:'saturday', label:'六'}
+];
+const WEEKDAY_INDEX = {sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6};
+
+/* ---------------- timetableStorage.js (等效) ---------------- */
+const STORAGE_KEY = 'timetable_data_v1';
+
+function defaultTimetable(){
+  return {
+    version: 1,
+    schoolDays: ['monday','tuesday','wednesday','thursday','friday'],
+    periods: [
+      {id:1, name:'第 1 節', start:'08:10', end:'09:00', type:'class'},
+      {id:2, name:'第 2 節', start:'09:10', end:'10:00', type:'class'},
+      {id:3, name:'第 3 節', start:'10:10', end:'11:00', type:'class'},
+      {id:4, name:'第 4 節', start:'11:10', end:'12:00', type:'class'},
+      {id:5, name:'午餐', start:'12:00', end:'13:00', type:'break', icon:'🍱'},
+      {id:6, name:'第 5 節', start:'13:00', end:'13:50', type:'class'},
+      {id:7, name:'第 6 節', start:'14:00', end:'14:50', type:'class'},
+    ],
+    classes: {}
+  };
+}
+
+function loadTimetable(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultTimetable();
+    const parsed = JSON.parse(raw);
+    if(!parsed.periods || !parsed.schoolDays) return defaultTimetable();
+    return parsed;
+  }catch(e){
+    console.error('讀取課表失敗', e);
+    return defaultTimetable();
+  }
+}
+
+function saveTimetable(data){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }catch(e){
+    console.error('儲存課表失敗', e);
+    showToast('儲存失敗，請檢查瀏覽器儲存空間');
+  }
+}
+
+/* ---------------- App State ---------------- */
+let state = {
+  view: 'home',              // home | settings | import
+  data: loadTimetable(),
+  selectedDay: null,
+  editing: null,             // {day, periodId} when class-edit sheet open
+  showEditSheet: false,
+  importStage: 'select',     // select | preview | analyzing | review
+  importImageBase64: null,
+  importResult: null,        // parsed AI result awaiting confirmation
+  deepseekKey: '',
+};
+
+// pick today's weekday (fallback to first schoolDay if today isn't a school day)
+(function initSelectedDay(){
+  const todayKey = WEEKDAYS[new Date().getDay()].key;
+  state.selectedDay = state.data.schoolDays.includes(todayKey)
+    ? todayKey
+    : state.data.schoolDays[0];
+})();
+
+function setState(patch){
+  Object.assign(state, patch);
+  render();
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* ---------------- date helpers ---------------- */
+function getDateForWeekday(weekdayKey){
+  const today = new Date();
+  const todayIdx = today.getDay();
+  const targetIdx = WEEKDAY_INDEX[weekdayKey];
+  const diff = targetIdx - todayIdx;
+  const d = new Date(today);
+  d.setDate(today.getDate()+diff);
+  return d;
+}
+function fmtMonthDay(d){
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+/* ---------------- render root ---------------- */
+function render(){
+  const app = document.getElementById('app');
+  if(state.view === 'settings'){
+    app.innerHTML = renderSettings();
+    bindSettingsEvents();
+  } else if(state.view === 'import'){
+    app.innerHTML = renderImport();
+    bindImportEvents();
+  } else {
+    app.innerHTML = renderHome();
+    bindHomeEvents();
+  }
+  renderEditSheet();
+}
+
+/* ================= HOME VIEW ================= */
+function renderHome(){
+  const {data, selectedDay} = state;
+  const dayTabs = data.schoolDays.map(dayKey=>{
+    const d = getDateForWeekday(dayKey);
+    const label = WEEKDAYS.find(w=>w.key===dayKey).label;
+    const active = dayKey===selectedDay ? 'active':'';
+    return `<div class="day-tab ${active}" data-day="${dayKey}">
+      <div class="dn">${label}</div>
+      <div class="dd">${fmtMonthDay(d)}</div>
+    </div>`;
+  }).join('');
+
+  const periods = data.periods;
+  let timelineHTML = '';
+  if(periods.length===0){
+    timelineHTML = `<div class="empty-state"><div class="em-icon">🗓️</div>尚未設定課節時間<br>請先到設定新增課節</div>`;
+  } else {
+    timelineHTML = periods.map(p=>{
+      const isBreak = p.type==='break';
+      const dotCls = isBreak ? 'tl-dot break-dot' : 'tl-dot';
+      let cardHTML;
+      if(isBreak){
+        cardHTML = `<div class="card break-card">
+          <div class="card-subject">${p.icon||'☕'} ${escapeHTML(p.name)}</div>
+          <div class="card-meta">${p.start} – ${p.end}</div>
+        </div>`;
+      } else {
+        const cls = (data.classes[selectedDay] && data.classes[selectedDay][p.id]) || null;
+        if(cls && cls.subject){
+          cardHTML = `<div class="card" data-day="${selectedDay}" data-period="${p.id}">
+            <div class="card-subject">${escapeHTML(cls.subject)}</div>
+            <div class="card-meta">${[cls.teacher, cls.room].filter(Boolean).map(escapeHTML).join(' · ')||'&nbsp;'}</div>
+          </div>`;
+        } else {
+          cardHTML = `<div class="card empty" data-day="${selectedDay}" data-period="${p.id}">＋ 新增課程</div>`;
+        }
+      }
+      return `<div class="tl-row">
+        <div class="tl-rail">
+          <div class="tl-time mono">${p.start}</div>
+          <div class="${dotCls}"></div>
+          <div class="tl-line"></div>
+        </div>
+        ${cardHTML}
+      </div>`;
+    }).join('');
+  }
+
+  return `
+    <div class="topbar">
+      <div class="topbar-row">
+        <div>
+          <div class="topbar-title">課表</div>
+          <div class="topbar-sub">${WEEKDAYS.find(w=>w.key===selectedDay)?.label ? '星期'+WEEKDAYS.find(w=>w.key===selectedDay).label : ''} · ${fmtMonthDay(getDateForWeekday(selectedDay))}</div>
+        </div>
+        <div class="icon-group">
+          <button class="icon-btn" id="btn-import" title="AI 匯入">📷</button>
+          <button class="icon-btn" id="btn-settings" title="設定">⚙️</button>
+        </div>
+      </div>
+      <div class="day-tabs">${dayTabs}</div>
+    </div>
+    <div class="content">
+      <div class="timeline">${timelineHTML}</div>
+    </div>
+  `;
+}
+
+function bindHomeEvents(){
+  document.getElementById('btn-settings').onclick = ()=>setState({view:'settings'});
+  document.getElementById('btn-import').onclick = ()=>setState({view:'import', importStage:'select', importImageBase64:null, importResult:null});
+  document.querySelectorAll('.day-tab').forEach(el=>{
+    el.onclick = ()=>setState({selectedDay: el.dataset.day});
+  });
+  document.querySelectorAll('.card[data-period]').forEach(el=>{
+    el.onclick = ()=>{
+      const day = el.dataset.day, periodId = parseInt(el.dataset.period);
+      const existing = (state.data.classes[day] && state.data.classes[day][periodId]) || {subject:'',teacher:'',room:'',note:''};
+      setState({showEditSheet:true, editing:{day, periodId, ...existing}});
+    };
+  });
+}
+
+/* ================= CLASS EDIT SHEET ================= */
+function renderEditSheet(){
+  let host = document.getElementById('edit-overlay');
+  if(!host){
+    host = document.createElement('div');
+    host.id = 'edit-overlay';
+    host.className = 'overlay';
+    document.body.appendChild(host);
+  }
+  if(!state.showEditSheet || !state.editing){
+    host.classList.remove('show');
+    host.innerHTML='';
+    return;
+  }
+  const e = state.editing;
+  const period = state.data.periods.find(p=>p.id===e.periodId);
+  host.innerHTML = `
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">${period? period.name:'課程'} · 編輯課程</div>
+      <div class="field"><label>科目</label><input id="f-subject" type="text" value="${escapeAttr(e.subject||'')}" placeholder="例：國文"></div>
+      <div class="row2">
+        <div class="field"><label>老師</label><input id="f-teacher" type="text" value="${escapeAttr(e.teacher||'')}" placeholder="選填"></div>
+        <div class="field"><label>教室</label><input id="f-room" type="text" value="${escapeAttr(e.room||'')}" placeholder="選填"></div>
+      </div>
+      <div class="field"><label>備註</label><input id="f-note" type="text" value="${escapeAttr(e.note||'')}" placeholder="選填"></div>
+      <div class="sheet-actions">
+        <button class="btn btn-ghost" id="btn-cancel-edit">取消</button>
+        <button class="btn btn-primary" id="btn-save-edit">儲存</button>
+      </div>
+      ${ (e.subject) ? `<div class="link-danger" id="btn-delete-class">刪除這堂課</div>` : '' }
+    </div>
+  `;
+  host.classList.add('show');
+
+  host.onclick = (ev)=>{ if(ev.target===host) setState({showEditSheet:false}); };
+  document.getElementById('btn-cancel-edit').onclick = ()=>setState({showEditSheet:false});
+  document.getElementById('btn-save-edit').onclick = ()=>{
+    const subject = document.getElementById('f-subject').value.trim();
+    if(!subject){ showToast('請輸入科目名稱'); return; }
+    const teacher = document.getElementById('f-teacher').value.trim();
+    const room = document.getElementById('f-room').value.trim();
+    const note = document.getElementById('f-note').value.trim();
+    const data = state.data;
+    if(!data.classes[e.day]) data.classes[e.day] = {};
+    data.classes[e.day][e.periodId] = {type:'class', subject, teacher, room, note};
+    saveTimetable(data);
+    setState({showEditSheet:false, data});
+    showToast('已儲存');
+  };
+  const delBtn = document.getElementById('btn-delete-class');
+  if(delBtn){
+    delBtn.onclick = ()=>{
+      const data = state.data;
+      if(data.classes[e.day]) delete data.classes[e.day][e.periodId];
+      saveTimetable(data);
+      setState({showEditSheet:false, data});
+      showToast('已刪除');
+    };
+  }
+}
+
+/* ================= SETTINGS VIEW ================= */
+function renderSettings(){
+  const {data} = state;
+  const dayChips = WEEKDAYS.map(w=>{
+    const on = data.schoolDays.includes(w.key) ? 'on':'';
+    return `<div class="day-chip ${on}" data-day="${w.key}">星期${w.label}</div>`;
+  }).join('');
+
+  const periodRows = data.periods.map((p)=>`
+    <div class="period-row" data-id="${p.id}">
+      <div class="drag-handle" title="拖曳調整順序">☰</div>
+      <select class="p-type">
+        <option value="class" ${p.type==='class'?'selected':''}>課</option>
+        <option value="break" ${p.type==='break'?'selected':''}>休息</option>
+      </select>
+      <input type="text" class="p-name" value="${escapeAttr(p.name)}">
+      <input type="time" class="p-start" value="${p.start}">
+      <input type="time" class="p-end" value="${p.end}">
+      <div class="period-del" data-id="${p.id}">✕</div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="topbar">
+      <div class="topbar-row">
+        <button class="icon-btn" id="btn-back">←</button>
+        <div class="topbar-title">課表設定</div>
+        <div style="width:38px"></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="settings-section">
+        <h3>上課日</h3>
+        <div class="day-checks">${dayChips}</div>
+      </div>
+      <div class="settings-section">
+        <h3>課節時間</h3>
+        <div class="drag-hint">拖曳左側 ☰ 可調整課節順序</div>
+        <div id="period-list">${periodRows}</div>
+        <div class="add-period-btn" id="btn-add-period">＋ 新增課節</div>
+      </div>
+      <button class="btn btn-primary" id="btn-save-settings" style="width:100%;margin-top:4px;">儲存設定</button>
+    </div>
+  `;
+}
+
+function bindSettingsEvents(){
+  document.getElementById('btn-back').onclick = ()=>setState({view:'home'});
+  document.querySelectorAll('.day-chip').forEach(el=>{
+    el.onclick = ()=>{
+      const day = el.dataset.day;
+      const days = new Set(state.data.schoolDays);
+      if(days.has(day)) days.delete(day); else days.add(day);
+      const order = WEEKDAYS.map(w=>w.key);
+      state.data.schoolDays = order.filter(k=>days.has(k));
+      render();
+    };
+  });
+  document.getElementById('btn-add-period').onclick = ()=>{
+    const periods = state.data.periods;
+    const nextId = periods.length ? Math.max(...periods.map(p=>p.id))+1 : 1;
+    periods.push({id:nextId, name:`第 ${periods.filter(p=>p.type==='class').length+1} 節`, start:'15:00', end:'15:50', type:'class'});
+    render();
+  };
+  document.querySelectorAll('.period-del').forEach(el=>{
+    el.onclick = ()=>{
+      const id = parseInt(el.dataset.id);
+      state.data.periods = state.data.periods.filter(p=>p.id!==id);
+      render();
+    };
+  });
+  bindPeriodDragEvents();
+  document.getElementById('btn-save-settings').onclick = ()=>{
+    const rows = document.querySelectorAll('.period-row');
+    const newPeriods = [];
+    rows.forEach((row, idx)=>{
+      const old = state.data.periods[idx];
+      newPeriods.push({
+        id: old.id,
+        name: row.querySelector('.p-name').value.trim() || old.name,
+        start: row.querySelector('.p-start').value,
+        end: row.querySelector('.p-end').value,
+        type: row.querySelector('.p-type').value,
+        icon: old.icon,
+      });
+    });
+    state.data.periods = newPeriods;
+    if(state.data.schoolDays.length===0){
+      showToast('請至少選擇一個上課日');
+      return;
+    }
+    saveTimetable(state.data);
+    if(!state.data.schoolDays.includes(state.selectedDay)){
+      state.selectedDay = state.data.schoolDays[0];
+    }
+    showToast('設定已儲存');
+    setState({view:'home'});
+  };
+}
+
+/* ---------------- Drag-to-reorder periods (Pointer Events: mouse + touch) ---------------- */
+let dragCtx = null;
+
+function bindPeriodDragEvents(){
+  document.querySelectorAll('.drag-handle').forEach(handle=>{
+    handle.onpointerdown = (ev)=>{
+      const row = handle.closest('.period-row');
+      const list = document.getElementById('period-list');
+      dragCtx = {row, list};
+      row.classList.add('dragging');
+      try{ row.setPointerCapture(ev.pointerId); }catch(e){}
+      ev.preventDefault();
+    };
+  });
+}
+
+document.addEventListener('pointermove', (ev)=>{
+  if(!dragCtx) return;
+  const {row, list} = dragCtx;
+  const siblings = Array.from(list.querySelectorAll('.period-row')).filter(r=>r!==row);
+  const y = ev.clientY;
+  let placed = false;
+  for(const sib of siblings){
+    const rect = sib.getBoundingClientRect();
+    const mid = rect.top + rect.height/2;
+    if(y < mid){
+      list.insertBefore(row, sib);
+      placed = true;
+      break;
+    }
+  }
+  if(!placed) list.appendChild(row);
+});
+
+document.addEventListener('pointerup', ()=>{
+  if(!dragCtx) return;
+  const {row, list} = dragCtx;
+  row.classList.remove('dragging');
+  // commit new visual order back into state.data.periods, matched by stable id
+  const newIdOrder = Array.from(list.querySelectorAll('.period-row')).map(r=>parseInt(r.dataset.id));
+  const byId = {};
+  state.data.periods.forEach(p=>{ byId[p.id] = p; });
+  state.data.periods = newIdOrder.map(id=>byId[id]);
+  dragCtx = null;
+});
+
+document.addEventListener('pointercancel', ()=>{
+  if(dragCtx) dragCtx.row.classList.remove('dragging');
+  dragCtx = null;
+});
+
+/* ================= AI IMPORT VIEW (timetableImport / timetableAI) ================= */
+
+/*
+  timetableAI.js 等效函式：
+  - 供應商抽象化：換模型時只需要改後端 server.js 那一支，前端 UI 完全不用動
+  - DeepSeek API Key 已經移到後端保管，前端不再持有金鑰
+  - 前端只呼叫「自己的後端」：POST /api/timetable/recognize，body 帶 base64 圖片
+  - 後端負責：組 prompt → 呼叫 DeepSeek Vision → 驗證/清理 JSON → 回傳給前端
+  - 對應的後端範例程式見 server.js（同一批輸出檔案內）
+*/
+const BACKEND_RECOGNIZE_ENDPOINT = '/api/timetable/recognize';
+
+async function recognizeTimetableViaBackend(base64Image){
+  const response = await fetch(BACKEND_RECOGNIZE_ENDPOINT, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ image: base64Image })
+  });
+
+  if(!response.ok){
+    let msg = `後端辨識失敗 (${response.status})`;
+    try{
+      const errJson = await response.json();
+      if(errJson.error) msg = errJson.error;
+    }catch(e){ /* ignore parse error */ }
+    throw new Error(msg);
+  }
+
+  const json = await response.json();
+  if(!json.periods || !Array.isArray(json.periods)){
+    throw new Error('後端回傳的資料缺少節次時間資訊。');
+  }
+  return json;
+}
+
+function renderImport(){
+  const stage = state.importStage;
+  let body = '';
+
+  if(stage==='select'){
+    body = `
+      <div class="warn-banner">📡 辨識請求會送到本 App 自己的後端（<span class="mono">${BACKEND_RECOGNIZE_ENDPOINT}</span>），由後端保管 DeepSeek API Key 並轉發給 DeepSeek，前端不會接觸到金鑰。若尚未架設後端，請先參考 server.js 說明部署。</div>
+      <div class="upload-box" id="upload-box">
+        <div class="up-icon">🖼️</div>
+        支援 JPG／PNG／WEBP<br>點擊選擇課表圖片
+      </div>
+      <input type="file" id="file-input" accept="image/*" style="display:none">
+    `;
+  } else if(stage==='preview'){
+    body = `
+      <img class="preview-img" src="data:image/jpeg;base64,${state.importImageBase64}">
+      <div class="sheet-actions">
+        <button class="btn btn-ghost" id="btn-reselect">重新選擇</button>
+        <button class="btn btn-primary" id="btn-analyze">開始 AI 辨識</button>
+      </div>
+    `;
+  } else if(stage==='analyzing'){
+    body = `<div class="loading-wrap"><div class="spinner"></div>AI 辨識中，請稍候…</div>`;
+  } else if(stage==='review'){
+    body = renderAIReview();
+  }
+
+  return `
+    <div class="topbar">
+      <div class="topbar-row">
+        <button class="icon-btn" id="btn-back-import">←</button>
+        <div class="topbar-title">AI 匯入課表</div>
+        <div style="width:38px"></div>
+      </div>
+    </div>
+    <div class="content">${body}</div>
+  `;
+}
+
+function renderAIReview(){
+  const result = state.importResult;
+  const dayOrder = ['monday','tuesday','wednesday','thursday','friday'];
+  const dayLabel = {monday:'一',tuesday:'二',wednesday:'三',thursday:'四',friday:'五'};
+  const periods = result.periods;
+  let flagCount = 0;
+
+  const rows = periods.map(p=>{
+    const cells = dayOrder.map(day=>{
+      const entries = result[day]||[];
+      const entry = entries.find(e=>e.period===p.id);
+      const subject = entry ? entry.subject : '';
+      const flagged = subject.includes('?') || subject.includes('？');
+      if(flagged) flagCount++;
+      return `<td class="${flagged?'flag':''}"><input data-day="${day}" data-period="${p.id}" value="${escapeAttr(subject.replace(/[?？]/g,''))}" placeholder="—"></td>`;
+    }).join('');
+    return `<tr><th class="mono">${p.start}</th>${cells}</tr>`;
+  }).join('');
+
+  const header = `<tr><th></th>${dayOrder.map(d=>`<th>星期${dayLabel[d]}</th>`).join('')}</tr>`;
+
+  return `
+    <table class="ai-table">
+      <thead>${header}</thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${flagCount>0 ? `<div class="flag-note">⚠ 有 ${flagCount} 個項目 AI 不太確定，橘底格子可直接點擊修改</div>` : `<div class="flag-note" style="color:var(--text-muted)">辨識結果看起來清楚，確認無誤後即可匯入</div>`}
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="btn-cancel-import">取消</button>
+      <button class="btn btn-primary" id="btn-confirm-import">確認匯入</button>
+    </div>
+  `;
+}
+
+function bindImportEvents(){
+  document.getElementById('btn-back-import').onclick = ()=>setState({view:'home'});
+
+  if(state.importStage==='select'){
+    document.getElementById('upload-box').onclick = ()=>document.getElementById('file-input').click();
+    document.getElementById('file-input').onchange = (ev)=>{
+      const file = ev.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        const base64 = reader.result.split(',')[1];
+        setState({importStage:'preview', importImageBase64: base64});
+      };
+      reader.readAsDataURL(file);
+    };
+  }
+
+  if(state.importStage==='preview'){
+    document.getElementById('btn-reselect').onclick = ()=>setState({importStage:'select', importImageBase64:null});
+    document.getElementById('btn-analyze').onclick = async ()=>{
+      setState({importStage:'analyzing'});
+      try{
+        const result = await recognizeTimetableViaBackend(state.importImageBase64);
+        setState({importStage:'review', importResult: result});
+      }catch(e){
+        console.error(e);
+        showToast(e.message || 'AI 辨識失敗');
+        setState({importStage:'preview'});
+      }
+    };
+  }
+
+  if(state.importStage==='review'){
+    document.getElementById('btn-cancel-import').onclick = ()=>setState({view:'home'});
+    document.getElementById('btn-confirm-import').onclick = ()=>{
+      const inputs = document.querySelectorAll('.ai-table input');
+      const result = state.importResult;
+      const dayOrder = ['monday','tuesday','wednesday','thursday','friday'];
+      const newClasses = {};
+      dayOrder.forEach(d=>newClasses[d]={});
+      inputs.forEach(inp=>{
+        const day = inp.dataset.day, period = parseInt(inp.dataset.period);
+        const val = inp.value.trim();
+        if(val){
+          newClasses[day][period] = {type:'class', subject: val, teacher:'', room:'', note:''};
+        }
+      });
+      // 合併節次時間 + 課程資料
+      const data = state.data;
+      const existingBreaks = data.periods.filter(p=>p.type==='break');
+      const mergedPeriods = result.periods.map(p=>({
+        id:p.id, name:`第 ${p.id} 節`, start:p.start, end:p.end, type:'class'
+      }));
+      data.periods = [...mergedPeriods, ...existingBreaks].sort((a,b)=>a.start.localeCompare(b.start));
+      dayOrder.forEach(d=>{ data.classes[d] = newClasses[d]; });
+      if(!data.schoolDays || data.schoolDays.length===0) data.schoolDays = dayOrder;
+      saveTimetable(data);
+      showToast('課表已匯入');
+      setState({view:'home', data});
+    };
+  }
+}
+
+/* ---------------- helpers ---------------- */
+function escapeHTML(str){
+  return String(str).replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+function escapeAttr(str){ return escapeHTML(str); }
+
+render();
+</script>
+</body>
+</html>
