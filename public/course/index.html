@@ -669,11 +669,11 @@ document.addEventListener('pointercancel', ()=>{
   timetableAI.js 等效函式：
   - 供應商抽象化：換模型時只需要改後端 server.js 那一支，前端 UI 完全不用動
   - DeepSeek API Key 已經移到後端保管，前端不再持有金鑰
-  - 前端只呼叫「自己的後端」：POST /api/timetable/recognize，body 帶 base64 圖片
+  - 前端只呼叫「自己的後端」：POST /api/aicourse.js，body 帶 base64 圖片
   - 後端負責：組 prompt → 呼叫 DeepSeek Vision → 驗證/清理 JSON → 回傳給前端
   - 對應的後端範例程式見 server.js（同一批輸出檔案內）
 */
-const BACKEND_RECOGNIZE_ENDPOINT = '/api/timetable/recognize';
+const BACKEND_RECOGNIZE_ENDPOINT = '/api/aicourse.js';
 
 async function recognizeTimetableViaBackend(base64Image){
   const response = await fetch(BACKEND_RECOGNIZE_ENDPOINT, {
