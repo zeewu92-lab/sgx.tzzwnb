@@ -3,7 +3,7 @@
  * ------------------------------------------------------------
  * 用途：
  *   前端「課表.html」不再持有 DeepSeek API Key，
- *   而是把圖片送到這支後端的 POST /api/timetable/recognize，
+ *   而是把圖片送到這支後端的 POST /api/aicourse.js，
  *   由這裡組 prompt、呼叫 DeepSeek Vision、清理並驗證回傳的 JSON，
  *   最後把乾淨的課表 JSON 回傳給前端。
  *
@@ -177,7 +177,7 @@ function parseAndValidate(raw) {
   return json;
 }
 
-app.post('/api/timetable/recognize', async (req, res) => {
+app.post('/api/aicourse.js', async (req, res) => {
   try {
     if (!DeepSeek_course_API_KEY) {
       return res.status(500).json({ error: '伺服器尚未設定 DeepSeek_course_API_KEY，請檢查 .env 檔案。' });
@@ -202,5 +202,5 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.listen(PORT, () => {
   console.log(`✅ 課表 AI 辨識後端已啟動：http://localhost:${PORT}`);
-  console.log(`   辨識端點：POST http://localhost:${PORT}/api/timetable/recognize`);
+  console.log(`   辨識端點：POST http://localhost:${PORT}/api/aicourse.js`);
 });
