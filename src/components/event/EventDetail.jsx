@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, SlidersHorizontal, Share2, Settings } from 'lucide-react';
-import { ACCENT, AUTH_GLASS, CARD_BG, CARD_BORDER, DANGER, INK, INK_SOFT, MINT, colorHex } from '../../constants/colors.js';
+import { ACCENT, AUTH_GLASS, CARD_BG, CARD_BORDER, DANGER, INK, INK_SOFT, MINT, colorHex, contrastColor } from '../../constants/colors.js';
 import { LOCALE_MAP } from '../../constants/languages.js';
 import { NUMBER_FONTS, SIL_OFL_1_1_TEXT, ensureGoogleFontLoaded, getBigNumberFontSize, getNumberFontFamily, getNumberFontVariation } from '../../constants/numberFonts.js';
 import { useModalBackClose } from '../../hooks/useModalBackClose.js';
@@ -276,7 +276,7 @@ export function LandmarkDetailModal({ ev, lang, t, isDark, onClose, onSetBgImage
         .premium-range::-moz-range-progress {
           height: 3px;
           border-radius: 999px;
-          background: ${colorHex(ev.colorId)};
+          background: ${colorHex(ev.colorId, isDark)};
         }
         .premium-range::-moz-range-thumb {
           width: 22px;
@@ -419,8 +419,8 @@ export function LandmarkDetailModal({ ev, lang, t, isDark, onClose, onSetBgImage
           {/* 有自訂背景時不再疊加額外彩色光暈，避免遮住背景圖片；沒有背景時才保留原本的柔光。 */}
           {!ev.bgImage && (
             <>
-              <div className="absolute pointer-events-none" style={{ width: '55%', aspectRatio: '1', top: '-18%', right: '-15%', background: `${colorHex(ev.colorId)}22`, filter: 'blur(50px)', borderRadius: '50%', zIndex: 0 }} />
-              <div className="absolute pointer-events-none" style={{ width: '45%', aspectRatio: '1', bottom: '-12%', left: '-12%', background: `${colorHex(ev.colorId)}15`, filter: 'blur(50px)', borderRadius: '50%', zIndex: 0 }} />
+              <div className="absolute pointer-events-none" style={{ width: '55%', aspectRatio: '1', top: '-18%', right: '-15%', background: `${colorHex(ev.colorId, isDark)}22`, filter: 'blur(50px)', borderRadius: '50%', zIndex: 0 }} />
+              <div className="absolute pointer-events-none" style={{ width: '45%', aspectRatio: '1', bottom: '-12%', left: '-12%', background: `${colorHex(ev.colorId, isDark)}15`, filter: 'blur(50px)', borderRadius: '50%', zIndex: 0 }} />
             </>
           )}
 
@@ -429,7 +429,7 @@ export function LandmarkDetailModal({ ev, lang, t, isDark, onClose, onSetBgImage
             <div className="flex items-center gap-3 min-w-0">
               <div
                 className="flex items-center justify-center flex-shrink-0 rounded-2xl"
-                style={{ width: 46, height: 46, background: `${colorHex(ev.colorId)}1c`, fontSize: 22, boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.6)' }}
+                style={{ width: 46, height: 46, background: `${colorHex(ev.colorId, isDark)}1c`, fontSize: 22, boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.6)' }}
               >
                 {ev.icon}
               </div>
@@ -438,7 +438,7 @@ export function LandmarkDetailModal({ ev, lang, t, isDark, onClose, onSetBgImage
                   <h3 className="font-bold truncate" style={{ color: cardInk, fontSize: 17, letterSpacing: '-0.01em' }}>{ev.title}</h3>
                   {/* 生日徽章：XX歲生日，緊跟在事件名稱後面 */}
                   {ev.age !== null && (
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: `${colorHex(ev.colorId)}20`, color: colorHex(ev.colorId) }}>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: `${colorHex(ev.colorId, isDark)}20`, color: colorHex(ev.colorId, isDark) }}>
                       {ev.isCare ? t.anniversaryBadge(ev.age) : t.ageBadge(ev.age)}
                     </span>
                   )}
@@ -452,7 +452,7 @@ export function LandmarkDetailModal({ ev, lang, t, isDark, onClose, onSetBgImage
           {/* 次要標籤：顏色標記／生日／關懷／農曆日期，統一做成徽章樣式；年齡與週年只保留在標題旁。 */}
           <div className="flex items-center gap-2 flex-wrap mt-2 relative" style={{ zIndex: 1 }}>
             <span className="inline-flex items-center gap-1 text-xs font-bold flex-shrink-0" style={{ color: cardInkSoft }}>
-              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: colorHex(ev.colorId) }} />
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: colorHex(ev.colorId, isDark) }} />
               {t.markerColorLabel}
             </span>
             {ev.isBirthday ? (
@@ -461,9 +461,9 @@ export function LandmarkDetailModal({ ev, lang, t, isDark, onClose, onSetBgImage
               <span
                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold flex-shrink-0"
                 style={{
-                  background: `${colorHex(ev.colorId)}18`,
-                  color: colorHex(ev.colorId),
-                  border: `1px solid ${colorHex(ev.colorId)}22`,
+                  background: `${colorHex(ev.colorId, isDark)}18`,
+                  color: colorHex(ev.colorId, isDark),
+                  border: `1px solid ${colorHex(ev.colorId, isDark)}22`,
                 }}
               >
                 {t.careLabel}
@@ -477,8 +477,8 @@ export function LandmarkDetailModal({ ev, lang, t, isDark, onClose, onSetBgImage
               <span
                 className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
                 style={{
-                  background: ev.isCare ? `${colorHex(ev.colorId)}20` : accentAlpha('20'),
-                  color: ev.isCare ? colorHex(ev.colorId) : ACCENT,
+                  background: ev.isCare ? `${colorHex(ev.colorId, isDark)}20` : accentAlpha('20'),
+                  color: ev.isCare ? colorHex(ev.colorId, isDark) : ACCENT,
                 }}
               >
                 {altCalendarStr}
@@ -498,12 +498,12 @@ export function LandmarkDetailModal({ ev, lang, t, isDark, onClose, onSetBgImage
                 letterSpacing: '-0.04em',
                 fontFamily: isTodayTextMessage ? todayTextFontFamily : numberFontFamily,
                 fontVariationSettings: isTodayTextMessage && isZh ? 'normal' : numberFontVariation,
-                background: `linear-gradient(135deg, ${colorHex(ev.colorId)}, ${colorHex(ev.colorId)})`,
+                background: `linear-gradient(135deg, ${colorHex(ev.colorId, isDark)}, ${colorHex(ev.colorId, isDark)})`,
                 WebkitBackgroundClip: 'text',
                 backgroundClip: 'text',
                 color: 'transparent',
                 opacity: 1,
-                filter: `drop-shadow(0 8px 20px ${colorHex(ev.colorId)}33)`,
+                filter: `drop-shadow(0 8px 20px ${colorHex(ev.colorId, isDark)}33)`,
                 transition: 'font-family 0.15s ease, font-size 0.15s ease',
               }}
             >
@@ -628,8 +628,8 @@ export function LandmarkDetailModal({ ev, lang, t, isDark, onClose, onSetBgImage
                             top: 0,
                             fontSize: 15,
                             fontWeight: 800,
-                            color: '#fff',
-                            background: colorHex(ev.colorId),
+                            color: contrastColor(colorHex(ev.colorId, isDark)),
+                            background: colorHex(ev.colorId, isDark),
                             padding: '4px 11px',
                             borderRadius: 9,
                             minWidth: 30,
@@ -665,7 +665,7 @@ export function LandmarkDetailModal({ ev, lang, t, isDark, onClose, onSetBgImage
                         style={{
                           // 底色跟隨路標色：已調整部分用路標色實色，未調整部分用路標色的淺色調，
                           // 不再是跟路標色無關的固定灰色。
-                          background: `linear-gradient(to right, ${colorHex(ev.colorId)} 0%, ${colorHex(ev.colorId)} ${localSliderValue}%, ${colorHex(ev.colorId)}2A ${localSliderValue}%, ${colorHex(ev.colorId)}2A 100%)`,
+                          background: `linear-gradient(to right, ${colorHex(ev.colorId, isDark)} 0%, ${colorHex(ev.colorId, isDark)} ${localSliderValue}%, ${colorHex(ev.colorId, isDark)}2A ${localSliderValue}%, ${colorHex(ev.colorId, isDark)}2A 100%)`,
                           opacity: glassCleared ? 0.4 : 1,
                           // 拖動當下把整條軌道的觸控手勢鎖定成只能水平拖動，不會被瀏覽器誤判成
                           // 想要垂直捲動頁面，這樣才不會出現「明明在拖滑桿，畫面卻跟著晃」的狀況。
@@ -729,15 +729,15 @@ export function LandmarkDetailModal({ ev, lang, t, isDark, onClose, onSetBgImage
                       className="relative flex flex-col items-center justify-center rounded-2xl flex-shrink-0"
                       style={{
                         width: 68, height: 68,
-                        background: active ? `${colorHex(ev.colorId)}18` : CARD_BG,
-                        border: active ? `1.5px solid ${colorHex(ev.colorId)}` : CARD_BORDER,
+                        background: active ? `${colorHex(ev.colorId, isDark)}18` : CARD_BG,
+                        border: active ? `1.5px solid ${colorHex(ev.colorId, isDark)}` : CARD_BORDER,
                         transition: 'border-color 0.15s ease, background 0.15s ease',
                       }}
                     >
                       {active && (
                         <span
                           className="absolute flex items-center justify-center rounded-full"
-                          style={{ top: 4, right: 4, width: 14, height: 14, background: colorHex(ev.colorId), color: '#fff', fontSize: 8, fontWeight: 900 }}
+                          style={{ top: 4, right: 4, width: 14, height: 14, background: colorHex(ev.colorId, isDark), color: contrastColor(colorHex(ev.colorId, isDark)), fontSize: 8, fontWeight: 900 }}
                         >
                           ✓
                         </span>
@@ -852,7 +852,7 @@ export function LandmarkDetailModal({ ev, lang, t, isDark, onClose, onSetBgImage
                     setShowFontInfo(false);
                     setTimeout(() => setShowFontLicenseModal(true), 0);
                   }}
-                  style={{ fontWeight: 700, color: colorHex(ev.colorId), background: 'transparent', border: 'none', padding: 0, textDecoration: 'underline' }}
+                  style={{ fontWeight: 700, color: colorHex(ev.colorId, isDark), background: 'transparent', border: 'none', padding: 0, textDecoration: 'underline' }}
                 >
                   {t.fontLicenseViewFull} →
                 </button>
