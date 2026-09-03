@@ -4,7 +4,7 @@ import { Plus, Trash2, ChevronDown, X, MapPin, Check, Clock, Pencil, Search, Ima
 import { CalendarDatePicker } from '../calendar/DatePicker.jsx';
 import { LandmarkDetailModal } from '../event/EventDetail.jsx';
 import { PastEventsAnimatedSection } from './PastLandmarks.jsx';
-import { ACCENT, AUTH_GLASS, CARD_BORDER, CARE_COLOR_TAGS, CARE_ICONS, CARE_MODE_VARS, COLOR_TAGS, DANGER, ICONS, INK, INK_SOFT, INPUT_BG, MINT, colorHex, glass, iconPickStyle } from '../../constants/colors.js';
+import { ACCENT, AUTH_GLASS, CARD_BG, CARD_BORDER, CARE_COLOR_TAGS, CARE_ICONS, CARE_MODE_VARS, COLOR_TAGS, DANGER, ICONS, INK, INK_SOFT, INPUT_BG, MINT, colorHex, contrastColor, glass, iconPickStyle } from '../../constants/colors.js';
 import { EVENT_MODES, ICON_SUBMENUS, eventModeFromEv } from '../../constants/eventModes.js';
 import { LOCALE_MAP } from '../../constants/languages.js';
 import { CAL_OPTIONS } from '../../constants/worldCities.js';
@@ -530,13 +530,13 @@ export function TimelineSection({
         )}
 
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-block px-3 py-1 rounded-lg text-sm font-bold" style={{ background: `${colorHex(ev.colorId)}20`, color: colorHex(ev.colorId) }}>
+          <div className="inline-block px-3 py-1 rounded-lg text-sm font-bold" style={{ background: `${colorHex(ev.colorId, isDark)}20`, color: colorHex(ev.colorId, isDark) }}>
             {ev.mode === 'companion'
               ? t.companionDays(Math.max(0, ev.elapsedDays ?? 0))
               : ev.diffDays === 0 ? t.today : ev.diffDays > 0 ? t.daysLeft(ev.diffDays) : t.daysAgo(Math.abs(ev.diffDays))}
           </div>
           {ev.age !== null && (
-            <div className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-bold" style={{ background: `${colorHex(ev.colorId)}20`, color: colorHex(ev.colorId) }}>
+            <div className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-bold" style={{ background: `${colorHex(ev.colorId, isDark)}20`, color: colorHex(ev.colorId, isDark) }}>
               {ev.isCare ? t.anniversaryBadge(ev.age) : t.ageBadge(ev.age)}
             </div>
           )}
@@ -561,7 +561,7 @@ export function TimelineSection({
         <div
           className="absolute w-4 h-4 rounded-full"
           style={{
-            background: colorHex(ev.colorId),
+            background: colorHex(ev.colorId, isDark),
             left: '-1.375rem',
             top: '0.25rem',
             border: '0.1875rem solid var(--page-bg)',
@@ -1003,8 +1003,8 @@ export function TimelineSection({
             </div>
             <div key={isCare ? 'care-colors' : 'normal-colors'} className="flex gap-2 mb-2 flex-wrap picker-fade-swap">
               {(isCare ? CARE_COLOR_TAGS : COLOR_TAGS).map(c => (
-                <button key={c.id} onClick={() => setColorId(c.id)} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: c.hex }}>
-                  {colorId === c.id && <Check size={14} color="#fff" />}
+                <button key={c.id} onClick={() => setColorId(c.id)} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: (isDark && c.hexDark) ? c.hexDark : c.hex }}>
+                  {colorId === c.id && <Check size={14} color={contrastColor((isDark && c.hexDark) ? c.hexDark : c.hex)} />}
                 </button>
               ))}
             </div>
@@ -1133,9 +1133,11 @@ export function TimelineSection({
                       width: 46,
                       height: 28,
                       padding: 3,
-                      background: repeat ? ACCENT : 'rgba(120,125,135,0.22)',
-                      border: repeat ? `1px solid ${ACCENT}` : '1px solid rgba(120,125,135,0.16)',
-                      boxShadow: repeat ? `0 3px 10px ${accentAlpha('30')}` : 'inset 0 1px 2px rgba(0,0,0,0.06)',
+                      background: repeat ? ACCENT : 'var(--card-border)',
+                      border: repeat ? `1px solid ${ACCENT}` : '1px solid var(--card-border)',
+                      boxShadow: repeat
+                        ? `0 3px 10px ${accentAlpha('30')}`
+                        : (isDark ? 'inset 0 1px 2px rgba(0,0,0,0.35)' : 'inset 0 1px 2px rgba(0,0,0,0.06)'),
                       transition: 'background 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
                     }}
                   >
@@ -1211,12 +1213,12 @@ export function TimelineSection({
               onClick={handleAdd}
               className="w-full py-2.5 rounded-full font-bold text-sm"
               style={{
-                background: 'rgba(255,255,255,0.6)',
+                background: isDark ? 'rgba(40,44,54,0.6)' : 'rgba(255,255,255,0.6)',
                 backdropFilter: 'blur(24px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-                border: '1px solid rgba(60,64,67,0.25)',
+                border: isDark ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(60,64,67,0.25)',
                 color: INK,
-                boxShadow: '0 4px 16px rgba(31,38,135,0.12)',
+                boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(31,38,135,0.12)',
               }}
             >
               {editingId ? t.saveChanges : t.addToTimeline}
@@ -1279,7 +1281,7 @@ export function TimelineSection({
               <button
                 onClick={() => { deleteEvent(confirmDeleteEvent.id); closeDeleteConfirm(); }}
                 className="flex-1 py-2.5 rounded-xl font-bold text-sm"
-                style={{ background: 'rgba(255,255,255,0.7)', border: `1px solid ${DANGER}`, color: DANGER }}
+                style={{ background: CARD_BG, border: `1px solid ${DANGER}`, color: DANGER }}
               >
                 {t.confirmDeleteLandmark}
               </button>
