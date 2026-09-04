@@ -41,6 +41,24 @@ export function TimelineSection({
   showAll = false,
 }) {
   const isCardsLayout = layout === 'cards';
+
+  // var(--ink)／var(--card-bg) 這些主題變數只設在 #app-root 這個 div 的 inline style 上，
+  // 但這個檔案裡好幾個彈窗（新增/編輯地標、刪除確認）都是用 createPortal 直接掛到
+  // document.body 底下、不在 #app-root 底下，CSS 自訂屬性是照 DOM 樹狀結構往下傳的，
+  // document.body 跟 #app-root 是兄弟關係不是父子，掛在 body 下的彈窗讀不到這些變數，
+  // 文字色／背景色會掉回瀏覽器預設，不會跟著深色模式變。
+  //
+  // 這裡不改成把變數設到 document.documentElement 上——那樣改動範圍是整個網頁、
+  // 會影響到這個檔案完全不知道、也管不到的其他地方（試過，會冒出預期外的畫面問題）。
+  // 改成只在這個檔案自己 createPortal 出去的彈窗最外層 div 上，直接用 inline style
+  // 重新提供同一套變數值，只有這個彈窗自己這一整棵子樹讀得到，不會影響到其他任何地方。
+  const portalVars = isDark ? {
+    '--ink': '#F2F3F6', '--ink-soft': 'rgba(242,243,246,0.55)',
+    '--card-bg': '#1D2029', '--card-border': '#2B2F3A', '--input-bg': '#232733',
+  } : {
+    '--ink': '#232733', '--ink-soft': 'rgba(35,39,51,0.55)',
+    '--card-bg': '#F7F8FA', '--card-border': '#ECEDF1', '--input-bg': '#FFFFFF',
+  };
   const [showForm, setShowForm] = useState(false);
   // 新增／編輯地標視窗的顯示階段：保留 mounted 狀態直到關閉動畫完成，
   // 這樣視窗不會在關閉瞬間消失。
@@ -764,6 +782,7 @@ export function TimelineSection({
         <div
           className="fixed inset-0 flex items-center justify-center px-6"
           style={{
+            ...portalVars,
             zIndex: 200,
             // 遮罩底色改成固定值，開合只動 opacity：先前讓 background（rgba 顏色本身）跟著
             // opacity 一起變化，等於每一幀都要重繪整個全螢幕遮罩（顏色插值不吃 GPU 合成），
@@ -1252,6 +1271,7 @@ export function TimelineSection({
         <div
           className="fixed inset-0 flex items-center justify-center px-6"
           style={{
+            ...portalVars,
             zIndex: 205,
             background: deleteModalPhase === 'shown' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0)',
             opacity: deleteModalPhase === 'hidden' ? 0 : 1,
