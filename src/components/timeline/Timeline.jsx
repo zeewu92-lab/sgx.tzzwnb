@@ -1051,7 +1051,7 @@ export function TimelineSection({
                   to { opacity: 1; transform: translateY(0); }
                 }
               `}</style>
-              <div className="relative flex p-1 rounded-full" style={{ background: '#FFFFFF', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+              <div className="relative flex p-1 rounded-full" style={{ background: isDark ? '#232733' : '#FFFFFF', boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.08)' }}>
                 <div
                   aria-hidden="true"
                   style={{
@@ -1152,8 +1152,8 @@ export function TimelineSection({
                       width: 46,
                       height: 28,
                       padding: 3,
-                      background: repeat ? ACCENT : 'var(--card-border)',
-                      border: repeat ? `1px solid ${ACCENT}` : '1px solid var(--card-border)',
+                      background: repeat ? ACCENT : (isDark ? 'rgba(255,255,255,0.16)' : 'rgba(120,125,135,0.22)'),
+                      border: repeat ? `1px solid ${ACCENT}` : `1px solid ${isDark ? 'rgba(255,255,255,0.14)' : 'rgba(120,125,135,0.16)'}`,
                       boxShadow: repeat
                         ? `0 3px 10px ${accentAlpha('30')}`
                         : (isDark ? 'inset 0 1px 2px rgba(0,0,0,0.35)' : 'inset 0 1px 2px rgba(0,0,0,0.06)'),
