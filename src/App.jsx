@@ -138,7 +138,7 @@ export default function App() {
     } else {
       setAlbumRoute({ screen: 'create', detailAlbumId: null, prefillEventId: eventId });
     }
-    setActiveTab('gallery');
+    navigateToTab('gallery');
   }
 
   // File Handling API：使用者在作業系統裡直接用「開啟檔案」／雙擊 .tzzwnb 備份檔、
@@ -216,7 +216,45 @@ export default function App() {
   // 完全不看這個 state。放在 App 這一層而不是各分頁自己的 local state，是因為分頁互相
   // 切換時（例如切去「圖片庫」再切回「時光線」）不會重新掛載 WorldClockSection／
   // TimelineSection，兩者的內部狀態（捲動位置、展開的相冊、搜尋關鍵字等）才不會被重置。
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === 'undefined') return 'home';
+
+    const hash = window.location.hash.replace(/^#/, '');
+    const validTabs = ['home', 'clock', 'schedule', 'gallery', 'profile'];
+
+    return validTabs.includes(hash) ? hash : 'home';
+  });
+
+  function navigateToTab(tab) {
+    const validTabs = ['home', 'clock', 'schedule', 'gallery', 'profile'];
+
+    if (!validTabs.includes(tab)) return;
+
+    setActiveTab(tab);
+
+    if (typeof window !== 'undefined') {
+      const currentHash = window.location.hash.replace(/^#/, '');
+
+      if (currentHash !== tab) {
+        window.location.hash = tab;
+      }
+    }
+  }
+
+  useEffect(() => {
+    function handleHashChange() {
+      const hash = window.location.hash.replace(/^#/, '');
+      const validTabs = ['home', 'clock', 'schedule', 'gallery', 'profile'];
+
+      setActiveTab(validTabs.includes(hash) ? hash : 'home');
+    }
+
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
   // 「日程」分頁（layout='cards'）專用的狀態，放在 App 這一層而不是 AnniversaryCalendar／
   // TimelineSection 自己的 local state，理由跟 activeTab 一樣：分頁切走切回時不希望被重置，
   // 而且日曆（AnniversaryCalendar）跟事件列表（TimelineSection）是兩個獨立元件，
@@ -713,19 +751,6 @@ export default function App() {
     '--accent': '#6C7BE0',
   };
 
-  // var(--ink)／var(--card-bg) 這些主題變數原本只設在 #app-root 這個 div 的 inline style 上。
-  // 但新增/編輯地標、地標詳情、刪除確認…等一大票視窗都是用 createPortal 直接掛到
-  // document.body 底下（不在 #app-root 底下），而 CSS 自訂屬性是照 DOM 樹狀結構往下傳的——
-  // document.body 跟 #app-root 是兄弟關係，不是父子，掛在 body 下的視窗完全讀不到這些變數，
-  // 文字色、背景色會整個掉回瀏覽器預設值，不會跟著深色模式變化，深色模式下常常就是深色文字
-  // 疊在（另外用其他方式做對的）深色背景上，直接看不見。改成同時把這些變數也設在
-  // document.documentElement（<html> 標籤）上——它是 #app-root 和 document.body 共同的
-  // 上層祖先，這樣不管彈窗掛在哪裡都讀得到。
-  useEffect(() => {
-    const root = document.documentElement;
-    Object.entries(cssVars).forEach(([key, value]) => root.style.setProperty(key, value));
-  }, [isDark]);
-
   if (!authChecked) return null;
 
   // 邀請碼機制暫時停用（如需重新啟用，把下面這個 if 區塊的註解拿掉即可）
@@ -1078,7 +1103,7 @@ export default function App() {
                 />
               )}
             </main>
-            <SideNavigation activeTab={activeTab} setActiveTab={setActiveTab} t={t} theme={isDark ? 'dark' : 'light'} />
+            <SideNavigation activeTab={activeTab} setActiveTab={navigateToTab} t={t} theme={isDark ? "dark" : "light"} />
           </div>
         ) : (
           /* 手機版：五個分頁的底部導覽列架構。
@@ -1309,7 +1334,7 @@ export default function App() {
                 />
               )}
             </main>
-            <BottomNavigation activeTab={activeTab} setActiveTab={setActiveTab} t={t} theme={isDark ? 'dark' : 'light'} />
+            <BottomNavigation activeTab={activeTab} setActiveTab={navigateToTab} t={t} theme={isDark ? "dark" : "light"} />
           </>
         )}
       </div>
