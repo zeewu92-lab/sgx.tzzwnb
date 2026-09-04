@@ -928,7 +928,7 @@ export default function App() {
               <div className="flex-1 min-h-0 flex flex-col gap-2" style={{ display: activeTab === 'schedule' ? 'flex' : 'none' }}>
                   <div ref={setScheduleControlsEl} className="flex-shrink-0 relative" style={{ zIndex: 31, marginTop: -34 }} />
 
-                  <div className="relative flex p-1 rounded-full flex-shrink-0" style={{ background: '#FFFFFF', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                  <div className="relative flex p-1 rounded-full flex-shrink-0" style={{ background: isDark ? '#232733' : '#FFFFFF', boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.08)' }}>
                     <div
                       aria-hidden="true"
                       style={{
@@ -977,9 +977,9 @@ export default function App() {
                           width: 38,
                           height: 22,
                           padding: 2,
-                          background: scheduleShowAll ? ACCENT : 'rgba(120,125,135,0.22)',
-                          border: scheduleShowAll ? `1px solid ${ACCENT}` : '1px solid rgba(120,125,135,0.16)',
-                          boxShadow: scheduleShowAll ? `0 3px 10px ${accentAlpha('30')}` : 'inset 0 1px 2px rgba(0,0,0,0.06)',
+                          background: scheduleShowAll ? ACCENT : (isDark ? 'rgba(255,255,255,0.16)' : 'rgba(120,125,135,0.22)'),
+                          border: scheduleShowAll ? `1px solid ${ACCENT}` : `1px solid ${isDark ? 'rgba(255,255,255,0.14)' : 'rgba(120,125,135,0.16)'}`,
+                          boxShadow: scheduleShowAll ? `0 3px 10px ${accentAlpha('30')}` : (isDark ? 'inset 0 1px 2px rgba(0,0,0,0.35)' : 'inset 0 1px 2px rgba(0,0,0,0.06)'),
                           transition: 'background 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
                         }}
                       >
@@ -1155,7 +1155,7 @@ export default function App() {
                   {/* 年／月／週檢視滑塊：放在頂部標題列（Header）跟日曆之間，切換 scheduleViewMode，
                       直接控制下面 AnniversaryCalendar 的檢視模式（見需求四）。跟「新建地標」的
                       模式選擇同一種滑動選中膠囊樣式（見 SCHEDULE_VIEW_MODES）。 */}
-                  <div className="relative flex p-1 rounded-full flex-shrink-0" style={{ background: '#FFFFFF', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                  <div className="relative flex p-1 rounded-full flex-shrink-0" style={{ background: isDark ? '#232733' : '#FFFFFF', boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.08)' }}>
                     <div
                       aria-hidden="true"
                       style={{
@@ -1208,9 +1208,9 @@ export default function App() {
                           width: 38,
                           height: 22,
                           padding: 2,
-                          background: scheduleShowAll ? ACCENT : 'rgba(120,125,135,0.22)',
-                          border: scheduleShowAll ? `1px solid ${ACCENT}` : '1px solid rgba(120,125,135,0.16)',
-                          boxShadow: scheduleShowAll ? `0 3px 10px ${accentAlpha('30')}` : 'inset 0 1px 2px rgba(0,0,0,0.06)',
+                          background: scheduleShowAll ? ACCENT : (isDark ? 'rgba(255,255,255,0.16)' : 'rgba(120,125,135,0.22)'),
+                          border: scheduleShowAll ? `1px solid ${ACCENT}` : `1px solid ${isDark ? 'rgba(255,255,255,0.14)' : 'rgba(120,125,135,0.16)'}`,
+                          boxShadow: scheduleShowAll ? `0 3px 10px ${accentAlpha('30')}` : (isDark ? 'inset 0 1px 2px rgba(0,0,0,0.35)' : 'inset 0 1px 2px rgba(0,0,0,0.06)'),
                           transition: 'background 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
                         }}
                       >
