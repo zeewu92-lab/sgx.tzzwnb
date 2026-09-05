@@ -23,7 +23,7 @@ export function isLikelyMainlandChinaUser() {
 //               開了也會全部丟「尚未實作」的錯誤，不要在大陸後端真正建好之前打開）
 // 'auto'      → 依 isLikelyMainlandChinaUser() 自動判斷（等大陸後端做好、要正式上線
 //               雙後端並存時，把這裡改成 'auto' 即可，不用再改其他任何檔案）
-const BACKEND_MODE = 'firebase';
+const BACKEND_MODE = 'mainland';
 
 export function getBackendMode() {
   if (BACKEND_MODE === 'auto') {

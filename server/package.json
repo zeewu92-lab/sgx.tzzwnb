@@ -1,0 +1,27 @@
+{
+  "name": "timezzw-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "時光線自建帳戶與同步後端",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:migrate": "tsx src/db/migrate.ts"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.1.2",
+    "@fastify/cors": "^11.3.0",
+    "argon2": "^0.45.1",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.12.3",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "@types/pg": "^8.15.6",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.2"
+  }
+}

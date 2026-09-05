@@ -52,3 +52,7 @@ export async function changePassword(currentPassword, newPassword) {
 export async function deleteAccount(currentPassword) {
   return pick().deleteAccount(currentPassword);
 }
+
+export async function updateUserProfile(profile) {
+  return pick().updateUserProfile(profile);
+}
