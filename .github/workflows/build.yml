@@ -39,7 +39,7 @@ jobs:
           # 統一處理」的設計(見 App.jsx 內部說明),這裡絕對不能再疊加任何額外的
           # zoom/transform/JS 動態縮放,否則會重現「底部裁切」「置中留白」的雙層縮放衝突。
           if grep -q '<meta name="viewport"' dist/index.html; then
-            sed -i 's#<meta name="viewport"[^>]*>#<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">#' dist/index.html
+            sed -i 's#<meta name="viewport"[^>]*>#<meta name="viewport" content="width=device-width, initial-scale=0.75, minimum-scale=0.75, maximum-scale=2.0, viewport-fit=cover">#' dist/index.html
           else
             sed -i 's#<head>#<head>\n    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">#' dist/index.html
           fi
