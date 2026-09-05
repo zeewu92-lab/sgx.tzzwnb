@@ -97,7 +97,7 @@ export function AuthModal({ lang, t, user, onClose, backupData, onImportBackup }
     setModalPhase('closing');
     setTimeout(onClose, AUTH_MODAL_DURATION);
   }
-  useModalBackClose(true, handleClose);
+//   useModalBackClose(true, handleClose);
   const modalShown = modalPhase === 'shown';
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [email, setEmail] = useState('');
@@ -107,7 +107,12 @@ export function AuthModal({ lang, t, user, onClose, backupData, onImportBackup }
   const [error, setError] = useState('');
   const [magicSent, setMagicSent] = useState(false);
   // 是否偵測為中國大陸用戶：只在「尚未登入」的登入／註冊頁面擋下，已登入的帳號管理畫面不受影響
-  const [cnBlocked] = useState(() => isLikelyMainlandChinaUser());
+  const BYPASS_MAINLAND_LOGIN_BLOCK =
+    import.meta.env.VITE_BYPASS_MAINLAND_LOGIN_BLOCK === 'true';
+
+  const [cnBlocked] = useState(
+    () => isLikelyMainlandChinaUser() && !BYPASS_MAINLAND_LOGIN_BLOCK
+  );
 
   // ---- 本機備份（匯出／匯入）：雲端同步在中國大陸連不上時的替代方案 ----
   // 直接把目前的 clocks／events／lang／isDark／customIcons 整包輸出，
@@ -393,7 +398,6 @@ export function AuthModal({ lang, t, user, onClose, backupData, onImportBackup }
             </button>
           )}
 
-          <BackupSection t={t} handleExportBackup={handleExportBackup} importFileRef={importFileRef} handleImportFileChange={handleImportFileChange} backupMsg={backupMsg} />
 
           <button
             onClick={() => run(async () => { await signOutUser(); handleClose(); })}
@@ -418,134 +422,404 @@ export function AuthModal({ lang, t, user, onClose, backupData, onImportBackup }
 
   if (cnBlocked) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center px-6" style={{
-            zIndex: 200,
-            background: modalShown ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0)',
-            transition: `background ${AUTH_MODAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-          }} onClick={handleClose}>
-        <div className={`w-full ${isLargeScreen ? 'max-w-sm' : 'max-w-xs'} p-6 rounded-2xl flex flex-col gap-3`} style={{
-              ...AUTH_GLASS,
-              opacity: modalShown ? 1 : 0,
-              transform: modalShown ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.97)',
-              transition: `opacity ${AUTH_MODAL_DURATION}ms ease, transform ${AUTH_MODAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-            }} onClick={e => e.stopPropagation()}>
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-black" style={{ color: INK }}>{t.loginToSync}</h2>
-            <button onClick={handleClose} style={{ color: INK_SOFT }}><X size={18} /></button>
+      <div
+        className="fixed inset-0 flex items-center justify-center px-5"
+        style={{
+          zIndex: 200,
+          background: modalShown ? 'rgba(0,0,0,0.42)' : 'rgba(0,0,0,0)',
+          transition: `background ${AUTH_MODAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+        }}
+        onClick={handleClose}
+      >
+        <div
+          className={`w-full ${isLargeScreen ? 'max-w-sm' : 'max-w-xs'} rounded-3xl overflow-hidden`}
+          style={{
+            ...AUTH_GLASS,
+            opacity: modalShown ? 1 : 0,
+            transform: modalShown
+              ? 'translateY(0) scale(1)'
+              : 'translateY(14px) scale(0.97)',
+            transition: `opacity ${AUTH_MODAL_DURATION}ms ease, transform ${AUTH_MODAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="px-6 pt-5 pb-6">
+            <div className="flex items-center justify-between mb-5">
+              <div />
+              <button
+                onClick={handleClose}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{
+                  color: INK_SOFT,
+                  background: 'var(--input-bg)',
+                }}
+                aria-label="Close"
+              >
+                <X size={17} />
+              </button>
+            </div>
+
+            <div className="text-center">
+              <div
+                className="mx-auto mb-4 w-14 h-14 rounded-2xl flex items-center justify-center"
+                style={{
+                  background: accentAlpha(ACCENT, 0.12),
+                  border: `1px solid ${accentAlpha(ACCENT, 0.18)}`,
+                }}
+              >
+                <User size={25} style={{ color: ACCENT }} />
+              </div>
+
+              <h2
+                className="text-xl font-black tracking-tight"
+                style={{ color: INK }}
+              >
+                {t.loginToSync}
+              </h2>
+
+              <p
+                className="mt-2 text-xs leading-relaxed"
+                style={{ color: INK_SOFT }}
+              >
+                {t.mainlandCnBlocked}
+              </p>
+            </div>
+
+            <div
+              className="mt-6 p-3.5 rounded-2xl"
+              style={{
+                background: accentAlpha(ACCENT, 0.07),
+                border: `1px solid ${accentAlpha(ACCENT, 0.12)}`,
+              }}
+            >
+              <p
+                className="text-xs leading-relaxed"
+                style={{ color: INK }}
+              >
+                {t.mainlandCnBlocked}
+              </p>
+            </div>
+
+            <button
+              onClick={handleClose}
+              className="w-full mt-5 py-3 rounded-2xl font-bold text-sm"
+              style={{
+                background: ACCENT,
+                color: '#fff',
+              }}
+            >
+              {t.back}
+            </button>
           </div>
-          <p className="text-sm font-bold" style={{ color: DANGER }}>{t.mainlandCnBlocked}</p>
-          <BackupSection t={t} handleExportBackup={handleExportBackup} importFileRef={importFileRef} handleImportFileChange={handleImportFileChange} backupMsg={backupMsg} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center px-6" style={{
-            zIndex: 200,
-            background: modalShown ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0)',
-            transition: `background ${AUTH_MODAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-          }} onClick={handleClose}>
-      <div className={`w-full ${isLargeScreen ? 'max-w-sm' : 'max-w-xs'} p-6 rounded-2xl flex flex-col gap-3`} style={{
-              ...AUTH_GLASS,
-              opacity: modalShown ? 1 : 0,
-              transform: modalShown ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.97)',
-              transition: `opacity ${AUTH_MODAL_DURATION}ms ease, transform ${AUTH_MODAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-            }} onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-black" style={{ color: INK }}>{t.loginToSync}</h2>
-          <button onClick={handleClose} style={{ color: INK_SOFT }}><X size={18} /></button>
+    <div
+      className="fixed inset-0 flex items-center justify-center px-5"
+      style={{
+        zIndex: 200,
+        background: modalShown ? 'rgba(0,0,0,0.42)' : 'rgba(0,0,0,0)',
+        transition: `background ${AUTH_MODAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+      }}
+      onClick={handleClose}
+    >
+      <div
+        className={`w-full ${isLargeScreen ? 'max-w-sm' : 'max-w-xs'} rounded-3xl overflow-hidden`}
+        style={{
+          ...AUTH_GLASS,
+          opacity: modalShown ? 1 : 0,
+          transform: modalShown
+            ? 'translateY(0) scale(1)'
+            : 'translateY(14px) scale(0.97)',
+          transition: `opacity ${AUTH_MODAL_DURATION}ms ease, transform ${AUTH_MODAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="px-6 pt-5 pb-6">
+
+          <div className="flex items-center justify-between mb-5">
+            <div className="w-8" />
+
+            <div
+              className="text-xs font-bold px-3 py-1.5 rounded-full"
+              style={{
+                color: ACCENT,
+                background: accentAlpha(ACCENT, 0.08),
+              }}
+            >
+              時光線
+            </div>
+
+            <button
+              onClick={handleClose}
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{
+                color: INK_SOFT,
+                background: 'var(--input-bg)',
+              }}
+              aria-label="Close"
+            >
+              <X size={17} />
+            </button>
+          </div>
+
+          <div className="text-center mb-6">
+            <div
+              className="mx-auto mb-4 w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden"
+              style={{
+                background: accentAlpha(ACCENT, 0.11),
+                border: `1px solid ${accentAlpha(ACCENT, 0.16)}`,
+              }}
+            >
+              <img
+                src="/银山绿必.png"
+                alt="時光線"
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            <h2
+              className="text-xl font-black tracking-tight"
+              style={{ color: INK }}
+            >
+              {mode === 'login' ? t.loginToSync : t.signup}
+            </h2>
+
+            <p
+              className="mt-1.5 text-xs"
+              style={{ color: INK_SOFT }}
+            >
+              {mode === 'login'
+                ? '登入後即可同步你的時光線資料'
+                : '建立帳號，開始同步你的資料'}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+
+            <button
+              onClick={() => run(signInWithGoogle)}
+              disabled={busy}
+              className="w-full py-2.5 rounded-full font-bold text-sm flex items-center justify-center gap-2.5"
+              style={{
+                background: 'var(--input-bg)',
+                border: CARD_BORDER,
+                color: INK,
+                opacity: busy ? 0.6 : 1,
+              }}
+            >
+              <GoogleGIcon />
+              {t.continueWithGoogle}
+            </button>
+
+            {SHOW_APPLE_LOGIN && (
+              <button
+                onClick={() => run(signInWithApple)}
+                disabled={busy}
+                className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
+                style={{
+                  background: INK,
+                  color: '#fff',
+                  opacity: busy ? 0.6 : 1,
+                }}
+              >
+                <span className="text-base leading-none"></span>
+                {t.continueWithApple}
+              </button>
+            )}
+
+            <div className="flex items-center gap-3 my-1">
+              <div
+                className="flex-1 h-px"
+                style={{ background: CARD_BORDER }}
+              />
+              <span
+                className="text-[11px] font-bold"
+                style={{ color: INK_SOFT }}
+              >
+                {t.orDivider}
+              </span>
+              <div
+                className="flex-1 h-px"
+                style={{ background: CARD_BORDER }}
+              />
+            </div>
+
+            <input
+              ref={emailRef}
+              type="email"
+              autoComplete="email"
+              placeholder={t.email}
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={stepToNext(passwordRef, null, null)}
+              className="px-3.5 py-3 rounded-2xl text-sm outline-none w-full"
+              style={{
+                background: 'var(--input-bg)',
+                border: CARD_BORDER,
+                color: INK,
+              }}
+            />
+
+            <PasswordField
+              inputRef={passwordRef}
+              t={t}
+              placeholder={t.password}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={stepToNext(
+                mode === 'signup' ? confirmPasswordRef : null,
+                handleSubmit,
+                emailRef
+              )}
+              className="px-3.5 py-3 rounded-2xl text-sm outline-none w-full"
+              style={{
+                background: 'var(--input-bg)',
+                border: CARD_BORDER,
+                color: INK,
+              }}
+            />
+
+            {mode === 'signup' && (
+              <PasswordField
+                inputRef={confirmPasswordRef}
+                t={t}
+                placeholder={t.confirmPassword}
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                onKeyDown={stepToNext(null, handleSubmit, passwordRef)}
+                className="px-3.5 py-3 rounded-2xl text-sm outline-none w-full"
+                style={{
+                  background: 'var(--input-bg)',
+                  border: CARD_BORDER,
+                  color: INK,
+                }}
+              />
+            )}
+
+            {error && (
+              <div
+                className="px-3.5 py-2.5 rounded-xl"
+                style={{
+                  background: accentAlpha(DANGER, 0.08),
+                  border: `1px solid ${accentAlpha(DANGER, 0.14)}`,
+                }}
+              >
+                <p
+                  className="text-xs font-bold leading-relaxed"
+                  style={{ color: DANGER }}
+                >
+                  {error}
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={handleSubmit}
+              disabled={
+                busy ||
+                !email ||
+                !password ||
+                (mode === 'signup' && !confirmPassword)
+              }
+              className="w-full py-3 rounded-2xl font-black text-sm"
+              style={{
+                background: ACCENT,
+                color: '#fff',
+                opacity:
+                  busy ||
+                  !email ||
+                  !password ||
+                  (mode === 'signup' && !confirmPassword)
+                    ? 0.55
+                    : 1,
+              }}
+            >
+              {mode === 'login' ? t.login : t.signup}
+            </button>
+
+            <button
+              onClick={() => {
+                setMode(mode === 'login' ? 'signup' : 'login');
+                setConfirmPassword('');
+                setError('');
+                setMagicSent(false);
+              }}
+              disabled={busy}
+              className="text-xs font-bold py-1"
+              style={{
+                color: ACCENT,
+                opacity: busy ? 0.6 : 1,
+              }}
+            >
+              {mode === 'login'
+                ? t.switchToSignup
+                : t.switchToLogin}
+            </button>
+
+            <div className="flex items-center gap-3 my-1">
+              <div
+                className="flex-1 h-px"
+                style={{ background: CARD_BORDER }}
+              />
+              <span
+                className="text-[11px] font-bold"
+                style={{ color: INK_SOFT }}
+              >
+                {t.orDivider}
+              </span>
+              <div
+                className="flex-1 h-px"
+                style={{ background: CARD_BORDER }}
+              />
+            </div>
+
+            {magicSent ? (
+              <div
+                className="px-3.5 py-3 rounded-2xl text-center"
+                style={{
+                  background: accentAlpha(MINT, 0.08),
+                  border: `1px solid ${accentAlpha(MINT, 0.14)}`,
+                }}
+              >
+                <p
+                  className="text-xs font-bold leading-relaxed"
+                  style={{ color: MINT }}
+                >
+                  {t.magicLinkSent}
+                </p>
+              </div>
+            ) : (
+              <button
+                onClick={() =>
+                  run(async () => {
+                    await sendMagicLink(email);
+                    setMagicSent(true);
+                  })
+                }
+                disabled={busy || !email}
+                className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
+                style={{
+                  background: 'transparent',
+                  border: CARD_BORDER,
+                  color: INK,
+                  opacity: busy || !email ? 0.5 : 1,
+                }}
+              >
+                <Mail size={15} />
+                {t.sendMagicLink}
+              </button>
+            )}
+
+          </div>
         </div>
-
-        <button
-          onClick={() => run(signInWithGoogle)}
-          disabled={busy}
-          className="flex items-center justify-center gap-2.5 py-2.5 rounded-full font-bold text-sm"
-          style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(60,64,67,0.25)', color: INK, opacity: busy ? 0.6 : 1 }}
-        >
-          <GoogleGIcon /> {t.continueWithGoogle}
-        </button>
-        {SHOW_APPLE_LOGIN && (
-          <button
-            onClick={() => run(signInWithApple)}
-            disabled={busy}
-            className="py-2.5 rounded-xl font-bold text-sm"
-            style={{ background: 'var(--input-bg)', border: CARD_BORDER, color: INK, opacity: busy ? 0.6 : 1 }}
-          >
-            {t.continueWithApple}
-          </button>
-        )}
-
-        <div className="flex items-center gap-2 my-1">
-          <div className="flex-1 h-px" style={{ background: 'var(--card-border)' }} />
-          <span className="text-xs" style={{ color: INK_SOFT }}>{t.orDivider}</span>
-          <div className="flex-1 h-px" style={{ background: 'var(--card-border)' }} />
-        </div>
-
-        <input
-          ref={emailRef}
-          type="email" placeholder={t.email} value={email} onChange={e => setEmail(e.target.value)}
-          onKeyDown={stepToNext(passwordRef, null, null)}
-          className="px-3 py-2.5 rounded-xl text-sm outline-none"
-          style={{ background: 'var(--input-bg)', border: CARD_BORDER, color: INK }}
-        />
-        <PasswordField
-          inputRef={passwordRef} t={t}
-          placeholder={t.password} value={password} onChange={e => setPassword(e.target.value)}
-          onKeyDown={stepToNext(mode === 'signup' ? confirmPasswordRef : null, handleSubmit, emailRef)}
-          className="px-3 py-2.5 rounded-xl text-sm outline-none w-full"
-          style={{ background: 'var(--input-bg)', border: CARD_BORDER, color: INK }}
-        />
-        {mode === 'signup' && (
-          <PasswordField
-            inputRef={confirmPasswordRef} t={t}
-            placeholder={t.confirmPassword} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-            onKeyDown={stepToNext(null, handleSubmit, passwordRef)}
-            className="px-3 py-2.5 rounded-xl text-sm outline-none w-full"
-            style={{ background: 'var(--input-bg)', border: CARD_BORDER, color: INK }}
-          />
-        )}
-        {error && <p className="text-xs font-bold" style={{ color: DANGER }}>{error}</p>}
-
-        <button
-          onClick={handleSubmit}
-          disabled={busy || !email || !password || (mode === 'signup' && !confirmPassword)}
-          className="py-2.5 rounded-xl font-bold text-sm"
-          style={{ background: MINT, color: '#fff', opacity: busy || !email || !password || (mode === 'signup' && !confirmPassword) ? 0.6 : 1 }}
-        >
-          {mode === 'login' ? t.login : t.signup}
-        </button>
-        <button
-          onClick={() => { setMode(m => (m === 'login' ? 'signup' : 'login')); setConfirmPassword(''); setError(''); }}
-          className="text-xs font-bold"
-          style={{ color: ACCENT }}
-        >
-          {mode === 'login' ? t.switchToSignup : t.switchToLogin}
-        </button>
-
-        <div className="flex items-center gap-2 my-1">
-          <div className="flex-1 h-px" style={{ background: 'var(--card-border)' }} />
-          <span className="text-xs" style={{ color: INK_SOFT }}>{t.orDivider}</span>
-          <div className="flex-1 h-px" style={{ background: 'var(--card-border)' }} />
-        </div>
-
-        {magicSent ? (
-          <p className="text-xs font-bold text-center" style={{ color: MINT }}>{t.magicLinkSent}</p>
-        ) : (
-          <button
-            onClick={() => run(async () => { await sendMagicLink(email); setMagicSent(true); })}
-            disabled={busy || !email}
-            className="flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm"
-            style={{ background: 'var(--input-bg)', border: CARD_BORDER, color: INK, opacity: busy || !email ? 0.6 : 1 }}
-          >
-            <Mail size={15} /> {t.sendMagicLink}
-          </button>
-        )}
-
-        <BackupSection t={t} handleExportBackup={handleExportBackup} importFileRef={importFileRef} handleImportFileChange={handleImportFileChange} backupMsg={backupMsg} />
       </div>
     </div>
   );
+
 }
 
 export function MergeDialog({ t, onResolve }) {
